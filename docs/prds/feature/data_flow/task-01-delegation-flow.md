@@ -40,6 +40,19 @@ Unity → FastAPI(PersonaAgent) → NanoClaw → Callback → 다음 턴 보고�
 
 - [ ] Callback의 `status: "failed"` → synthetic message 삽입 → 다음 턴에서 실패 사유 보고
 
+## 테스트 전략
+
+FastAPI 측 callback 로직을 NanoClaw 완성과 독립적으로 개발/테스트하기 위해, mock callback script를 먼저 작성한다.
+
+```bash
+# mock: POST fake callback to FastAPI
+curl -X POST http://localhost:8000/api/callback/nanoclaw \
+  -H "Content-Type: application/json" \
+  -d '{"task_id": "test-001", "status": "done", "summary": "mock result"}'
+```
+
+이를 통해 FastAPI 측 callback handler, STM injection, Background Sweep을 NanoClaw 없이 검증할 수 있다.
+
 ## Acceptance Criteria
 
 - [ ] 전체 E2E 흐름이 non-blocking으로 동작한다

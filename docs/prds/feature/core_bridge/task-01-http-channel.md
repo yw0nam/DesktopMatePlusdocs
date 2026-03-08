@@ -1,6 +1,6 @@
 # Task 01: HTTP Channel (add-fastapi-channel Skill)
 
-**Parent**: §2 The Core Bridge
+**Parent**: §2 The Artisan Team (NanoClaw)
 **Priority**: P0
 **Depends on**: NanoClaw Channel Registry 패턴 이해
 
@@ -8,7 +8,7 @@
 
 ## Goal
 
-NanoClaw에 Fastify 기반 HTTP 채널을 추가하여 FastAPI와의 비동기 위임 전용 입출력 단자를 구현한다. 기존 `add-slack` 채널과 동일한 self-registration 패턴을 따른다.
+NanoClaw에 HTTP 채널을 추가하여 FastAPI와의 비동기 위임 전용 입출력 단자를 구현한다. 기존 `add-slack` 채널과 동일한 self-registration 패턴을 따른다.
 
 ## Scope
 
@@ -38,20 +38,19 @@ adds:
 modifies:
   - src/channels/index.ts
 structured:
-  npm_dependencies:
-    fastify: "^5.0.0"
+  npm_dependencies: {}  # node:http 내장 모듈 사용, 외부 의존성 없음
   env_additions:
     - HTTP_PORT
     - FASTAPI_CALLBACK_URL
 ```
 
+> **구현 노트**: POST 1개 + outbound fetch 1개이므로 `node:http` 내장 모듈로 충분하다. Fastify 등 외부 프레임워크는 불필요한 의존성.
+
 ## JID 설계 결정
 
-hash는 단방향이므로 "역산"은 불가능하다. 다음 중 하나를 선택:
-- **Option A**: `http:{base64(callback_url)}` — JID 자체에서 URL 복원 가능, 간단
-- **Option B**: in-memory Map<jid, callback_url> — JID가 짧아지나 프로세스 재시작 시 유실
+**결정: Option A (stateless base64)**
 
-→ 구현 시 결정. 권장: Option A (stateless)
+`http:{base64(callback_url)}` — JID 자체에서 URL 복원 가능. 프로세스 재시작에도 유실 없음.
 
 ## Acceptance Criteria
 

@@ -34,10 +34,11 @@ structured:
     - IPC_OBSERVER_SLACK_JID
 ```
 
-### 선택적 연동
+### Persona별 로깅
 
-- `add-slack-swarm` 설치 시: `sender`/`thread_ts` 필드를 활용해 Persona별 Slack Thread 로깅
-- `add-slack-swarm` 미설치 시: 단순 채널 메시지로 로깅
+IPC 메시지의 `sender` 필드(ipc-mcp-stdio.ts에서 이미 지원)를 활용해 Persona별 로깅을 구분한다. 추가 Skill 의존 없이 Observer 단독으로 동작.
+
+> **[TODO]** Slack Thread 분리 로깅: `sender` 필드 기반으로 Persona별 Slack Thread를 자동 생성/라우팅하는 로직. Observer 내부에서 처리 가능하며 외부 Skill 의존 불필요.
 
 ## 핵심 설계 원칙
 
@@ -49,4 +50,4 @@ structured:
 - [ ] staging → messages 파일 이동이 atomic하게 동작한다
 - [ ] Observer 채널로 IPC 메시지가 미러링된다
 - [ ] Observer 실패 시에도 기존 IPC 흐름이 정상 동작한다
-- [ ] `add-slack-swarm` 없이도 단독으로 동작한다
+- [ ] `sender` 필드 기반 Persona별 로깅이 구분된다
