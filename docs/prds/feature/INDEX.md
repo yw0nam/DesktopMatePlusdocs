@@ -35,7 +35,7 @@ FastAPI(Director)가 사용자와의 실시간 대화를 처리하고, 무거운
 | # | Task | Priority | Status | Description |
 |---|---|---|---|---|
 | 01 | [Persona Skills](./nanoclaw_swarm/task-01-persona-skills.md) | P0 | TODO | DevAgent, ReviewerAgent, PMAgent Skill 파일 작성 |
-| 02 | [Multi-Persona Execution](./nanoclaw_swarm/task-02-single-container-multi-persona.md) | P0 | TODO | 단일 Container에서 Persona 순차 실행 로직 |
+| 02 | [Multi-Persona Execution](./nanoclaw_swarm/task-02-single-container-multi-persona.md) | P0 | TODO | Sub-Agent Driven(TeamCreate) Persona 실행 로직 |
 
 ### observer — §4 The Observers & Bypasses
 
@@ -65,6 +65,7 @@ FastAPI(Director)가 사용자와의 실시간 대화를 처리하고, 무거운
 | 01 | [Push Notification](./TODO/task-01-push-notification.md) | P2 | HOLD | Callback 수신 시 Unity로 즉시 알림 |
 | 02 | [Delegation Policy](./TODO/task-02-delegation-policy.md) | P1 | HOLD | 위임 vs 직접 처리 경계 규칙 정의 |
 | 03 | [Barge-in Interrupt](./TODO/task-03-barge-in-interrupt.md) | P2 | HOLD | 사용자 끼어들기 시 파이프라인 즉시 중단 |
+| 04 | [Cross-Runtime Sub-Agent](./TODO/task-04-cross-runtime-subagent.md) | P2 | HOLD | MCP 기반 runtime-agnostic Sub-agent delegation |
 
 ---
 
