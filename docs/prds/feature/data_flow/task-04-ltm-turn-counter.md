@@ -1,7 +1,7 @@
 # data_flow/04 — LTM Turn Counter Fix
 
 **Priority**: P1
-**Status**: TODO
+**Status**: DONE
 **Discovered**: 2026-03-09 (during data_flow/03 verification)
 
 ---

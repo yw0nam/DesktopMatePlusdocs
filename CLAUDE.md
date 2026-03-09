@@ -7,6 +7,9 @@
 - **FastAPI** (`backend/`): Director — real-time WebSocket chat, STM/LTM, TTS, VLM, delegates heavy tasks to NanoClaw
 - **NanoClaw** (`nanoclaw/`): Artisan — Node.js Claude agent runner; executes delegated tasks via container-based persona agents
 - **Unity**: Dumb UI — renders output only, unaware of NanoClaw
+- **DesktopMatePlus**: Only documentation and workspace-level instructions; no code. You have to make a worktree or code change in backend or nanoclaw only. path:/home/spow12/codes/2025_lower/DesktopMatePlus
+
+Note: NanoClaw and Backend has own their git.
 
 Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/fastapi` (NanoClaw) → `POST /v1/callback/nanoclaw/{session_id}` (FastAPI)
 
@@ -73,11 +76,13 @@ npm run dev                  # hot reload
 - **Persona skills** live in `container/skills/{name}/SKILL.md`; skill-only (no code) for runtime agent instructions
 - **IPC trigger**: write task file to `ipc/{group}/tasks/` to dispatch a NanoClaw task directly
 - **Per-group config**: `groups/{name}/CLAUDE.md` (isolated memory context)
+- **Reverse code injection**: After each implementation and test is done, remove and reverse to original code, except skills which remain. This ensures clean git history and prevents skill code from being mixed with implementation code.
+  - For example, if a skill modifies `src/channels/index.ts`, after the skill is applied and tests pass, the modified code is committed as a skill, and then the original `index.ts` code is restored in the main branch. This way, the skill serves as a standalone unit of change that can be reviewed and tracked separately from the core implementation.
 
 ## PRD Tracking
 
-Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).  
-Current focus: Phase 2 — `nanoclaw/03` (Multi-Persona Execution) + `data_flow/01` (E2E Integration).
+Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).
+Current focus: Phase 2 완료. 다음은 P2 HOLD 항목 중 필요한 것을 선택적으로 구현.
 
 ## Update documents
 

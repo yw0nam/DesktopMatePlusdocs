@@ -1,138 +1,114 @@
-# Phase 2: Multi-Persona Orchestrator + E2E Mock Implementation Plan
+> **[HOLD]** Multi-Persona Orchestrator(Task 1)는 nice-to-have로 분류되어 HOLD 처리됨.
+> Task 2(E2E 테스트), Task 3(mock script), Task 4(INDEX 업데이트)는 현재 플랜([2026-03-09-e2e-and-p1-plan.md](./2026-03-09-e2e-and-p1-plan.md))으로 이전됨.
+> 이 문서는 참고용으로만 보존한다.
+
+# Phase 2: Multi-Persona Orchestrator + E2E Verification Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Enable NanoClaw's Main Agent to orchestrate Persona Sub-agents (DevAgent, ReviewerAgent, PMAgent) via TeamCreate, and verify FastAPI callback flow with mock tests.
+**Goal:** (1) Add Multi-Persona Orchestrator via NanoClaw skill packages. (2) Verify FastAPI callback flow using existing tests.
 
-**Architecture:** Pure Prompt Orchestrator — no NanoClaw source code changes. Group CLAUDE.md defines orchestrator behavior, Persona SKILL.md files define Sub-agent communication rules. FastAPI callback already implemented; we add mock tests only.
+**Architecture:** Pure Prompt Orchestrator via skill packages — all NanoClaw changes applied through `apply-skill.ts`. HTTP Channel status vocab (`'done'`) is already correct in `add-http` skill. FastAPI tests already exist; run them to verify.
 
-**Tech Stack:** Markdown (CLAUDE.md/SKILL.md), Python (pytest, httpx), Bash (curl scripts)
+**Tech Stack:** TypeScript (NanoClaw skill packages), Markdown (CLAUDE.md/SKILL.md), Bash (npm test, pytest)
+
+**NanoClaw Convention:** After each skill apply + test, revert all modified source files and commit only the skill package (reverse code injection — see CLAUDE.md).
 
 ---
 
-### Task 1: Update Persona SKILL.md — DevAgent Communication Rules
+### Task 1: Create `add-multi-persona-orchestrator` Skill Package
 
 **Files:**
 
-- Modify: `nanoclaw/container/skills/dev-agent/SKILL.md`
+- Create: `nanoclaw/.claude/skills/add-multi-persona-orchestrator/SKILL.md`
+- Create: `nanoclaw/.claude/skills/add-multi-persona-orchestrator/manifest.yaml`
+- Create: `nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/groups/main/CLAUDE.md`
+- Create: `nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/dev-agent/SKILL.md`
+- Create: `nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/reviewer-agent/SKILL.md`
+- Create: `nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/pm-agent/SKILL.md`
 
-**Step 1: Read current file and verify structure**
-
-Run: `cat nanoclaw/container/skills/dev-agent/SKILL.md`
-Expected: Current SKILL.md with Responsibilities, Workflow, Output Format sections.
-
-**Step 2: Add Communication Rules section**
-
-Append to `nanoclaw/container/skills/dev-agent/SKILL.md`:
-
-```markdown
-
-## Communication Rules (Sub-agent Mode)
-
-When running as a sub-agent spawned by an orchestrator:
-- Do NOT use `mcp__nanoclaw__send_message` directly — return results to the orchestrator
-- Follow the Output Format section for structured results
-- If the task requires file creation, write files to `/workspace/group/` and reference paths in your output
-- Keep your output concise — the orchestrator will synthesize across all Personas
-```
-
-**Step 3: Verify file is well-formed**
-
-Run: `head -30 nanoclaw/container/skills/dev-agent/SKILL.md`
-Expected: Original content preserved with new section appended.
-
-**Step 4: Commit**
+**Step 1: Create skill directory structure**
 
 ```bash
-git add nanoclaw/container/skills/dev-agent/SKILL.md
-git commit -m "docs(persona): add communication rules to DevAgent SKILL.md"
+mkdir -p nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/groups/main
+mkdir -p nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/dev-agent
+mkdir -p nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/reviewer-agent
+mkdir -p nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/pm-agent
 ```
 
----
+**Step 2: Create SKILL.md**
 
-### Task 2: Update Persona SKILL.md — ReviewerAgent Communication Rules
-
-**Files:**
-
-- Modify: `nanoclaw/container/skills/reviewer-agent/SKILL.md`
-
-**Step 1: Add Communication Rules section**
-
-Append to `nanoclaw/container/skills/reviewer-agent/SKILL.md`:
+Create `nanoclaw/.claude/skills/add-multi-persona-orchestrator/SKILL.md`:
 
 ```markdown
-
-## Communication Rules (Sub-agent Mode)
-
-When running as a sub-agent spawned by an orchestrator:
-- Do NOT use `mcp__nanoclaw__send_message` directly — return results to the orchestrator
-- Follow the Output Format section for structured results
-- If reviewing files, reference them by path so the orchestrator can include links
-- Keep your output concise — the orchestrator will synthesize across all Personas
-```
-
-**Step 2: Verify file is well-formed**
-
-Run: `head -30 nanoclaw/container/skills/reviewer-agent/SKILL.md`
-Expected: Original content preserved with new section appended.
-
-**Step 3: Commit**
-
-```bash
-git add nanoclaw/container/skills/reviewer-agent/SKILL.md
-git commit -m "docs(persona): add communication rules to ReviewerAgent SKILL.md"
-```
-
+---
+name: add-multi-persona-orchestrator
+description: Use when NanoClaw's Main Agent needs to orchestrate DevAgent, ReviewerAgent, and PMAgent via Claude Agent Teams (TeamCreate). Adds Orchestrator instructions to group CLAUDE.md and Communication Rules to each Persona SKILL.md.
 ---
 
-### Task 3: Update Persona SKILL.md — PMAgent Communication Rules
+# Multi-Persona Orchestrator Skill
 
-**Files:**
+## Overview
+Configures the Main Agent as an Orchestrator that:
+1. Receives task delegations from FastAPI Director
+2. Spawns Persona Sub-agents via TeamCreate
+3. Synthesizes results and sends final callback
 
-- Modify: `nanoclaw/container/skills/pm-agent/SKILL.md`
+## Sender Model
+ipc.ts drops the sender field, so Persona attribution is done via text:
+Orchestrator summary explicitly names which Persona contributed what.
+Full IPC sender support is deferred to Approach B (separate skill).
 
-**Step 1: Add Communication Rules section**
-
-Append to `nanoclaw/container/skills/pm-agent/SKILL.md`:
-
-```markdown
-
-## Communication Rules (Sub-agent Mode)
-
-When running as a sub-agent spawned by an orchestrator:
-- Do NOT use `mcp__nanoclaw__send_message` directly — return results to the orchestrator
-- Follow the Output Format section for structured results
-- Keep your output concise — the orchestrator will synthesize across all Personas
+## Sub-agent send_message rule
+Sub-agents MUST NOT call mcp__nanoclaw__send_message — only the Orchestrator
+sends the final result to prevent spurious intermediate callbacks to FastAPI.
 ```
 
-**Step 2: Verify file is well-formed**
+**Step 3: Create manifest.yaml**
 
-Run: `head -30 nanoclaw/container/skills/pm-agent/SKILL.md`
-Expected: Original content preserved with new section appended.
+Create `nanoclaw/.claude/skills/add-multi-persona-orchestrator/manifest.yaml`:
 
-**Step 3: Commit**
+```yaml
+skill: add-multi-persona-orchestrator
+version: 1.0.0
+description: "Adds Multi-Persona Orchestrator behavior to Main Agent and Communication Rules to Persona SKILL.md files"
+core_version: 0.1.0
+
+adds: []
+modifies:
+  - groups/main/CLAUDE.md
+  - container/skills/dev-agent/SKILL.md
+  - container/skills/reviewer-agent/SKILL.md
+  - container/skills/pm-agent/SKILL.md
+
+structured:
+  npm_dependencies: {}
+
+conflicts: []
+depends: []
+
+test: "npm test"
+```
+
+**Step 4: Build modify/ files — copy current then add content**
 
 ```bash
-git add nanoclaw/container/skills/pm-agent/SKILL.md
-git commit -m "docs(persona): add communication rules to PMAgent SKILL.md"
+cp nanoclaw/groups/main/CLAUDE.md \
+   nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/groups/main/CLAUDE.md
+
+cp nanoclaw/container/skills/dev-agent/SKILL.md \
+   nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/dev-agent/SKILL.md
+
+cp nanoclaw/container/skills/reviewer-agent/SKILL.md \
+   nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/reviewer-agent/SKILL.md
+
+cp nanoclaw/container/skills/pm-agent/SKILL.md \
+   nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/pm-agent/SKILL.md
 ```
 
----
+**Step 5: Append Orchestrator section to modify/groups/main/CLAUDE.md**
 
-### Task 4: Add Orchestrator Section to Group CLAUDE.md
-
-**Files:**
-
-- Modify: `nanoclaw/groups/main/CLAUDE.md`
-
-**Step 1: Read current CLAUDE.md**
-
-Run: `wc -l nanoclaw/groups/main/CLAUDE.md`
-Expected: ~247 lines.
-
-**Step 2: Add Task Delegation section**
-
-Append the following to `nanoclaw/groups/main/CLAUDE.md` (before the "Managing Groups" section, after "Container Mounts"):
+Append to the end of `modify/groups/main/CLAUDE.md`:
 
 ```markdown
 
@@ -140,282 +116,213 @@ Append the following to `nanoclaw/groups/main/CLAUDE.md` (before the "Managing G
 
 ## Task Delegation (Orchestrator Mode)
 
-When you receive a message from FastAPI Director (recognized by the format below), switch to Orchestrator mode:
-
-```
-
-Task: <description>
-Task ID: <uuid>
-Session ID: <session_id>
-
-```
+When you receive a message from FastAPI Director (recognized by format:
+"Task: ...\nTask ID: ...\nSession ID: ..."), switch to Orchestrator mode:
 
 ### Step 1: Analyze the Task
 
 - Determine which Personas are needed: DevAgent (coding), ReviewerAgent (review), PMAgent (reporting)
 - Decide execution order:
-  - **Sequential**: dependent tasks (e.g., DevAgent writes code → ReviewerAgent reviews it)
-  - **Parallel**: independent tasks (e.g., DevAgent + PMAgent can work simultaneously)
-- Not every task needs all Personas. Use your judgment — simple tasks may only need DevAgent.
+  - **Sequential**: dependent tasks (e.g., DevAgent writes → ReviewerAgent reviews)
+  - **Parallel**: independent tasks
+- Not every task needs all Personas — use judgment
 
 ### Step 2: Spawn Sub-agents via TeamCreate
 
-For each Persona, use `TeamCreate` with this prompt structure:
+For each Persona, use TeamCreate with this prompt structure:
 
-```
+    You are {PersonaName}. Read and follow your skill file:
+    /home/node/.claude/skills/{persona-dir}/SKILL.md
 
-You are {PersonaName}. Read and follow your skill file at:
-/home/node/.claude/skills/{persona-dir}/SKILL.md
+    Task: {task description from the delegation message}
+    Task ID: {task_id}
 
-Task: {task description from the delegation message}
-Task ID: {task_id}
+    {If sequential: include preceding Persona's output here}
 
-{If sequential: include preceding Persona's results here}
+    RULES:
+    - Do NOT use mcp__nanoclaw__send_message. Return your result to me directly.
+    - Follow the Output Format defined in your SKILL.md.
 
-RULES:
+Persona Directory Mapping:
+| Persona       | Directory      | Use For                           |
+|---------------|----------------|-----------------------------------|
+| DevAgent      | dev-agent      | Writing/modifying/testing code    |
+| ReviewerAgent | reviewer-agent | Code review, bug detection        |
+| PMAgent       | pm-agent       | Summarizing work, reports         |
 
-- Do NOT use mcp__nanoclaw__send_message. Return your result to me directly.
-- Follow the Output Format defined in your SKILL.md.
-
-```
-
-**Persona Directory Mapping:**
-
-| Persona | Directory | Use For |
-|---------|-----------|---------|
-| DevAgent | `dev-agent` | Writing/modifying code, running tests |
-| ReviewerAgent | `reviewer-agent` | Code review, bug detection |
-| PMAgent | `pm-agent` | Summarizing work, creating reports |
-
-### Step 3: Collect & Synthesize Results
+### Step 3: Synthesize Results
 
 After all Sub-agents complete:
-1. Combine their structured outputs into a single summary
-2. Note any conflicts between Persona outputs (e.g., DevAgent says "done" but ReviewerAgent found issues)
-3. Include actionable next steps if applicable
+1. Combine their outputs into a final summary
+2. Attribute results explicitly: e.g. "DevAgent: [changes], ReviewerAgent: [verdict]"
+3. Include the Task ID for traceability
 
 ### Step 4: Deliver Final Result
 
-Send the synthesized summary using `mcp__nanoclaw__send_message`:
+Send via `mcp__nanoclaw__send_message(text: final_summary)`.
+This triggers the HTTP Channel egress → POST to FastAPI callback_url.
 
+**IMPORTANT**:
+- Only YOU (Main Agent / Orchestrator) may call `mcp__nanoclaw__send_message` for the final result
+- Sub-agents MUST NOT call `send_message` — return results to me directly
 ```
 
-mcp__nanoclaw__send_message(text: "<final synthesized summary>", sender: "Orchestrator")
+**Step 6: Append Communication Rules to each Persona SKILL.md**
 
+Append to `modify/container/skills/dev-agent/SKILL.md`:
+
+```markdown
+
+## Communication Rules (Sub-agent Mode)
+
+When running as a sub-agent spawned by an orchestrator:
+- Do NOT use `mcp__nanoclaw__send_message` directly — return results to the orchestrator
+- Follow the Output Format section for structured results
+- If the task requires file creation, write to `/workspace/group/` and reference paths in output
+- Keep output concise — the orchestrator synthesizes across all Personas
 ```
 
-This triggers the HTTP Channel egress to POST the result back to the FastAPI callback URL.
+Append the same block to `modify/container/skills/reviewer-agent/SKILL.md` and
+`modify/container/skills/pm-agent/SKILL.md`.
 
-**IMPORTANT:**
-- Only YOU (the Main Agent / Orchestrator) may call `mcp__nanoclaw__send_message` for the final result
-- Sub-agents must NOT call `send_message` — their output goes through you
-- Include the Task ID in your summary for traceability
-```
-
-**Step 3: Verify section was added correctly**
-
-Run: `grep -n "Orchestrator Mode" nanoclaw/groups/main/CLAUDE.md`
-Expected: Line number where section was added.
-
-**Step 4: Commit**
+**Step 7: Verify modify/ files look correct**
 
 ```bash
-git add nanoclaw/groups/main/CLAUDE.md
-git commit -m "docs(orchestrator): add task delegation section to main group CLAUDE.md"
+tail -20 nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/groups/main/CLAUDE.md
+tail -10 nanoclaw/.claude/skills/add-multi-persona-orchestrator/modify/container/skills/dev-agent/SKILL.md
+```
+
+Expected: Newly added sections visible at end of each file.
+
+**Step 8: Apply the skill**
+
+```bash
+cd nanoclaw && npx tsx scripts/apply-skill.ts .claude/skills/add-multi-persona-orchestrator
+```
+
+Expected: Skill applied cleanly (all 4 files are markdown; no merge conflicts expected on fresh install).
+
+**Step 9: Verify applied files**
+
+```bash
+grep -n "Orchestrator Mode" nanoclaw/groups/main/CLAUDE.md
+grep -n "Communication Rules" nanoclaw/container/skills/dev-agent/SKILL.md
+grep -n "Communication Rules" nanoclaw/container/skills/reviewer-agent/SKILL.md
+grep -n "Communication Rules" nanoclaw/container/skills/pm-agent/SKILL.md
+```
+
+Expected: Each grep returns a line number showing the section was added.
+
+**Step 10: Run tests**
+
+```bash
+cd nanoclaw && npm test
+```
+
+Expected: All tests PASS (no TypeScript source changed, only markdown files).
+
+**Step 11: Revert applied files, commit skill package only**
+
+Per CLAUDE.md reverse code injection rule — revert all applied source files, commit only the skill:
+
+```bash
+git checkout -- nanoclaw/groups/main/CLAUDE.md \
+                nanoclaw/container/skills/dev-agent/SKILL.md \
+                nanoclaw/container/skills/reviewer-agent/SKILL.md \
+                nanoclaw/container/skills/pm-agent/SKILL.md
+git add nanoclaw/.claude/skills/add-multi-persona-orchestrator/
+git commit -m "feat(orchestrator): add multi-persona orchestrator skill package"
 ```
 
 ---
 
-### Task 5: Write Callback E2E Test — Happy Path
+### Task 2: Verify FastAPI Callback Tests (data_flow/01 mock 검증)
 
-**Files:**
+**Background:** `test_delegation_e2e.py` and `test_callback_api.py` already cover the
+delegation round-trip. No new tests needed — just run them green.
 
-- Create: `backend/tests/api/test_callback_e2e.py`
-- Reference: `backend/src/api/routes/callback.py`, `backend/src/models/callback.py`
-
-**Step 1: Write the test file**
-
-```python
-"""E2E mock tests for NanoClaw callback endpoint."""
-
-import pytest
-from unittest.mock import MagicMock, patch
-
-from fastapi.testclient import TestClient
-
-from src.main import app
-
-
-@pytest.fixture
-def client():
-    """Create test client."""
-    return TestClient(app)
-
-
-@pytest.fixture
-def mock_stm_service():
-    """Mock STM service with a pending task."""
-    service = MagicMock()
-    service.get_session_metadata.return_value = {
-        "user_id": "test-user",
-        "agent_id": "test-agent",
-        "pending_tasks": [
-            {
-                "task_id": "task-001",
-                "description": "Review auth-fix branch",
-                "status": "running",
-                "created_at": "2026-03-09T00:00:00Z",
-            }
-        ],
-    }
-    return service
-
-
-class TestCallbackHappyPath:
-    """Happy path: NanoClaw sends success callback."""
-
-    def test_callback_updates_task_status(self, client, mock_stm_service):
-        """Callback with status=done updates task record and injects synthetic message."""
-        with patch("src.api.routes.callback.get_stm_service", return_value=mock_stm_service):
-            response = client.post(
-                "/v1/callback/nanoclaw/session-123",
-                json={
-                    "task_id": "task-001",
-                    "status": "done",
-                    "summary": "코드 리뷰 완료 - 보안 결함 1건 발견 (line 45)",
-                },
-            )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["task_id"] == "task-001"
-        assert data["status"] == "done"
-
-        # Verify STM metadata was updated
-        mock_stm_service.update_session_metadata.assert_called_once()
-        call_args = mock_stm_service.update_session_metadata.call_args
-        assert call_args[0][0] == "session-123"
-        pending = call_args[0][1]["pending_tasks"]
-        assert pending[0]["status"] == "done"
-
-        # Verify synthetic message was injected
-        mock_stm_service.add_chat_history.assert_called_once()
-        chat_args = mock_stm_service.add_chat_history.call_args
-        assert chat_args[1]["session_id"] == "session-123"
-        messages = chat_args[1]["messages"]
-        assert len(messages) == 1
-        assert "[TaskResult:task-001]" in messages[0].content
-
-
-class TestCallbackFailurePath:
-    """Failure path: NanoClaw sends failed callback."""
-
-    def test_callback_handles_failure(self, client, mock_stm_service):
-        """Callback with status=failed injects TaskFailed synthetic message."""
-        with patch("src.api.routes.callback.get_stm_service", return_value=mock_stm_service):
-            response = client.post(
-                "/v1/callback/nanoclaw/session-123",
-                json={
-                    "task_id": "task-001",
-                    "status": "failed",
-                    "summary": "NanoClaw 컨테이너 타임아웃",
-                },
-            )
-
-        assert response.status_code == 200
-
-        # Verify TaskFailed prefix
-        mock_stm_service.add_chat_history.assert_called_once()
-        messages = mock_stm_service.add_chat_history.call_args[1]["messages"]
-        assert "[TaskFailed:task-001]" in messages[0].content
-
-
-class TestCallback404:
-    """404 path: Unknown task_id."""
-
-    def test_callback_unknown_task_returns_404(self, client, mock_stm_service):
-        """Callback with non-existent task_id returns 404."""
-        with patch("src.api.routes.callback.get_stm_service", return_value=mock_stm_service):
-            response = client.post(
-                "/v1/callback/nanoclaw/session-123",
-                json={
-                    "task_id": "nonexistent-task",
-                    "status": "done",
-                    "summary": "Should not be found",
-                },
-            )
-
-        assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
-
-
-class TestCallbackServiceUnavailable:
-    """503 path: STM service not initialized."""
-
-    def test_callback_no_stm_returns_503(self, client):
-        """Callback when STM service is None returns 503."""
-        with patch("src.api.routes.callback.get_stm_service", return_value=None):
-            response = client.post(
-                "/v1/callback/nanoclaw/session-123",
-                json={
-                    "task_id": "task-001",
-                    "status": "done",
-                    "summary": "irrelevant",
-                },
-            )
-
-        assert response.status_code == 503
-```
-
-**Step 2: Run tests to verify they pass**
-
-Run: `cd backend && uv run pytest tests/api/test_callback_e2e.py -v`
-Expected: All 4 tests PASS. (The callback endpoint is already implemented.)
-
-**Step 3: Commit**
+**Step 1: Run existing tests**
 
 ```bash
-git add backend/tests/api/test_callback_e2e.py
-git commit -m "test(callback): add E2E mock tests for NanoClaw callback endpoint"
+cd backend && uv run pytest tests/api/test_delegation_e2e.py tests/api/test_callback_api.py -v
+```
+
+Expected output — all passing:
+
+```
+tests/api/test_delegation_e2e.py::TestDelegationFlowE2E::test_full_delegation_round_trip PASSED
+tests/api/test_delegation_e2e.py::TestDelegationFlowE2E::test_delegation_with_nanoclaw_failure PASSED
+tests/api/test_delegation_e2e.py::TestDelegationFlowE2E::test_callback_for_failed_task PASSED
+tests/api/test_callback_api.py::TestNanoClawCallback::test_callback_returns_503_when_stm_not_initialized PASSED
+tests/api/test_callback_api.py::TestNanoClawCallback::test_callback_returns_404_for_unknown_task PASSED
+tests/api/test_callback_api.py::TestNanoClawCallback::test_callback_updates_task_status_on_success PASSED
+...
+```
+
+If any test fails, investigate before proceeding.
+
+**Step 2: Commit (if any incidental fixes were needed)**
+
+```bash
+git commit -m "test(delegation): verify existing E2E tests pass for mock delegation flow"
 ```
 
 ---
 
-### Task 6: Create Mock Callback Shell Script
+### Task 3: Add Mock Callback Shell Script
 
 **Files:**
 
 - Create: `backend/scripts/mock_callback.sh`
 
-**Step 1: Write the script**
+**Note:** The script requires a real pending task_id from the STM — it cannot invent one.
+Usage instructions are embedded in the script.
+
+**Step 1: Create the script**
+
+Create `backend/scripts/mock_callback.sh`:
 
 ```bash
 #!/usr/bin/env bash
-# mock_callback.sh — Send a fake NanoClaw callback to FastAPI for manual testing
+# mock_callback.sh — Manually simulate a NanoClaw callback to FastAPI for debugging.
+#
+# PREREQUISITE: You must have a real pending task in STM.
+# How to get one:
+#   1. Start FastAPI: cd backend && uv run uvicorn src.main:app
+#   2. Connect via WebSocket and send a message that triggers DelegateTaskTool
+#   3. Copy the task_id from the FastAPI logs: "Task record: task_id=..."
+#   4. Then run this script with that task_id and session_id
 #
 # Usage:
-#   ./scripts/mock_callback.sh                    # Happy path (done)
-#   ./scripts/mock_callback.sh failed             # Failure path
-#   ./scripts/mock_callback.sh done session-456   # Custom session
+#   ./scripts/mock_callback.sh <task_id> <session_id> [done|failed]
 #
-# Prerequisites: FastAPI running on localhost:8000 with an active session
+# Example:
+#   ./scripts/mock_callback.sh abc-123 session-xyz done
 
 set -euo pipefail
 
-STATUS="${1:-done}"
-SESSION_ID="${2:-test-session}"
-TASK_ID="${3:-task-$(date +%s)}"
+if [ $# -lt 2 ]; then
+  echo "Usage: $0 <task_id> <session_id> [done|failed]"
+  echo ""
+  echo "PREREQUISITE: task_id must exist in session STM pending_tasks."
+  echo "Get it from FastAPI logs after triggering DelegateTaskTool."
+  exit 1
+fi
+
+TASK_ID="$1"
+SESSION_ID="$2"
+STATUS="${3:-done}"
 BASE_URL="${BACKEND_URL:-http://localhost:8000}"
 
 if [ "$STATUS" = "done" ]; then
-  SUMMARY="코드 리뷰 완료 - 보안 결함 1건 발견 (line 45). 수정 권장."
+  SUMMARY="코드 리뷰 완료 — 보안 결함 1건 발견 (line 45). 수정 권장."
 else
   SUMMARY="NanoClaw 컨테이너 타임아웃으로 작업 실패."
 fi
 
 echo "Sending $STATUS callback to $BASE_URL/v1/callback/nanoclaw/$SESSION_ID"
-echo "  task_id: $TASK_ID"
-echo "  summary: $SUMMARY"
+echo "  task_id:  $TASK_ID"
+echo "  summary:  $SUMMARY"
 echo ""
 
 curl -s -w "\nHTTP Status: %{http_code}\n" \
@@ -430,18 +337,20 @@ curl -s -w "\nHTTP Status: %{http_code}\n" \
 
 **Step 2: Make executable**
 
-Run: `chmod +x backend/scripts/mock_callback.sh`
+```bash
+chmod +x backend/scripts/mock_callback.sh
+```
 
 **Step 3: Commit**
 
 ```bash
 git add backend/scripts/mock_callback.sh
-git commit -m "scripts: add mock callback script for manual E2E testing"
+git commit -m "scripts: add mock callback script with correct usage instructions"
 ```
 
 ---
 
-### Task 7: Update PRD INDEX.md
+### Task 4: Update PRD INDEX.md
 
 **Files:**
 
@@ -449,16 +358,22 @@ git commit -m "scripts: add mock callback script for manual E2E testing"
 
 **Step 1: Update statuses**
 
-Change in `docs/prds/feature/INDEX.md`:
+In `docs/prds/feature/INDEX.md`:
 
 - `nanoclaw/03`: `TODO` → `DONE`
-- `data_flow/01`: `TODO` → `DONE`
+- `data_flow/01`: keep `TODO` (full E2E with real NanoClaw not yet verified)
+
+Add a note under data_flow/01:
+
+```
+| 01 | [Delegation Flow E2E](./data_flow/task-01-delegation-flow.md) | P0 | TODO | mock 검증 완료 (test_delegation_e2e.py Green). 전체 E2E는 NanoClaw 기동 후 검증 필요. |
+```
 
 **Step 2: Commit**
 
 ```bash
 git add docs/prds/feature/INDEX.md
-git commit -m "docs: mark nanoclaw/03 and data_flow/01 as DONE"
+git commit -m "docs: mark nanoclaw/03 DONE, update data_flow/01 note"
 ```
 
 ---
@@ -466,11 +381,9 @@ git commit -m "docs: mark nanoclaw/03 and data_flow/01 as DONE"
 ## Task Dependency Graph
 
 ```
-Task 1 (DevAgent SKILL.md)    ─┐
-Task 2 (ReviewerAgent SKILL.md) ├─→ Task 4 (Orchestrator CLAUDE.md) ─→ Task 7 (INDEX update)
-Task 3 (PMAgent SKILL.md)     ─┘
-                                    Task 5 (E2E tests) ─→ Task 7
-                                    Task 6 (mock script) ─→ Task 7
+Task 1 (add-multi-persona-orchestrator skill) ──→ Task 4 (INDEX)
+Task 2 (verify existing E2E tests) ──→ Task 4
+Task 3 (mock script) ──→ Task 4 (independent)
 ```
 
-Tasks 1-3 are independent (parallelizable). Task 4 depends on 1-3. Tasks 5-6 are independent of 1-4. Task 7 is final.
+Tasks 1, 2, 3 are independent. Task 4 is last.

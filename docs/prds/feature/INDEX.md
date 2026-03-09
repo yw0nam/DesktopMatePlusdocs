@@ -41,7 +41,7 @@ NanoClaw 내부의 HTTP 채널 추가. 핵심 브릿지 역할만 담당.
 | 01 | [Delegation Flow E2E](./data_flow/task-01-delegation-flow.md) | P0 | DONE | mock 검증 완료 (test_delegation_e2e.py 9/9 Green). 실제 NanoClaw E2E는 NanoClaw 기동 후 별도 검증 필요 |
 | 02 | [TTS Flow](./data_flow/task-02-tts-flow.md) | P1 | DONE | 스트리밍 → 문장 감지 → TTS → Unity push 검증 완료. VLLMOmniTTS 커버리지 추가 |
 | 03 | [LTM Consolidation](./data_flow/task-03-ltm-consolidation.md) | P1 | DONE | turn counter(len//2) + synthetic message 포함 검증 완료. 12개 테스트 추가 |
-| 04 | [LTM Turn Counter Fix](./data_flow/task-04-ltm-turn-counter.md) | P1 | TODO | turn counter를 user message only로 수정 (현재 len(history)//2로 전체 쌍 계산 중) |
+| 04 | [LTM Turn Counter Fix](./data_flow/task-04-ltm-turn-counter.md) | P1 | DONE | turn counter를 HumanMessage only로 수정. synthetic 메시지 부풀림 및 slice 경계 버그 동시 수정 |
 
 ### Appendix: 검증 항목 (코드 변경 없음)
 
