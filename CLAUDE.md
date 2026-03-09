@@ -10,6 +10,19 @@
 
 Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/fastapi` (NanoClaw) → `POST /v1/callback/nanoclaw/{session_id}` (FastAPI)
 
+## Skill 설계 원칙
+
+NanoClaw 소스 변경은 반드시 `apply-skill.ts`를 통해야 한다. TDD에서 "테스트 먼저 작성"의
+의미는 여기서 **skill 패키지 안에 테스트를 먼저 작성**하는 것이다.
+
+```
+skill 패키지 작성 (implementation + tests 동시에)
+  → apply-skill.ts 적용 (atomic)
+    → npm test 실행 (TDD 검증)
+```
+
+소스를 직접 수정하면 다음 skill apply 시 overwrite되어 사라진다.
+
 ## CRITICAL: NanoClaw Changes via Skills Only
 
 **Never modify NanoClaw source directly.** Use the skill-based workflow:
