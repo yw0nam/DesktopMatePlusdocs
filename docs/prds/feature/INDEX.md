@@ -2,7 +2,7 @@
 
 **Source PRD**: [required_feature_refined.md](./required_feature_refined.md)
 **Architecture**: Decoupled Director-Artisan (FastAPI + NanoClaw + Unity)
-**Last Updated**: 2026-03-08
+**Last Updated**: 2026-03-09
 
 ---
 
@@ -22,8 +22,8 @@ FastAPI(Director)가 사용자와의 실시간 대화를 처리하고, 무거운
 
 | # | Task | Priority | Status | Description |
 |---|---|---|---|---|
-| 01 | [DelegateTaskTool](./fastapi_backend/task-01-delegate-task-tool.md) | P0 | TODO | PersonaAgent가 NanoClaw로 작업을 위임하는 LangGraph Tool |
-| 02 | [Callback Endpoint](./fastapi_backend/task-02-callback-endpoint.md) | P0 | TODO | NanoClaw 결과 수신 + synthetic message 삽입 |
+| 01 | [DelegateTaskTool](./fastapi_backend/task-01-delegate-task-tool.md) | P0 | DONE | PersonaAgent가 NanoClaw로 작업을 위임하는 LangGraph Tool |
+| 02 | [Callback Endpoint](./fastapi_backend/task-02-callback-endpoint.md) | P0 | DONE | NanoClaw 결과 수신 + synthetic message 삽입 |
 | 03 | [Background Sweep](./fastapi_backend/task-03-background-sweep.md) | P1 | TODO | TTL 초과 task를 failed 처리하는 주기적 스캔 |
 
 ### nanoclaw — §2 The Artisan Team
@@ -32,8 +32,8 @@ NanoClaw 내부의 HTTP 채널 추가 + 멀티 페르소나 실행 로직.
 
 | # | Task | Priority | Status | Description |
 |---|---|---|---|---|
-| 01 | [HTTP Channel](./core_bridge/task-01-http-channel.md) | P0 | TODO | NanoClaw에 HTTP 채널 추가 (Ingress/Egress) |
-| 02 | [Persona Skills](./nanoclaw_swarm/task-01-persona-skills.md) | P0 | TODO | DevAgent, ReviewerAgent, PMAgent Skill 파일 작성 |
+| 01 | [HTTP Channel](./core_bridge/task-01-http-channel.md) | P0 | DONE | NanoClaw에 HTTP 채널 추가 (Ingress/Egress) |
+| 02 | [Persona Skills](./nanoclaw_swarm/task-01-persona-skills.md) | P0 | DONE | DevAgent, ReviewerAgent, PMAgent Skill 파일 작성 |
 | 03 | [Multi-Persona Execution](./nanoclaw_swarm/task-02-single-container-multi-persona.md) | P0 | TODO | Sub-Agent Driven(TeamCreate) Persona 실행 로직 |
 
 ### data_flow — §3 Interaction Flow

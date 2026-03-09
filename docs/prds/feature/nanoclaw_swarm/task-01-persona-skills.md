@@ -16,28 +16,23 @@
 
 ```
 container/skills/
-├── agent-browser/      (기존)
+├── agent-browser/      (기존, SKILL.md only)
 ├── dev-agent/          (신규)
-│   ├── manifest.yaml
-│   ├── SKILL.md
-│   ├── add/
-│   ├── modify/
-│   └── tests/
+│   └── SKILL.md
 ├── reviewer-agent/     (신규)
-│   └── (동일 구조)
+│   └── SKILL.md
 └── pm-agent/           (신규)
-    └── (동일 구조)
+    └── SKILL.md
 ```
 
-각 Skill 디렉토리는 `nanoclaw/.claude/skills/add-discord`와 동일한 패턴을 따른다.
+> **Note**: Persona Skills는 런타임 에이전트 지침이므로 코드 변경이 없다.
+> 따라서 `manifest.yaml`, `add/`, `modify/`, `tests/` 구조는 불필요하다.
+> 기존 `agent-browser/SKILL.md` 패턴과 동일하게 SKILL.md만 사용한다.
+> 코드를 추가/수정하는 Skill(e.g., HTTP Channel)만 full 패턴을 따른다.
 
 ### 각 Skill 구성
 
-- **SKILL.md**: Persona의 역할, 사용 도구, 책임 범위, 출력 형식 정의
-- **manifest.yaml**: 의존성, 환경변수, 추가/수정 파일 선언
-- **add/**: 신규 추가 파일
-- **modify/**: 기존 파일 수정 intent
-- **tests/**: Skill 동작 검증 테스트
+- **SKILL.md**: Persona의 역할, 사용 도구, 책임 범위, 출력 형식 정의 (YAML frontmatter 포함)
 
 ### Persona 목록
 
@@ -49,6 +44,6 @@ container/skills/
 
 ## Acceptance Criteria
 
-- [ ] 각 Skill 디렉토리가 기존 `agent-browser/` 패턴을 따른다 (manifest.yaml, SKILL.md, add/, modify/, tests/)
+- [x] 각 Skill 디렉토리에 SKILL.md가 존재한다 (런타임 지침 패턴)
 - [ ] Claude가 Task 실행 시 Skill 파일을 참조해 Persona를 전환할 수 있다
-- [ ] Persona 추가/수정이 다른 Skill 파일에 영향을 주지 않는다
+- [x] Persona 추가/수정이 다른 Skill 파일에 영향을 주지 않는다

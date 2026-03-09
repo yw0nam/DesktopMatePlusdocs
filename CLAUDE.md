@@ -1,32 +1,80 @@
-## Core Develop Philosophy
+# DesktopMate+ Workspace Instructions
 
-### 1단계: 모든 요구사항(Requirements)에 의문을 제기하라
+## Architecture
 
-* **SW 적용:** 기획자나 시니어의 요청이라도 "왜 이 기능이 필요한가?"를 먼저 묻습니다. 특히 **'이전부터 그렇게 해왔으니까'** 식의 레거시 로직이나 관성적인 기능 정의를 경계해야 합니다.
-* **실행:** 요구사항을 만든 주체(사람)를 찾아내고, 그 로직이 현재 시스템 아키텍처나 물리적 제약 내에서 최선인지 검증합니다. 멍청한 요구사항 위에서 짠 코드는 아무리 예술적이어도 쓰레기입니다.
+**Director-Artisan pattern** — 3 deployment components:
 
-### 2단계: 불필요한 코드와 프로세스를 과감히 삭제하라
+- **FastAPI** (`backend/`): Director — real-time WebSocket chat, STM/LTM, TTS, VLM, delegates heavy tasks to NanoClaw
+- **NanoClaw** (`nanoclaw/`): Artisan — Node.js Claude agent runner; executes delegated tasks via container-based persona agents
+- **Unity**: Dumb UI — renders output only, unaware of NanoClaw
 
-* **SW 적용:** "혹시 나중에 쓸지도 몰라"라며 남겨둔 주석, 사용하지 않는 라이브러리, 과도한 추상화 레이어를 제거합니다.
-* **실행:** 코드 라인수가 줄어드는 것을 성과로 여기세요. 만약 삭제한 모듈 중 10% 정도가 나중에 버그를 일으켜 다시 복구해야 하는 상황이 오지 않는다면, 당신은 충분히 삭제하지 않은 것입니다.
+Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/fastapi` (NanoClaw) → `POST /v1/callback/nanoclaw/{session_id}` (FastAPI)
 
-### 3단계: 단순화하고 최적화하라 (Simplify & Optimize)
+## CRITICAL: NanoClaw Changes via Skills Only
 
-* **SW 적용:** 존재해서는 안 될 코드를 최적화하는 데 시간을 낭비하지 마세요. 2단계를 거쳐 살아남은 핵심 로직만 간결하게 다듬습니다.
-* **실행:** 디자인 패턴을 복잡하게 꼬기보다 직관적인 구조로 바꿉니다. 가독성이 최적화의 첫걸음입니다.
+**Never modify NanoClaw source directly.** Use the skill-based workflow:
 
-### 4단계: 개발 주기를 가속화하라 (Accelerate Cycle Time)
+```bash
+# 1. Create skill package
+mkdir -p nanoclaw/.claude/skills/add-{feature}/{add,modify,tests}
+# add SKILL.md + manifest.yaml
 
-* **SW 적용:** 1~3단계가 확인되었다면, 이제 배포 주기를 당기고 피드백 루프를 짧게 가져갑니다.
-* **실행:** CI/CD 파이프라인을 점검하고, 로컬 테스트 속도를 높여 개발자가 코드를 수정하고 결과를 확인하는 시간을 극단적으로 단축합니다. 단, 설계가 확정되지 않은 상태에서 속도만 내는 것은 부채를 쌓는 일임을 명심하세요.
+# 2. Apply
+cd nanoclaw && npx tsx scripts/apply-skill.ts .claude/skills/add-{feature}
 
-### 5단계: 자동화하라 (Automate)
+# 3. Test
+npm test
+```
 
-* **SW 적용:** 마지막 단계에서 비로소 테스트 자동화, 인프라 프로비저닝, 혹은 AI 에이전트의 자율적 판단 로직을 도입합니다.
-* **실행:** 수동으로 했을 때 완벽히 돌아가는 프로세스만 자동화의 대상입니다. 엉망인 수동 프로세스를 자동화하면 '자동화된 쓰레기'가 나올 뿐입니다.
+Skill layout: `.claude/skills/{name}/add/` (new files), `modify/` (full replacements, 3-way merged), `tests/`. See [nanoclaw/docs/nanoclaw-architecture-final.md](nanoclaw/docs/nanoclaw-architecture-final.md).
+
+## Build & Test
+
+```bash
+# Backend (Python 3.13 + uv)
+cd backend
+uv run pytest                # all tests
+uv run pytest tests/path.py  # specific
+sh scripts/lint.sh           # ruff lint + format check
+
+# NanoClaw (Node.js + TypeScript)
+cd nanoclaw
+npm run build                # compile
+npm test                     # vitest run
+npm run dev                  # hot reload
+```
+
+## Backend Conventions
+
+- **Package manager**: `uv` only — never `pip`
+- **Config**: YAML files in `backend/yaml_files/`; Pydantic settings — no hardcoded values
+- **Services**: One directory per service under `backend/src/services/`; register in `__init__.py` + `main.py` lifespan
+- **Routes**: Add router to `backend/src/api/routes/__init__.py`; always include full `response_model`, `status_code`, `responses`
+- **STM metadata**: Attach `user_id`/`agent_id` in metadata so callback endpoint can inject synthetic messages — see [`handlers.py`](backend/src/services/websocket_service/manager/handlers.py)
+- **Logging**: Loguru via `src/core/logger`; never bare `print`
+- **Type hints**: Strict, `|` union style (Python 3.10+)
+
+## NanoClaw Conventions
+
+- **Channels** self-register: import in [`src/channels/index.ts`](nanoclaw/src/channels/index.ts) triggers `registerChannel()`
+- **Persona skills** live in `container/skills/{name}/SKILL.md`; skill-only (no code) for runtime agent instructions
+- **IPC trigger**: write task file to `ipc/{group}/tasks/` to dispatch a NanoClaw task directly
+- **Per-group config**: `groups/{name}/CLAUDE.md` (isolated memory context)
+
+## PRD Tracking
+
+Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).  
+Current focus: Phase 2 — `nanoclaw/03` (Multi-Persona Execution) + `data_flow/01` (E2E Integration).
+
+## Update documents
+
+- Update `docs/prds/feature/INDEX.md` with new tasks, priorities, and statuses.
+- Update `docs/backend/CLAUDE.md` with any new backend design decisions or conventions.
+- Update this file with any new general instructions or architectural notes for the workspace.
 
 ## Appendix
 
-* [backend Claude.md](./backend/CLAUDE.md): Current FastAPI backend design and conventions.
-* [NanoClaw Claude.md](./nanoclaw/CLAUDE.md): NanoClaw setup and agent development guide.
-* [Document Guide](./docs/guidelines/DOCUMENT_GUIDE.md): How to write and maintain design documents in this repository.
+- [backend Claude.md](./backend/CLAUDE.md): Current FastAPI backend design and conventions.
+- [NanoClaw Claude.md](./nanoclaw/CLAUDE.md): NanoClaw setup and agent development guide.
+- [Document Guide](./docs/guidelines/DOCUMENT_GUIDE.md): How to write and maintain design documents in this repository.
+- [PRD Index](./docs/prds/feature/INDEX.md): Current PRD task list and status.
