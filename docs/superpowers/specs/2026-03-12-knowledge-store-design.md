@@ -127,7 +127,7 @@ Pydantic `BaseSettings`로 주입.
    - 없으면: created_at = 서버 현재시각 주입 → 파일 생성
    - 있으면: frontmatter created_at 파싱 → grace period 체크
        - 초과 시: 409 Conflict 반환 (에러 메시지에 기존 파일 경로 포함)
-5. FileLock 획득 (INDEX.md, MOC 업데이트 구간)
+5. FileLock 획득 (INDEX.md, MOC 업데이트 구간) — timeout=5초 필수 (데드락 방지)
 6. 순차 업데이트 with lock (실패 시 롤백 없음, 에러 로그 후 502 반환):
    a. 본문 파일 저장
    b. YYYY-MM/INDEX.md 항목 추가 (최신순 상단 삽입)
@@ -141,9 +141,12 @@ Pydantic `BaseSettings`로 주입.
 
 ### search 로직
 
-- `rg --json -C 2 {query} {knowledge_base_path}` 실행
-- tags 파라미터 있으면 frontmatter `tags:` 줄 포함 파일로 후처리 필터링
+- `query`와 `tags` 분기 처리:
+  - `query` 있음: `rg --json -C 2 {query} {knowledge_base_path}` 실행 후 tags로 Python 단 후처리 필터링
+  - `query` 없고 `tags`만 있음: `rg --json "tags:.*{tag}"` 로 frontmatter 직접 검색 (전체 파일 반환 방지)
+  - 둘 다 없으면: 400 Bad Request 반환
 - 반환: 파일 경로 + 전후 2줄 스니펫 목록
+- Known limitation: tags 필터링이 본문 내 `tags:` 문자열에 false positive 가능 (MVP 허용)
 
 ### Logging (Loguru)
 
@@ -159,6 +162,7 @@ Python 3.10+ `|` union 스타일. 예: `path: Path | str`.
 ### 테스트 전략 (TDD)
 
 `tests/services/test_knowledge_base_service.py` 필수 작성:
+
 - `upsert` grace period 체크 (이내/초과 각 케이스)
 - slug 생성 및 충돌 처리 (suffix 증가)
 - tag 정규화 (대소문자, 특수문자)
@@ -173,6 +177,9 @@ Python 3.10+ `|` union 스타일. 예: `path: Path | str`.
 NanoClaw host에 MCP 서버 프로세스 추가. 기술 스택: `@modelcontextprotocol/sdk` (TypeScript).
 Transport: HTTP/SSE (컨테이너가 host MCP 서버에 연결하므로 stdio 불가).
 NanoClaw 메인 프로세스와 **별도 프로세스**로 실행.
+
+**네트워크 바인딩**: MCP 서버는 `0.0.0.0:{MCP_KNOWLEDGE_PORT}`로 바인딩 필수 (localhost 불가 — 컨테이너에서 접근 안 됨).
+컨테이너 내부 에이전트는 `http://host.docker.internal:4001` (또는 Docker Gateway IP)로 MCP 서버에 연결.
 
 ### 노출 tools (2개)
 
@@ -240,14 +247,18 @@ disconnect 이후 idle timeout sweep에서도 동일 플래그 확인 가능.
 두 trigger 중 먼저 오는 것으로 fire-and-forget delegate.
 
 **WebSocket disconnect** (`handlers.py` on_disconnect):
+
 ```python
 stm_meta = await stm_service.get_metadata(session_id)
-if not stm_meta.get("knowledge_saved") and stm.message_count() >= MIN_TURNS_FOR_SUMMARY:
+if not stm_meta.get("knowledge_saved") and stm.human_message_count() >= MIN_TURNS_FOR_SUMMARY:
     await stm_service.set_metadata(session_id, {"knowledge_saved": True})
     await delegate_knowledge_summary(session_id, user_id)
 ```
 
+> `MIN_TURNS_FOR_SUMMARY` 카운트 기준: **HumanMessage only** (tool call, system message, AIMessage 제외). 순수 유저 발화 횟수 기준.
+
 **Idle timeout** (`task_sweep_service` 패턴 재활용):
+
 - `last_message_at` 타임스탬프를 STM metadata에 저장 (메시지 수신 시마다 업데이트)
 - Sweep 주기마다 `last_message_at + session_idle_timeout_minutes < now` 확인
 - `knowledge_saved` 플래그 False이면 동일한 delegate 실행
