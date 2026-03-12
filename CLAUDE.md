@@ -58,6 +58,14 @@ cd nanoclaw
 npm run build                # compile
 npm test                     # vitest run
 npm run dev                  # hot reload
+
+# Real E2E (requires both services running)
+# 1. Backend: uvicorn src.main:app --port 5500  (in backend/)
+# 2. NanoClaw: HTTP_PORT=4000 node dist/index.js  (in nanoclaw/, after npm run build)
+# 3. Run tests:
+cd backend
+NANOCLAW_HTTP_PORT=4000 uv run pytest tests/api/test_real_e2e.py -v
+# Note: NanoClaw credential proxy uses 3001; HTTP channel must use a different port (e.g. 4000)
 ```
 
 ## Backend Conventions
@@ -82,7 +90,7 @@ npm run dev                  # hot reload
 ## PRD Tracking
 
 Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).
-Current focus: Phase 2 완료. 다음은 P2 HOLD 항목 중 필요한 것을 선택적으로 구현.
+Current focus: Phase 2 완료 + Real E2E 검증 완료. 다음은 P2 HOLD 항목 중 필요한 것을 선택적으로 구현.
 
 ## Update documents
 
