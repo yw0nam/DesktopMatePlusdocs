@@ -1392,6 +1392,8 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_idle_timeout_triggers_knowledge_summary():
+    from unittest.mock import AsyncMock
+    from langchain_core.messages import HumanMessage
     stm = MagicMock()
     stm.list_all_sessions.return_value = [{"session_id": "s1", "user_id": "u1", "agent_id": "a1"}]
     old_time = (datetime.now(timezone.utc) - timedelta(minutes=35)).isoformat()
@@ -1401,18 +1403,19 @@ async def test_idle_timeout_triggers_knowledge_summary():
         "user_id": "u1",
         "agent_id": "a1",
     }
-    stm.get_chat_history.return_value = [MagicMock()] * 5
+    stm.get_chat_history.return_value = [HumanMessage(content="msg")] * 5
     stm.update_session_metadata.return_value = True
 
     config = SweepConfig(sweep_interval_seconds=60, task_ttl_seconds=300, session_idle_timeout_minutes=30)
     svc = BackgroundSweepService(stm_service=stm, config=config)
-    with patch("src.services.task_sweep_service.sweep._delegate_knowledge_summary") as mock_delegate:
-        mock_delegate.return_value = None
+    # _delegate_knowledge_summary is async — must use AsyncMock
+    with patch("src.services.task_sweep_service.sweep._delegate_knowledge_summary", new_callable=AsyncMock) as mock_delegate:
         await svc._sweep_once()
     stm.update_session_metadata.assert_called()
 
 @pytest.mark.asyncio
 async def test_idle_timeout_skips_when_knowledge_saved():
+    from unittest.mock import AsyncMock
     stm = MagicMock()
     stm.list_all_sessions.return_value = [{"session_id": "s1", "user_id": "u1"}]
     old_time = (datetime.now(timezone.utc) - timedelta(minutes=35)).isoformat()
@@ -1422,7 +1425,7 @@ async def test_idle_timeout_skips_when_knowledge_saved():
     }
     config = SweepConfig(sweep_interval_seconds=60, task_ttl_seconds=300, session_idle_timeout_minutes=30)
     svc = BackgroundSweepService(stm_service=stm, config=config)
-    with patch("src.services.task_sweep_service.sweep._delegate_knowledge_summary") as mock_delegate:
+    with patch("src.services.task_sweep_service.sweep._delegate_knowledge_summary", new_callable=AsyncMock) as mock_delegate:
         await svc._sweep_once()
     mock_delegate.assert_not_called()
 ```
@@ -1435,6 +1438,8 @@ cd backend && uv run pytest tests/services/test_knowledge_base_service.py -k "id
 Expected: test collection error or AttributeError
 
 - [ ] **Step 10.3: Add idle timeout check to sweep.py**
+
+> Before editing, verify the existing `_sweep_once` loop variable names: `session_id`, `metadata`, `now`. These are confirmed in the current codebase (`session_id: str = session.get("session_id", "")`, `metadata = self._stm.get_session_metadata(session_id)`, `now = datetime.now(timezone.utc)`). The block below inserts after the `if updated: ...` block.
 
 In `SweepConfig`, add:
 ```python
