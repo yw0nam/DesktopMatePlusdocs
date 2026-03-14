@@ -87,13 +87,17 @@ async def synthesize_chunk(
     text: str,
     emotion: str | None,
     sequence: int,
+    tts_enabled: bool = True,
     reference_id: str | None = None,
 ) -> TtsChunkMessage | None:
     """
-    1. await asyncio.to_thread(tts_service.generate_speech(text, output_format="base64", audio_format="mp3"))
-    2. mapper.map(emotion) → (motion_name, blendshape_name)
-    3. Assemble TtsChunkMessage
-    4. Return None on failure
+    1. motion_name, blendshape_name = mapper.map(emotion)
+    2. if tts_enabled:
+           audio = await asyncio.to_thread(generate_speech(text, "base64", "mp3"))
+           if audio is None → return None (caller sends warning + silent fallback)
+       else:
+           audio = SILENT_MP3_BASE64  (skip TTS API call)
+    3. Assemble and return TtsChunkMessage
     """
 ```
 
@@ -195,14 +199,18 @@ WARNING = "warning"
 ### TTS 생성 실패
 
 ```text
-_synthesize_and_send():
-  try:
-      audio = await asyncio.to_thread(generate_speech(...))
-      if audio is None → raise TTSSynthesisError
-      → tts_chunk 전송
-  except Exception:
-      → warning 전송 (code: TTS_SYNTHESIS_FAILED)
-      → tts_chunk 전송 (audio_base64 = SILENT_MP3_BASE64)
+_synthesize_and_send(text, emotion, sequence, tts_enabled):
+  motion, blendshape = mapper.map(emotion)
+  if tts_enabled:
+      try:
+          audio = await asyncio.to_thread(generate_speech(...))
+          if audio is None → raise TTSSynthesisError
+      except Exception:
+          → warning 전송 (code: TTS_SYNTHESIS_FAILED)
+          audio = SILENT_MP3_BASE64
+  else:
+      audio = SILENT_MP3_BASE64  (TTS API 호출 스킵)
+  → tts_chunk { sequence, text, audio, emotion, motion, blendshape } 전송
 ```
 
 - 실패해도 해당 sequence의 `tts_chunk`를 전송해야 FE 큐가 막히지 않음
@@ -210,9 +218,10 @@ _synthesize_and_send():
 
 ### tts_enabled=False
 
-- `_synthesize_and_send()` 호출 자체를 스킵
-- `tts_chunk`, `warning` 모두 미전송
-- `stream_token`만 정상 전달 — 텍스트 전용 모드
+- TTS 서비스 호출을 스킵 (API 비용/latency 절약)
+- `tts_chunk`는 **전송함** — `audio_base64 = SILENT_MP3_BASE64`, emotion/motion/blendshape는 정상 전달
+- Unity가 motion/expression 애니메이션을 계속 재생할 수 있도록 보장
+- 음성만 무음이고 캐릭터 움직임은 유지되는 "무음 모드"
 
 ### 연결 끊김 도중 TTS task
 
@@ -261,7 +270,7 @@ emotion_motion_map:
 |--------|-------|
 | `EmotionMotionMapper` | 등록 emotion → 올바른 반환, 미등록 → default, None → default |
 | `synthesize_chunk()` | 정상 → TtsChunkMessage, generate_speech None → None, exception → None |
-| `EventHandler._synthesize_and_send()` | tts_enabled + 정상 → 큐에 tts_chunk, 실패 → warning + 무음 tts_chunk, tts_enabled=False → 미전송, is_closing → drop |
+| `EventHandler._synthesize_and_send()` | tts_enabled=True + 정상 → 큐에 tts_chunk (실제 audio), 실패 → warning + 무음 tts_chunk, tts_enabled=False → 큐에 tts_chunk (무음 audio + motion 정상), is_closing → drop |
 | `ChatMessage` model | tts_enabled 미전송 → True, False 명시 → 정상 파싱 |
 
 ### Integration Tests
@@ -269,7 +278,7 @@ emotion_motion_map:
 | Test | Verification |
 |------|-------------|
 | WS chat_message { tts_enabled: true } | `tts_chunk` 수신, sequence 순서, audio_base64 유효성 |
-| WS chat_message { tts_enabled: false } | `tts_chunk` 미수신, stream_token만 수신 |
+| WS chat_message { tts_enabled: false } | `tts_chunk` 수신, audio_base64가 무음, emotion/motion/blendshape 정상 |
 
 ### Not Tested
 
