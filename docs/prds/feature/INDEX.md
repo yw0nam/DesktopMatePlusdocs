@@ -2,7 +2,7 @@
 
 **Source PRD**: [required_feature_refined.md](./required_feature_refined.md)
 **Architecture**: Decoupled Director-Artisan (FastAPI + NanoClaw + Unity)
-**Last Updated**: 2026-03-10 (Phase 2 + Real E2E complete)
+**Last Updated**: 2026-03-12 (Phase 2 + Real E2E complete; Knowledge Store spec + plans added to HOLD)
 
 ---
 
@@ -63,6 +63,7 @@ NanoClaw 내부의 HTTP 채널 추가. 핵심 브릿지 역할만 담당.
 | H05 | [Delegation Policy](./TODO/task-02-delegation-policy.md) | P2 | HOLD | 위임 vs 직접 처리 경계 규칙 정의 |
 | H06 | [Barge-in Interrupt](./TODO/task-03-barge-in-interrupt.md) | P2 | HOLD | 사용자 끼어들기 시 파이프라인 즉시 중단 |
 | H07 | [Cross-Runtime Sub-Agent](./TODO/task-04-cross-runtime-subagent.md) | P2 | HOLD | MCP 기반 runtime-agnostic Sub-agent delegation |
+| H08 | [Knowledge Store](../../superpowers/specs/2026-03-12-knowledge-store-design.md) | P2 | VERIFY | 구조화된 경험·지식 아카이브 (FastAPI KB서비스 + NanoClaw MCP 서버). Plans: [FastAPI](../../superpowers/plans/2026-03-12-knowledge-store-fastapi.md) / [NanoClaw](../../superpowers/plans/2026-03-12-knowledge-store-nanoclaw.md) |
 
 ---
 

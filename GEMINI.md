@@ -96,9 +96,6 @@ NANOCLAW_HTTP_PORT=4000 uv run pytest tests/api/test_real_e2e.py -v
 - **Per-group config**: `groups/{name}/CLAUDE.md` (isolated memory context)
 - **Skill 적용 후 코드 복원**: 스킬을 `skill/{name}` 브랜치에 커밋한 뒤, `develop`/`main`에는 해당 소스를 두지 않는다. 설치 시에만 merge, 제거 시 원상복구. SKILL.md의 Removal 섹션을 따른다.
 
-**IMPORTANT!!!**
--> **다른 Skill 의 패턴 이해**: nanoclaw는 독특한 Develop pattern 이기때문에 반드시 참고한뒤 작성해야함. (예시: add-slack 스킬의 SKILL.md 참고)
-
 ## PRD Tracking
 
 Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).
