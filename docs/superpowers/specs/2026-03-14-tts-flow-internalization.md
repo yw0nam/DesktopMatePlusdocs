@@ -221,7 +221,7 @@ WARNING = "warning"
 | `src/models/websocket.py` | `ChatMessage.tts_enabled`, `ChatMessage.reference_id` 추가, `TtsChunkMessage`/`WarningMessage` 모델 추가, `MessageType` enum 추가 |
 | `src/services/websocket_service/message_processor/event_handlers.py` | `_build_tts_event()` → `_synthesize_and_send()` 교체, sequence 카운터, `_flush_tts_buffer()`도 동일하게 async TTS 적용. 각 task를 `turn.tts_tasks`와 `_task_manager.track_task()` 양쪽에 등록. |
 | `src/services/websocket_service/message_processor/processor.py` | `EventHandler` 생성 시 `tts_service`, `EmotionMotionMapper` 전달, `tts_enabled`/`reference_id` 전파, `stream_end` 전송 전 `asyncio.gather(*turn.tts_tasks)` barrier 추가. `cleanup()`은 수정 불필요 (기존 `turn.tasks` 로직으로 TTS task 자동 cancel). |
-| `src/services/websocket_service/message_processor/models.py` | `ConversationTurn.tts_enabled: bool`, `ConversationTurn.reference_id: str | None`, `ConversationTurn.tts_tasks: list[asyncio.Task]` 추가 |
+| `src/services/websocket_service/message_processor/models.py` | `ConversationTurn`에 `tts_enabled: bool`, `reference_id: Optional[str]`, `tts_tasks: list[Task]` 필드 추가 |
 | `src/services/websocket_service/manager/handlers.py` | `chat_message`에서 `tts_enabled` 추출, MessageProcessor에 전달 |
 | `src/api/routes/tts.py` | `POST /v1/tts/synthesize` deprecation 헤더/주석 추가, `GET /v1/tts/voices` 신규 엔드포인트 추가 |
 | `src/services/tts_service/service.py` | `list_voices() -> list[str]` 추상 메서드 추가 |
