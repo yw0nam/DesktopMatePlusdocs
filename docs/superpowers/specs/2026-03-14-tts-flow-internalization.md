@@ -103,7 +103,10 @@ async def synthesize_chunk(
     1. motion_name, blendshape_name = mapper.map(emotion)
     2. if tts_enabled:
            try:
-               audio = await asyncio.to_thread(generate_speech(text, "base64", "mp3"))
+               # asyncio.to_thread()는 callable + args 형태로 호출 (동기 함수를 thread pool에서 실행)
+               audio = await asyncio.to_thread(
+                   tts_service.generate_speech, text, reference_id, "base64", "mp3"
+               )
                if audio is None → audio = SILENT_MP3_BASE64, set warning flag
            except Exception:
                audio = SILENT_MP3_BASE64, set warning flag
@@ -178,6 +181,11 @@ GET /v1/tts/voices
 
 FishSpeech는 `reference_id` 스캔 방식이 다를 수 있으므로, `TTSService`에 `list_voices() -> list[str]` 추상 메서드를 추가해 구현체별로 처리.
 
+**에러 응답**:
+
+- `503 Service Unavailable`: TTS 서비스 미초기화 (기존 `/synthesize` 패턴과 동일)
+- `ref_audio_dir` 미존재 시: 빈 리스트 반환 (`{"voices": []}`) — 예외 발생 없음
+
 **Unity 사용 흐름**: 앱 시작 → `GET /v1/tts/voices` 호출 → 목소리 목록 UI 표시 → 유저 선택 → 이후 `chat_message`에 `reference_id` 포함
 
 ### 3.4 warning (BE → FE) — New
@@ -190,12 +198,12 @@ FishSpeech는 `reference_id` 스캔 방식이 다를 수 있으므로, `TTSServi
 }
 ```
 
-### 3.4 tts_ready_chunk — Deprecated
+### 3.5 tts_ready_chunk — Deprecated
 
 - 코드에서 즉시 삭제하지 않음
 - `tts_chunk`만 전송, `tts_ready_chunk`는 전송하지 않음
 
-### 3.5 MessageType Enum Additions
+### 3.6 MessageType Enum Additions
 
 ```python
 TTS_CHUNK = "tts_chunk"
@@ -211,9 +219,9 @@ WARNING = "warning"
 | File | Change |
 | --- | --- |
 | `src/models/websocket.py` | `ChatMessage.tts_enabled`, `ChatMessage.reference_id` 추가, `TtsChunkMessage`/`WarningMessage` 모델 추가, `MessageType` enum 추가 |
-| `src/services/websocket_service/message_processor/event_handlers.py` | `_build_tts_event()` → `_synthesize_and_send()` 교체, sequence 카운터, `tts_tasks: list[asyncio.Task]` 추가, `_flush_tts_buffer()`도 동일하게 async TTS 적용 |
-| `src/services/websocket_service/message_processor/processor.py` | `EventHandler` 생성 시 `tts_service`, `EmotionMotionMapper` 전달, `tts_enabled` 전파, `stream_end` 전송 전 TTS task barrier 추가 |
-| `src/services/websocket_service/message_processor/models.py` | `ConversationTurn.tts_enabled: bool`, `ConversationTurn.tts_tasks: list[asyncio.Task]` 추가 |
+| `src/services/websocket_service/message_processor/event_handlers.py` | `_build_tts_event()` → `_synthesize_and_send()` 교체, sequence 카운터, `_flush_tts_buffer()`도 동일하게 async TTS 적용. 각 task를 `turn.tts_tasks`와 `_task_manager.track_task()` 양쪽에 등록. |
+| `src/services/websocket_service/message_processor/processor.py` | `EventHandler` 생성 시 `tts_service`, `EmotionMotionMapper` 전달, `tts_enabled`/`reference_id` 전파, `stream_end` 전송 전 `asyncio.gather(*turn.tts_tasks)` barrier 추가. `cleanup()`은 수정 불필요 (기존 `turn.tasks` 로직으로 TTS task 자동 cancel). |
+| `src/services/websocket_service/message_processor/models.py` | `ConversationTurn.tts_enabled: bool`, `ConversationTurn.reference_id: str | None`, `ConversationTurn.tts_tasks: list[asyncio.Task]` 추가 |
 | `src/services/websocket_service/manager/handlers.py` | `chat_message`에서 `tts_enabled` 추출, MessageProcessor에 전달 |
 | `src/api/routes/tts.py` | `POST /v1/tts/synthesize` deprecation 헤더/주석 추가, `GET /v1/tts/voices` 신규 엔드포인트 추가 |
 | `src/services/tts_service/service.py` | `list_voices() -> list[str]` 추상 메서드 추가 |
@@ -256,6 +264,18 @@ event_handlers.py:
 ```
 
 `EmotionMotionMapper`는 `service_manager.py`에서 앱 시작 시 초기화, 싱글턴으로 관리.
+
+```python
+# service_manager.py에 추가
+def initialize_emotion_motion_mapper() -> EmotionMotionMapper:
+    """yaml_files/tts_rules.yml의 emotion_motion_map 섹션 로드.
+    TTSTextProcessor의 tts_rules.yml 로드 방식과 동일한 loader 사용."""
+    config = load_yaml("yaml_files/tts_rules.yml")
+    return EmotionMotionMapper(config.get("emotion_motion_map", {}))
+
+def get_emotion_motion_mapper() -> EmotionMotionMapper:
+    return _emotion_motion_mapper_instance
+```
 
 ### 5.2 tts_enabled 전파 체인
 
@@ -320,7 +340,10 @@ _synthesize_and_send(text, emotion, sequence, tts_enabled):
 ### 연결 끊김 도중 TTS task
 
 - 이벤트 큐 put 시 `is_closing` 플래그 체크 → 닫혔으면 조용히 drop
-- TTS task는 `ConversationTurn.tasks` + `tts_tasks` 모두에서 관리 → turn 종료 시 일괄 cancel
+- TTS task는 두 곳에 동시 등록:
+  - `turn.tts_tasks` → barrier용 (`asyncio.gather()`)
+  - `_task_manager.track_task(task)` → 기존 `turn.tasks`에 추가, 기존 `cleanup()` 로직으로 cancel 처리
+  - `cleanup()`는 수정 불필요 — `turn.tasks`를 순회하므로 TTS task도 자동 cancel됨
 
 ### Concurrent Turn (4002)
 
