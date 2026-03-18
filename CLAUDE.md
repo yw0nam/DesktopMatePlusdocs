@@ -4,7 +4,7 @@
 
 **Director-Artisan pattern** — 3 deployment components:
 
-- **FastAPI** (`backend/`): Director — real-time WebSocket chat, STM/LTM, TTS, VLM, delegates heavy tasks to NanoClaw
+- **FastAPI** (`backend/`): Director — real-time WebSocket chat, STM/LTM, TTS, delegates heavy tasks to NanoClaw
 - **NanoClaw** (`nanoclaw/`): Artisan — Node.js Claude agent runner; executes delegated tasks via container-based persona agents
 - **Unity**: Dumb UI — renders output only, unaware of NanoClaw
 - **DesktopMatePlus**: Only documentation and workspace-level instructions; no code. You have to make a worktree or code change in backend or nanoclaw only. path:/home/spow12/codes/2025_lower/DesktopMatePlus
@@ -102,12 +102,11 @@ NANOCLAW_HTTP_PORT=4000 uv run pytest tests/api/test_real_e2e.py -v
 ## PRD Tracking
 
 Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).
-Current focus: Phase 2 완료 + Real E2E 검증 완료. 다음은 P2 HOLD 항목 중 필요한 것을 선택적으로 구현.
 
 ## Update documents
 
 - Update `docs/prds/feature/INDEX.md` with new tasks, priorities, and statuses.
-- Update `docs/backend/CLAUDE.md` with any new backend design decisions or conventions.
+- Update `backend/CLAUDE.md` with any new backend design decisions or conventions.
 - Update this file with any new general instructions or architectural notes for the workspace.
 
 ## Appendix

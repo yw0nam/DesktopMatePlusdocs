@@ -2,7 +2,7 @@
 
 **Source PRD**: [required_feature_refined.md](./required_feature_refined.md)
 **Architecture**: Decoupled Director-Artisan (FastAPI + NanoClaw + Unity)
-**Last Updated**: 2026-03-12 (Phase 2 + Real E2E complete; Knowledge Store spec + plans added to HOLD)
+**Last Updated**: 2026-03-18 (Phase 3 시작: Multi-Channel Slack Support 구현 완료)
 
 ---
 
@@ -25,6 +25,7 @@ FastAPI(Director)가 사용자와의 실시간 대화를 처리하고, 무거운
 | 01 | [DelegateTaskTool](./fastapi_backend/task-01-delegate-task-tool.md) | P0 | DONE | PersonaAgent가 NanoClaw로 작업을 위임하는 LangGraph Tool |
 | 02 | [Callback Endpoint](./fastapi_backend/task-02-callback-endpoint.md) | P0 | DONE | NanoClaw 결과 수신 + synthetic message 삽입 |
 | 03 | [Background Sweep](./fastapi_backend/task-03-background-sweep.md) | P1 | DONE | TTL 초과 task를 failed 처리하는 주기적 스캔 |
+| 04 | Multi-Channel Slack Support | P1 | DONE | Slack 채널 통합: webhook 수신 → Yuri 에이전트 → Slack 응답. channel_service, session_lock, process_message 공통 진입점, BackgroundSweepService Slack 알림 포함 |
 
 ### nanoclaw — §2 The Artisan Team
 
@@ -56,14 +57,14 @@ NanoClaw 내부의 HTTP 채널 추가. 핵심 브릿지 역할만 담당.
 
 | # | Task | Priority | Status | Description |
 |---|---|---|---|---|
-| H01 | [Persona Skills](./nanoclaw_swarm/task-01-persona-skills.md) | P2 | HOLD | DevAgent, ReviewerAgent, PMAgent Skill 파일 작성 |
-| H02 | [Multi-Persona Execution](./nanoclaw_swarm/task-02-single-container-multi-persona.md) | P2 | HOLD | Sub-Agent Driven(TeamCreate) Persona 실행 로직 |
-| H03 | [IPC Observer](./observer/task-01-ipc-observer.md) | P2 | HOLD | Staging 패턴으로 IPC를 Slack 등에 미러링 |
+<!-- | H01 | [Persona Skills](./nanoclaw_swarm/task-01-persona-skills.md) | P2 | HOLD | DevAgent, ReviewerAgent, PMAgent Skill 파일 작성 |
+| H02 | [Multi-Persona Execution](./nanoclaw_swarm/task-02-single-container-multi-persona.md) | P2 | HOLD | Sub-Agent Driven(TeamCreate) Persona 실행 로직 | -->
+<!-- | H03 | [IPC Observer](./observer/task-01-ipc-observer.md) | P2 | HOLD | Staging 패턴으로 IPC를 Slack 등에 미러링 | -->
 | H04 | [Push Notification](./TODO/task-01-push-notification.md) | P2 | HOLD | Callback 수신 시 Unity로 즉시 알림 |
 | H05 | [Delegation Policy](./TODO/task-02-delegation-policy.md) | P2 | HOLD | 위임 vs 직접 처리 경계 규칙 정의 |
 | H06 | [Barge-in Interrupt](./TODO/task-03-barge-in-interrupt.md) | P2 | HOLD | 사용자 끼어들기 시 파이프라인 즉시 중단 |
 | H07 | [Cross-Runtime Sub-Agent](./TODO/task-04-cross-runtime-subagent.md) | P2 | HOLD | MCP 기반 runtime-agnostic Sub-agent delegation |
-| H08 | [Knowledge Store](../../superpowers/specs/2026-03-12-knowledge-store-design.md) | P2 | VERIFY | 구조화된 경험·지식 아카이브 (FastAPI KB서비스 + NanoClaw MCP 서버). Plans: [FastAPI](../../superpowers/plans/2026-03-12-knowledge-store-fastapi.md) / [NanoClaw](../../superpowers/plans/2026-03-12-knowledge-store-nanoclaw.md) |
+| H08 | [Knowledge Store](../../superpowers/specs/knowledge-store) | P2 | DONE | 구조화된 경험·지식 아카이브 (FastAPI KB서비스 + NanoClaw MCP 서버)
 
 ---
 
@@ -74,6 +75,8 @@ fastapi_backend/01 (DelegateTaskTool) [DONE]
   └─→ nanoclaw/01 (HTTP Channel) [DONE]
   └─→ fastapi_backend/02 (Callback) [DONE]
        └─→ fastapi_backend/03 (Sweep) [DONE]
+       │    └─→ fastapi_backend/04 (Slack Support) [DONE] — Sweep에 Slack 알림 추가
+       └─→ fastapi_backend/04 (Slack Support) [DONE]
        └─→ data_flow/01 (E2E mock) [DONE]
                 └─→ data_flow/02 (TTS 검증) [DONE]
                 └─→ data_flow/03 (LTM Consolidation) [DONE]
