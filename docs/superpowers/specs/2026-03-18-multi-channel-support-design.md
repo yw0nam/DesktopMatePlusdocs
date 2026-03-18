@@ -195,11 +195,14 @@ async def ainvoke(self, messages, session_id, persona_id="yuri") -> str:
     return result["messages"][-1].content
 ```
 
-**STM/LTM 저장 책임**: `ainvoke()`는 `stream()`과 달리 STM/LTM 저장을 수행하지 않는다. 호출자(channel handler)가 직접 책임진다:
-- STM: `stm.add_chat_history(user_id, agent_id, session_id, [HumanMessage, AIMessage])` 호출
-- LTM: `agent_service.save_memory(new_chats, stm_service, ltm_service, user_id, agent_id, session_id)` 호출 — Unity와 동일한 turn-interval consolidation 정책 재사용
+**STM/LTM 저장 책임**: `AgentService`는 순수 추론 엔진이며 메모리를 직접 건드리지 않는다. 메모리 I/O는 `memory_orchestrator`가 전담한다:
 
-채널 핸들러는 `stm_service`, `ltm_service`, `agent_service` 모두에 접근해야 한다.
+- **컨텍스트 로드**: `await memory_orchestrator.load_context(stm, ltm, user_id, agent_id, session_id, query)`
+- **저장**: `asyncio.create_task(memory_orchestrator.save_turn(new_chats, stm, ltm, user_id, agent_id, session_id))`
+
+`save_turn()`은 STM 저장 + LTM 10턴 consolidation을 내부에서 처리한다. Unity WebSocket 경로와 동일한 패턴이다.
+
+채널 핸들러는 `agent_service`, `stm_service`, `ltm_service`, `memory_orchestrator`에 접근해야 한다.
 
 ### 5.3 `session_lock` 유틸리티
 
@@ -259,21 +262,19 @@ async with session_lock(session_id):
   })
   # 3. 중간 메시지 전송
   await slack_sender.send_message(channel_id, "⏳ 생각 중...")
-  # 4. 히스토리 조회 (실제 시그니처: user_id, agent_id, session_id 순)
-  history = stm.get_chat_history(user_id="default", agent_id="yuri", session_id=session_id)
-  final_text = await agent_service.ainvoke(history + [HumanMessage(text)], session_id)
-  # 5. STM 저장 (실제 시그니처: user_id, agent_id, session_id, messages 순)
-  stm.add_chat_history("default", "yuri", session_id, [HumanMessage(text), AIMessage(final_text)])
-  # 6. LTM 저장 (ainvoke()는 저장 안 함 — 호출자가 agent_service.save_memory() 호출)
-  #    Unity 경로와 동일한 turn-interval 기반 consolidation 정책 재사용
-  await agent_service.save_memory(
-      new_chats=[HumanMessage(text), AIMessage(final_text)],
-      stm_service=stm,
-      ltm_service=ltm,
-      user_id="default",
-      agent_id="yuri",
-      session_id=session_id,
+  # 4. 컨텍스트 로드 (memory_orchestrator가 LTM prefix + STM history 통합)
+  context = await memory_orchestrator.load_context(
+      stm, ltm, user_id="default", agent_id="yuri",
+      session_id=session_id, query=text,
   )
+  # 5. 에이전트 실행
+  final_text = await agent_service.ainvoke(context + [HumanMessage(text)], session_id)
+  # 6. STM/LTM 저장 (fire-and-forget, Unity 경로와 동일한 패턴)
+  asyncio.create_task(memory_orchestrator.save_turn(
+      new_chats=[HumanMessage(text), AIMessage(final_text)],
+      stm_service=stm, ltm_service=ltm,
+      user_id="default", agent_id="yuri", session_id=session_id,
+  ))
   # 7. 응답 전송
   await slack_sender.send_message(channel_id, final_text)
 ```
@@ -307,8 +308,16 @@ sender가 None이면 → 채널 비활성화, 로그 후 skip
   ↓
 channel_id = metadata["reply_channel"]["channel_id"]
   ↓
-history = stm.get_chat_history(user_id="default", agent_id="yuri", session_id=session_id)  # synthetic 메시지 포함
-final_text = await agent_service.ainvoke(history, session_id)
+context = await memory_orchestrator.load_context(
+    stm, ltm, user_id="default", agent_id="yuri",
+    session_id=session_id, query="",  # synthetic message 포함된 history 반영
+)
+final_text = await agent_service.ainvoke(context, session_id)
+asyncio.create_task(memory_orchestrator.save_turn(
+    new_chats=[AIMessage(final_text)],
+    stm_service=stm, ltm_service=ltm,
+    user_id="default", agent_id="yuri", session_id=session_id,
+))
   ↓
 await sender.send_message(channel_id, final_text)
 ```
