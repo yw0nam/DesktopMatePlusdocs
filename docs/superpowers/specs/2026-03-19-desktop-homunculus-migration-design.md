@@ -134,22 +134,23 @@ MOD WebView로 렌더링되는 채팅 인터페이스. STM REST는 `localhost:55
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ [세션 사이드바]                     |  [채팅창]                               │
-│                                     |                                         │
-│  Conversations                      |  AI: What is the most...    01:33:17   │
-│                                     |                                         │
-│  - Meeting Notes [✎] [🗑]          |  User: How are you...       01:33:39   │
-│    - CreatedAt 2025-10-26           |  AI: What leads you...      01:33:53   │
-│    - UpdatedAt 2025-10-28           |  User: Example Text...      01:33:39   │
-│  - API Integration Plan [✎] [🗑]   |                                         │
-│    - CreatedAt 2025-11-26           |  AI: What leads you...      01:33:53   │
-│    - UpdatedAt 2026-01-11           |  User: Example Text...      01:33:39   │
-│                                     |                                         │
-│  [ + New Chat ]                     |  User: ...                  01:34:19   │
-│                                     |                                         │
+│ [세션 사이드바]   |  [채팅창]                      | [설정 패널]              │
+│                   |                                |                          │
+│  Conversations    |  AI: What is the most...       | Settings                 │
+│                   |                   01:33:17     |                          │
+│  - Meeting Notes  |  User: How are you...          | user_id:                 │
+│    [✎] [🗑]      |                   01:33:39     | [_______________]        │
+│    CreatedAt ...  |  AI: What leads... 01:33:53    |                          │
+│    UpdatedAt ...  |  User: Example...  01:33:39    | agent_id:                │
+│  - API Plan       |                                | [_______________]        │
+│    [✎] [🗑]      |  AI: What leads... 01:33:53    |                          │
+│    CreatedAt ...  |  User: Example...  01:33:39    | FastAPI URL:             │
+│    UpdatedAt ...  |                                | [_______________]        │
+│                   |  User: ...         01:34:19    |                          │
+│  [ + New Chat ]   |                                |          [ Save ]        │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │                        ✔ Connected / disconnected                             │
-│ [Drag] [    Enter message...    ]  [ Send/Stop ] [ChatHistory] [SessionList] │
+│ [Drag] [ Enter message... ] [Send/Stop] [ChatHistory] [SessionList] [⚙ Settings] │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -157,13 +158,15 @@ MOD WebView로 렌더링되는 채팅 인터페이스. STM REST는 `localhost:55
 
 - **세션 사이드바**: 세션 목록 (CreatedAt/UpdatedAt 표시), [✎ 이름변경] [🗑 삭제], [+ New Chat]
 - **채팅창**: AI/User 메시지 + 타임스탬프, typing indicator (stream_start ~ stream_end)
+- **설정 패널**: user_id / agent_id / FastAPI REST URL 입력 필드 + [Save] 버튼. 값은 localStorage에 저장
 - **하단 컨트롤 바**:
-  - 연결 상태 표시 (Connected/Disconnected / 백엔드 재시작 필요)
+  - 연결 상태 표시 (Connected / Disconnected / 백엔드 재시작 필요)
   - [Drag] 버튼 — 채팅창 위치 드래그
   - 메시지 입력창
   - [Send/Stop] — AI 처리 중 Stop으로 전환, 입력창 비활성화
   - [ChatHistory Toggle] — 채팅창 표시/숨김
   - [SessionList Toggle] — 사이드바 표시/숨김
+  - [⚙ Settings Toggle] — 설정 패널 표시/숨김
 
 ### 상태 관리
 
@@ -174,6 +177,7 @@ MOD WebView로 렌더링되는 채팅 인터페이스. STM REST는 `localhost:55
 - `activeSessionId`: 현재 활성 세션
 - `isTyping`: typing indicator 상태
 - `connectionStatus`: connected / disconnected / restart-required
+- `settings`: `{ user_id, agent_id, fastapi_rest_url }` — localStorage에 persist. 미설정 시 초기값 공백
 
 ### Toggle 독립성 시나리오
 
@@ -272,6 +276,7 @@ desktop-homunculus/mods/desktopmate-bridge/
     │   ├── components/
     │   │   ├── SessionSidebar.tsx
     │   │   ├── ChatWindow.tsx
+    │   │   ├── SettingsPanel.tsx
     │   │   └── ControlBar.tsx
     │   └── hooks/
     │       └── useSignals.ts   # SSE 구독 (dm-* signals)
