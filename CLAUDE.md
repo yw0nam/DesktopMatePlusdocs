@@ -13,45 +13,38 @@ Note: NanoClaw and Backend has own their git.
 
 Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/fastapi` (NanoClaw) → `POST /v1/callback/nanoclaw/{session_id}` (FastAPI)
 
-## Skill 설계 원칙
-
-NanoClaw 스킬은 **Git 브랜치 기반**으로 관리된다. 스킬을 적용한다는 것은 해당 스킬 브랜치를 현재 브랜치에 `git merge`하는 것이다.
-
-```
-skill 브랜치 작성 (main 기반, 스킬 코드만 포함)
-  → git merge origin/skill/{name} 적용
-    → npm run build && npm test 실행 (검증)
-```
-
-- **업스트림 공식 스킬**: `git remote add {name} https://github.com/qwibitai/nanoclaw-{name}.git` 후 `git fetch {name} main && git merge {name}/main`
-- **커스텀 스킬** (이 repo): `git fetch origin skill/{name} && git merge origin/skill/{name}`
-- 소스를 직접 수정하지 말 것 — 다음 merge 시 충돌 발생
-
 ## CRITICAL: NanoClaw Changes via Skills Only
 
-**Never modify NanoClaw source directly.** Use the skill-based workflow:
+**NanoClaw 소스를 직접 수정하지 말 것.** 스킬은 **Git 브랜치 기반**으로 관리된다 — 스킬을 적용한다는 것은 해당 브랜치를 현재 브랜치에 `git merge`하는 것이다. 직접 수정하면 다음 merge 시 충돌 발생.
+
+**새 커스텀 스킬 작성:**
 
 ```bash
-# 1. Create skill branch from main (custom skill)
+# 1. skill 브랜치 생성 (main 기반, 스킬 코드만 포함)
 git checkout -b skill/{name} main
-# Add only the skill's source files, commit
+# 스킬 파일만 추가 후 커밋
 git push origin skill/{name}
 
-# 2. Write SKILL.md in .claude/skills/{name}/SKILL.md
+# 2. SKILL.md 작성: .claude/skills/{name}/SKILL.md
 #    Phase 1: pre-flight check
 #    Phase 2: git fetch + merge
 #    Phase 3: env/setup
-#    Phase 4: verify
+#    Phase 4: verify (+ Removal 섹션)
 
-# 3. Apply (from target branch e.g. develop)
+# 3. 적용 (target 브랜치에서)
 git fetch origin skill/{name}
 git merge origin/skill/{name}
 
-# 4. Test
+# 4. 검증
 npm run build && npm test
 ```
 
-Skill SKILL.md 구조: Phase 1~4 단계별 가이드. `add/`, `modify/`, `manifest.yaml`은 구 방식 — 사용하지 않는다.
+**스킬 종류별 적용 방법:**
+
+- **업스트림 공식 스킬**: `git remote add {name} https://github.com/qwibitai/nanoclaw-{name}.git` 후 `git fetch {name} main && git merge {name}/main`
+- **커스텀 스킬** (이 repo): `git fetch origin skill/{name} && git merge origin/skill/{name}`
+
+**SKILL.md 작성 전 반드시**: 기존 스킬(예: `nanoclaw/.claude/skills/add-slack`)의 SKILL.md를 먼저 읽고 패턴을 파악할 것. NanoClaw는 독특한 개발 패턴을 사용하므로 참고 없이 작성하면 구조가 어긋난다.
 
 ## Build & Test
 
@@ -96,9 +89,6 @@ NANOCLAW_HTTP_PORT=4000 uv run pytest tests/api/test_real_e2e.py -v
 - **Per-group config**: `groups/{name}/CLAUDE.md` (isolated memory context)
 - **Skill 적용 후 코드 복원**: 스킬을 `skill/{name}` 브랜치에 커밋한 뒤, `develop`/`main`에는 해당 소스를 두지 않는다. 설치 시에만 merge, 제거 시 원상복구. SKILL.md의 Removal 섹션을 따른다.
 
-**IMPORTANT!!!**
--> **다른 Skill 의 패턴 이해**: nanoclaw는 독특한 Develop pattern 이기때문에 반드시 참고한뒤 작성해야함. (예시: add-slack 스킬의 SKILL.md 참고)
-
 ## PRD Tracking
 
 Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).
@@ -109,6 +99,23 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 - Update `backend/CLAUDE.md` with any new backend design decisions or conventions.
 - Update this file with any new general instructions or architectural notes for the workspace.
 
+### FAQ 작성 규칙
+
+작업 중 아래 상황이 발생하면 `docs/faq/` 에 문서를 추가하고 이 파일의 FAQ 섹션에 링크를 추가한다:
+
+- 설계의 의도를 잘못 이해했다가 바로잡은 경우
+- "왜 X 대신 Y를 쓰는가"에 대한 답을 찾은 경우
+- 비슷해 보이는 두 개념의 차이를 명확히 한 경우
+- 반복적으로 헷갈릴 수 있는 아키텍처 결정이 드러난 경우
+
+파일명은 주제를 명확히 표현하는 kebab-case로 작성 (예: `nanoclaw-task-dispatch.md`).
+
+## FAQ
+
+자주 혼동되는 설계 결정들:
+
+- [NanoClaw Task Dispatch — IPC vs HTTP Channel](./docs/faq/nanoclaw-task-dispatch.md): `ipc/{group}/tasks/`(내부 자기 디스패치)와 `add-http` 스킬(FastAPI → NanoClaw 위임 브리지)의 차이. 왜 HTTP Channel을 Redis Queue로 대체하지 않는가.
+
 ## Appendix
 
 - [backend Claude.md](./backend/CLAUDE.md): Current FastAPI backend design and conventions.
@@ -116,3 +123,6 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 - [NanoClaw Claude.md](./nanoclaw/CLAUDE.md): NanoClaw setup and agent development guide.
 - [Document Guide](./docs/guidelines/DOCUMENT_GUIDE.md): How to write and maintain design documents in this repository.
 - [PRD Index](./docs/prds/feature/INDEX.md): Current PRD task list and status.
+- [FAQ](./docs/faq/): Frequently Asked Questions about architectural decisions and design patterns in this workspace.
+- [NanoClaw Skills](./nanoclaw/.claude/skills/): Directory of existing NanoClaw skills with installation instructions.
+- [Data Flows](./docs/data_flows/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and Unity.
