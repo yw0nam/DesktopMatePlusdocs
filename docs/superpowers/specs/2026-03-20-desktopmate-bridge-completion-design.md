@@ -229,17 +229,12 @@ The existing `{showX && <Component />}` conditional rendering is correct because
 - `setActiveSession` clears messages (session switch)
 - `setConnectionStatus("restart-required")` reflects in store
 
-### E2E script (package.json)
-```json
-"test:e2e": "FASTAPI_URL=http://localhost:5500 vitest run tests/e2e"
-```
+### E2E 격리 — 설정 파일 분리
 
-### E2E 격리 — vitest.config.ts 추가
+Vitest의 `exclude`는 CLI에서 경로를 명시해도 적용되므로, `vitest.config.ts`에서 e2e를 exclude하면 `vitest run tests/e2e`도 "No test files found" 에러가 난다. 따라서 unit/e2e 설정 파일을 분리한다.
 
-`vitest run`은 기본적으로 `tests/e2e/` 파일도 포함하므로, `vitest.config.ts`를 추가하여 기본 실행에서 제외한다:
-
+**`vitest.config.ts`** — unit 테스트 전용 (기본 `pnpm test`):
 ```typescript
-// mods/desktopmate-bridge/vitest.config.ts
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -249,7 +244,24 @@ export default defineConfig({
 });
 ```
 
-이후 `pnpm test` (`vitest run`)는 unit 테스트만 실행하고, `pnpm test:e2e`는 명시적으로 `tests/e2e` 대상만 실행한다.
+**`vitest.e2e.config.ts`** — E2E 전용 (`pnpm test:e2e`):
+```typescript
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    include: ["tests/e2e/**/*.test.ts"],
+  },
+});
+```
+
+**`package.json` scripts:**
+```json
+"test": "vitest run",
+"test:e2e": "FASTAPI_URL=http://localhost:5500 vitest run -c vitest.e2e.config.ts"
+```
+
+`pnpm test`는 unit 테스트만 실행하고, `pnpm test:e2e`는 실제 백엔드가 필요한 E2E만 실행한다.
 
 ### Mock server
 `scripts/mock-homunculus.ts` is already implemented. Used during development and CI for integration tests.
