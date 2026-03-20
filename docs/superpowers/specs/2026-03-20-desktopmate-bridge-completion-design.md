@@ -56,14 +56,19 @@ mods/desktopmate-bridge/
 ```
 
 ### Menus — fix format (current: `label/asset`, required: `id/text/command`)
+
+`menus` is nested inside the `homunculus` object:
+
 ```json
-"menus": [
-  {
-    "id": "open-desktopmate-chat",
-    "text": "Chat",
-    "command": "open-chat"
-  }
-]
+"homunculus": {
+  "menus": [
+    {
+      "id": "open-desktopmate-chat",
+      "text": "Chat",
+      "command": "open-chat"
+    }
+  ]
+}
 ```
 
 ### Bin — add open-chat command
@@ -110,7 +115,7 @@ The `entity_id` field in `config.yaml` / `Config` interface is removed. The VRM 
 ### Import paths
 
 All service.ts imports:
-- `@hmcs/sdk` — `Vrm`, `TransformArgs`, `signals`, `sleep`, `repeat`, `preferences`
+- `@hmcs/sdk` — `Vrm`, `TransformArgs`, `type TimelineKeyframe`, `signals`, `sleep`, `repeat`, `preferences`
 - `@hmcs/sdk/rpc` — `rpc` (NOT from `@hmcs/sdk` main entry)
 
 ### Add VRM spawn + animation state machine
@@ -147,28 +152,36 @@ async function spawnCharacter(): Promise<Vrm> {
 }
 ```
 
-### Wire VRM entity to TTS handler
+### Wire VRM entity to TTS handler — full call chain
 
-`handleTtsChunk` currently uses `config.homunculus.entity_id`. After this change the `vrm` instance is passed as a parameter:
+`vrm` must propagate through the entire call chain. All affected function signatures:
 
 ```typescript
-// Before
-async function handleTtsChunk(msg, config) {
-  const vrm = new Vrm(config.homunculus.entity_id);
-  await vrm.speakWithTimeline(audioBytes, msg.keyframes);
-}
+// handleTtsChunk: config → vrm
+async function handleTtsChunk(
+  msg: { sequence: number; text: string; emotion: string; audio_base64: string | null; keyframes: TimelineKeyframe[] },
+  vrm: Vrm,  // replaces config
+): Promise<void>
 
-// After
-async function handleTtsChunk(msg, vrm: Vrm) {
-  await vrm.speakWithTimeline(audioBytes, msg.keyframes);
-}
+// handleMessage: add vrm parameter
+async function handleMessage(event: MessageEvent, config: Config, vrm: Vrm): Promise<void>
+
+// connectWithRetry: add vrm parameter
+async function connectWithRetry(config: Config, vrm: Vrm, retryState: RetryState): Promise<void>
+// Inside: ws.addEventListener("message", (event) => { handleMessage(event, config, vrm) })
+
+// handleClose: add vrm, propagate to reconnect
+async function handleClose(event: CloseEvent, config: Config, vrm: Vrm, retryState: RetryState): Promise<void>
+// Inside: await connectWithRetry(config, vrm, { attempts: retryState.attempts + 1 })
+
+// connectAndServe: add vrm
+async function connectAndServe(config: Config, vrm: Vrm): Promise<void>
+// Inside: await connectWithRetry(config, vrm, { attempts: 0 })
 ```
-
-`handleMessage` also receives `vrm` as a parameter (replacing `config` for TTS purposes).
 
 ### Entry point
 
-`connectAndServe` uses async event callbacks (WebSocket `addEventListener`) and does **not** block — it returns after setup. Therefore the entry point sequences rather than uses `Promise.all`, to make the flow explicit and avoid timing ambiguity:
+`connectAndServe` uses async event callbacks (WebSocket `addEventListener`) and does **not** block — it returns after setup. The entry point sequences the calls to make the flow explicit:
 
 ```typescript
 // --- entry point ---
@@ -176,8 +189,6 @@ const config = loadConfig();
 const vrm = await spawnCharacter();        // VRM spawned first
 connectAndServe(config, vrm);              // fire-and-forget: WS + RPC
 ```
-
-`connectAndServe` signature changes to `(config: Config, vrm: Vrm): Promise<void>`.
 
 ---
 
@@ -222,7 +233,23 @@ The existing `{showX && <Component />}` conditional rendering is correct because
 ```json
 "test:e2e": "FASTAPI_URL=http://localhost:5500 vitest run tests/e2e"
 ```
-E2E tests are excluded from default `pnpm test` run.
+
+### E2E 격리 — vitest.config.ts 추가
+
+`vitest run`은 기본적으로 `tests/e2e/` 파일도 포함하므로, `vitest.config.ts`를 추가하여 기본 실행에서 제외한다:
+
+```typescript
+// mods/desktopmate-bridge/vitest.config.ts
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    exclude: ["**/node_modules/**", "tests/e2e/**"],
+  },
+});
+```
+
+이후 `pnpm test` (`vitest run`)는 unit 테스트만 실행하고, `pnpm test:e2e`는 명시적으로 `tests/e2e` 대상만 실행한다.
 
 ### Mock server
 `scripts/mock-homunculus.ts` is already implemented. Used during development and CI for integration tests.
