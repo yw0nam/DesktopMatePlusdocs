@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-20
 **Branch:** `feature/desktopmate-bridge`
-**Status:** Approved
+**Status:** Implemented (2026-03-20, PR #1 — https://github.com/yw0nam/desktop-homunculus/pull/1)
 
 ## Summary
 
@@ -133,20 +133,10 @@ async function spawnCharacter(): Promise<Vrm> {
 
   await vrm.playVrma({ asset: "vrma:idle-maid", ...animOpts });
 
-  vrm.events().on("state-change", async (e) => {
-    if (e.state === "idle") {
-      await vrm.playVrma({ asset: "vrma:idle-maid", ...animOpts });
-      await sleep(500);
-      await vrm.lookAtCursor();
-    } else if (e.state === "drag") {
-      await vrm.unlook();
-      await vrm.playVrma({ asset: "vrma:grabbed", ...animOpts, resetSpringBones: true });
-    } else if (e.state === "sitting") {
-      await vrm.playVrma({ asset: "vrma:idle-sitting", ...animOpts });
-      await sleep(500);
-      await vrm.lookAtCursor();
-    }
-  });
+  // Extracted as handleVrmStateChange() per ts-style.md (callbacks > 5 lines must be named functions)
+  vrm.events().on("state-change", (e) =>
+    handleVrmStateChange(e, vrm, animOpts).catch(console.error),
+  );
 
   return vrm;
 }

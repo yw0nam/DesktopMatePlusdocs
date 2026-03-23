@@ -7,9 +7,10 @@
 - **FastAPI** (`backend/`): Director — real-time WebSocket chat, STM/LTM, TTS, delegates heavy tasks to NanoClaw
 - **NanoClaw** (`nanoclaw/`): Artisan — Node.js Claude agent runner; executes delegated tasks via container-based persona agents
 - **Unity**: Dumb UI — renders output only, unaware of NanoClaw
-- **DesktopMatePlus**: Only documentation and workspace-level instructions; no code. You have to make a worktree or code change in backend or nanoclaw only. path:/home/spow12/codes/2025_lower/DesktopMatePlus
+- **desktop-homunculus** (`desktop-homunculus/`): Bevy desktop mascot engine + MOD system. MOD code lives here (e.g. `mods/desktopmate-bridge`). Has its own git.
+- **DesktopMatePlus**: Only documentation and workspace-level instructions; no code. path:/home/spow12/codes/2025_lower/DesktopMatePlus
 
-Note: NanoClaw and Backend has own their git.
+Note: NanoClaw, Backend, and desktop-homunculus each have their own git repo. Code changes go into their respective repos — do NOT commit code to DesktopMatePlus root.
 
 Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/fastapi` (NanoClaw) → `POST /v1/callback/nanoclaw/{session_id}` (FastAPI)
 
@@ -68,6 +69,13 @@ npm run dev                  # hot reload
 cd backend
 NANOCLAW_HTTP_PORT=4000 uv run pytest tests/api/test_real_e2e.py -v
 # Note: NanoClaw credential proxy uses 3001; HTTP channel must use a different port (e.g. 4000)
+
+# desktopmate-bridge MOD (TypeScript, in desktop-homunculus repo)
+cd desktop-homunculus/mods/desktopmate-bridge
+pnpm test                                        # unit tests (store, etc.)
+FASTAPI_URL=http://localhost:5500 pnpm test:e2e  # requires backend running on 5500
+pnpm build:ui                                    # build chat UI (required before mod install)
+# E2E deps: @hmcs/assets must be installed; @hmcs/elmer must NOT be installed (VRM conflict)
 ```
 
 ## Backend Conventions
@@ -115,6 +123,7 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 자주 혼동되는 설계 결정들:
 
 - [NanoClaw Task Dispatch — IPC vs HTTP Channel](./docs/faq/nanoclaw-task-dispatch.md): `ipc/{group}/tasks/`(내부 자기 디스패치)와 `add-http` 스킬(FastAPI → NanoClaw 위임 브리지)의 차이. 왜 HTTP Channel을 Redis Queue로 대체하지 않는가.
+- [Desktop Homunculus MOD 시스템](./docs/faq/desktop-homunculus-mod-system.md): MOD 철학(pnpm 패키지 기반), Service/UI/Bin 진입점 구조, Glassmorphism UI 설정, signals 통신, preferences 저장 방법.
 
 ## Appendix
 
@@ -125,4 +134,5 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 - [PRD Index](./docs/prds/feature/INDEX.md): Current PRD task list and status.
 - [FAQ](./docs/faq/): Frequently Asked Questions about architectural decisions and design patterns in this workspace.
 - [NanoClaw Skills](./nanoclaw/.claude/skills/): Directory of existing NanoClaw skills with installation instructions.
-- [Data Flows](./docs/data_flows/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and Unity.
+- [Data Flows](./docs/data_flow/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and Unity.
+- [desktopmate-bridge CLAUDE.md](./desktop-homunculus/mods/desktopmate-bridge/CLAUDE.md): Mod-specific build/test commands, config flow, React gotchas.
