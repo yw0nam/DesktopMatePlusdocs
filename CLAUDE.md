@@ -143,6 +143,6 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 - [PRD Index](./docs/prds/feature/INDEX.md): Current PRD task list and status.
 - [FAQ](./docs/faq/): Frequently Asked Questions about architectural decisions and design patterns in this workspace.
 - [NanoClaw Skills](./nanoclaw/.claude/skills/): Directory of existing NanoClaw skills with installation instructions.
-- [Data Flows](./docs/data_flow/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and Unity.
+- [Data Flows](./docs/data_flow/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and desktop-homunculus.
 - [desktopmate-bridge CLAUDE.md](./desktop-homunculus/mods/desktopmate-bridge/CLAUDE.md): Mod-specific build/test commands, config flow, React gotchas.
 - [docs/ Index](./docs/CLAUDE.md): Documentation directory map and quick-reference links.
