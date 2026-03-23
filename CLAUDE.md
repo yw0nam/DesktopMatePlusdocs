@@ -1,4 +1,8 @@
-# DesktopMate+ Workspace Instructions
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## DesktopMate+ Workspace Instructions
 
 ## Architecture
 
@@ -6,8 +10,7 @@
 
 - **FastAPI** (`backend/`): Director — real-time WebSocket chat, STM/LTM, TTS, delegates heavy tasks to NanoClaw
 - **NanoClaw** (`nanoclaw/`): Artisan — Node.js Claude agent runner; executes delegated tasks via container-based persona agents
-- **Unity**: Dumb UI — renders output only, unaware of NanoClaw
-- **desktop-homunculus** (`desktop-homunculus/`): Bevy desktop mascot engine + MOD system. MOD code lives here (e.g. `mods/desktopmate-bridge`). Has its own git.
+- **desktop-homunculus** (`desktop-homunculus/`): Frontend (Dumb UI) — Bevy desktop mascot engine + MOD system. Renders output only, unaware of NanoClaw. MOD code lives here (e.g. `mods/desktopmate-bridge`). Has its own git.
 - **DesktopMatePlus**: Only documentation and workspace-level instructions; no code. path:/home/spow12/codes/2025_lower/DesktopMatePlus
 
 Note: NanoClaw, Backend, and desktop-homunculus each have their own git repo. Code changes go into their respective repos — do NOT commit code to DesktopMatePlus root.
@@ -107,6 +110,12 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 - Update `backend/CLAUDE.md` with any new backend design decisions or conventions.
 - Update this file with any new general instructions or architectural notes for the workspace.
 
+### docs/ 규칙 요약
+
+- **본문 200줄 한도** — 초과 시 기능 단위로 분리, 인덱스 문서로 관리 ([전체 규칙](./docs/guidelines/DOCUMENT_GUIDE.md))
+- **`docs/superpowers/`**: git 미커밋 (로컬 작업 파일)
+- **`docs/feedback/`**: 읽기 전용, 수정 금지 (외부 피드백 원본 보존)
+
 ### FAQ 작성 규칙
 
 작업 중 아래 상황이 발생하면 `docs/faq/` 에 문서를 추가하고 이 파일의 FAQ 섹션에 링크를 추가한다:
@@ -136,3 +145,4 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 - [NanoClaw Skills](./nanoclaw/.claude/skills/): Directory of existing NanoClaw skills with installation instructions.
 - [Data Flows](./docs/data_flow/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and Unity.
 - [desktopmate-bridge CLAUDE.md](./desktop-homunculus/mods/desktopmate-bridge/CLAUDE.md): Mod-specific build/test commands, config flow, React gotchas.
+- [docs/ Index](./docs/CLAUDE.md): Documentation directory map and quick-reference links.

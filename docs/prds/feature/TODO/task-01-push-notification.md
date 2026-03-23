@@ -2,7 +2,7 @@
 
 **Status**: 보류
 **Priority**: P2
-**Depends on**: fastapi_backend/task-02, unity/task-01
+**Depends on**: fastapi_backend/task-02, frontend/task-01
 
 ---
 
@@ -12,14 +12,14 @@
 
 ## 방향
 
-Callback 수신 시 WebSocket을 통해 Unity에 알림 push. WebSocket은 이미 있으므로 기술적 난이도 낮음.
+Callback 수신 시 WebSocket을 통해 FE에 알림 push. WebSocket은 이미 있으므로 기술적 난이도 낮음.
 
 ## 필요 사항
 
 - FastAPI callback handler에서 WebSocket push 호출 (hook point는 task-02에서 준비)
-- Unity 알림 UI 구현 (토스트? 말풍선?)
+- FE 알림 UI 구현 (토스트? 말풍선?)
 - PersonaAgent가 push로 보고할지, 다음 턴에서 보고할지 중복 방지 정책
 
 ## 트리거 시점
 
-Unity 알림 UI 디자인 확정 후 구현.
+FE 알림 UI 디자인 확정 후 구현.
