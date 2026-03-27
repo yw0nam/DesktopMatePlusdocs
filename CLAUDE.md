@@ -17,70 +17,6 @@ Note: NanoClaw, Backend, and desktop-homunculus each have their own git repo. Co
 
 Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/fastapi` (NanoClaw) → `POST /v1/callback/nanoclaw/{session_id}` (FastAPI)
 
-## CRITICAL: NanoClaw Changes via Skills Only
-
-**NanoClaw 소스를 직접 수정하지 말 것.** 스킬은 **Git 브랜치 기반**으로 관리된다 — 스킬을 적용한다는 것은 해당 브랜치를 현재 브랜치에 `git merge`하는 것이다. 직접 수정하면 다음 merge 시 충돌 발생.
-
-**새 커스텀 스킬 작성:**
-
-```bash
-# 1. skill 브랜치 생성 (main 기반, 스킬 코드만 포함)
-git checkout -b skill/{name} main
-# 스킬 파일만 추가 후 커밋
-git push origin skill/{name}
-
-# 2. SKILL.md 작성: .claude/skills/{name}/SKILL.md
-#    Phase 1: pre-flight check
-#    Phase 2: git fetch + merge
-#    Phase 3: env/setup
-#    Phase 4: verify (+ Removal 섹션)
-
-# 3. 적용 (target 브랜치에서)
-git fetch origin skill/{name}
-git merge origin/skill/{name}
-
-# 4. 검증
-npm run build && npm test
-```
-
-**스킬 종류별 적용 방법:**
-
-- **업스트림 공식 스킬**: `git remote add {name} https://github.com/qwibitai/nanoclaw-{name}.git` 후 `git fetch {name} main && git merge {name}/main`
-- **커스텀 스킬** (이 repo): `git fetch origin skill/{name} && git merge origin/skill/{name}`
-
-**SKILL.md 작성 전 반드시**: 기존 스킬(예: `nanoclaw/.claude/skills/add-slack`)의 SKILL.md를 먼저 읽고 패턴을 파악할 것. NanoClaw는 독특한 개발 패턴을 사용하므로 참고 없이 작성하면 구조가 어긋난다.
-
-## Build & Test
-
-```bash
-# Backend (Python 3.13 + uv)
-cd backend
-uv run pytest                # all tests
-uv run pytest tests/path.py  # specific
-sh scripts/lint.sh           # ruff lint + format check
-
-# NanoClaw (Node.js + TypeScript)
-cd nanoclaw
-npm run build                # compile
-npm test                     # vitest run
-npm run dev                  # hot reload
-
-# Real E2E (requires both services running)
-# 1. Backend: uvicorn src.main:app --port 5500  (in backend/)
-# 2. NanoClaw: HTTP_PORT=4000 node dist/index.js  (in nanoclaw/, after npm run build)
-# 3. Run tests:
-cd backend
-NANOCLAW_HTTP_PORT=4000 uv run pytest tests/api/test_real_e2e.py -v
-# Note: NanoClaw credential proxy uses 3001; HTTP channel must use a different port (e.g. 4000)
-
-# desktopmate-bridge MOD (TypeScript, in desktop-homunculus repo)
-cd desktop-homunculus/mods/desktopmate-bridge
-pnpm test                                        # unit tests (store, etc.)
-FASTAPI_URL=http://localhost:5500 pnpm test:e2e  # requires backend running on 5500
-pnpm build:ui                                    # build chat UI (required before mod install)
-# E2E deps: @hmcs/assets must be installed; @hmcs/elmer must NOT be installed (VRM conflict)
-```
-
 ## Backend Conventions
 
 - **Package manager**: `uv` only — never `pip`
@@ -103,12 +39,6 @@ pnpm build:ui                                    # build chat UI (required befor
 ## PRD Tracking
 
 Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).
-
-## Update documents
-
-- Update `docs/prds/feature/INDEX.md` with new tasks, priorities, and statuses.
-- Update `backend/CLAUDE.md` with any new backend design decisions or conventions.
-- Update this file with any new general instructions or architectural notes for the workspace.
 
 ### docs/ 규칙 요약
 
@@ -133,16 +63,24 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 
 - [NanoClaw Task Dispatch — IPC vs HTTP Channel](./docs/faq/nanoclaw-task-dispatch.md): `ipc/{group}/tasks/`(내부 자기 디스패치)와 `add-http` 스킬(FastAPI → NanoClaw 위임 브리지)의 차이. 왜 HTTP Channel을 Redis Queue로 대체하지 않는가.
 - [Desktop Homunculus MOD 시스템](./docs/faq/desktop-homunculus-mod-system.md): MOD 철학(pnpm 패키지 기반), Service/UI/Bin 진입점 구조, Glassmorphism UI 설정, signals 통신, preferences 저장 방법.
+- [Upstream Fork CLAUDE.md 충돌 방지](./docs/faq/upstream-fork-claude-md.md): nanoclaw/desktop-homunculus 같은 fork repo에서 학습을 기록할 때 왜 CLAUDE.md가 아닌 `.claude/rules/team-local.md`를 쓰는가.
+- **[NanoClaw Skill 작성 가이드](./docs/faq/nanoclaw-skill-writing-guide.md)**: NanoClaw 스킬을 작성할 때의 SKILL.md 구조, 커밋/PR 규칙. **Critical** — NanoClaw 소스 직접 수정 금지, 스킬은 Git 브랜치로 관리, SKILL.md 작성 패턴 엄수.
+
+## Planning Workflow
+
+When starting any new feature or cross-repo initiative, follow the **three-phase planning workflow** (skill: `planning-workflow`):
+
+1. **Brainstorm** — Invoke `superpowers:brainstorming` with the feature description. Resolve intent, constraints, and which repos are affected.
+2. **Plan** — Feed brainstorm output as spec into `claude-code-harness:harness-plan`. Produces `cc:TODO` tasks in `Plans.md` with `[target: repo/]` markers.
+3. **Distribute** — Dispatch each team lead subagent (Backend/NanoClaw/DH) with their scoped tasks.
+
+Never skip phases. Never write tasks to Plans.md without a brainstorm spec first.
 
 ## Appendix
 
-- [backend Claude.md](./backend/CLAUDE.md): Current FastAPI backend design and conventions.
-- [backend Documents](./backend/docs/): Design documents for backend services and features.
-- [NanoClaw Claude.md](./nanoclaw/CLAUDE.md): NanoClaw setup and agent development guide.
-- [Document Guide](./docs/guidelines/DOCUMENT_GUIDE.md): How to write and maintain design documents in this repository.
 - [PRD Index](./docs/prds/feature/INDEX.md): Current PRD task list and status.
 - [FAQ](./docs/faq/): Frequently Asked Questions about architectural decisions and design patterns in this workspace.
 - [NanoClaw Skills](./nanoclaw/.claude/skills/): Directory of existing NanoClaw skills with installation instructions.
 - [Data Flows](./docs/data_flow/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and desktop-homunculus.
 - [desktopmate-bridge CLAUDE.md](./desktop-homunculus/mods/desktopmate-bridge/CLAUDE.md): Mod-specific build/test commands, config flow, React gotchas.
-- [docs/ Index](./docs/CLAUDE.md): Documentation directory map and quick-reference links.
+- [Plans.md](./Plans.md): Cross-repo task tracking (Lead Agent coordination log).

@@ -23,5 +23,9 @@ node_modules/
 # OS specific
 .DS_Store
 .github
-.claude
-.temp
+agents-v3/
+.claude/agent-memory
+.claude/memory
+.claude/sessions
+.claude/state
+.claude/settings.json

@@ -50,6 +50,12 @@ NanoClaw 내부의 HTTP 채널 추가. 핵심 브릿지 역할만 담당.
 
 - [ ] **Frontend Dumb UI** ([상세](./frontend/task-01-dumb-ui.md)): 위임 결과가 일반 대화와 동일하게 렌더링된다. Frontend는 NanoClaw를 직접 인식하지 않는다.
 
+### fastapi_backend — KB 에이전트 툴 확장
+
+| # | Task | Priority | Status | Description |
+|---|---|---|---|---|
+| KB01 | list_directory 툴 추가 | P2 | TODO | KnowledgeBaseService에 path validation(kb_path 경계) 포함한 디렉토리 탐색 툴. search_knowledge(ripgrep)·read_note와 함께 에이전트 자율 KB 탐색 완성 |
+
 ### HOLD — 나중에 구현할 기능
 
 핵심 흐름 안정화 후 우선순위 재검토.
