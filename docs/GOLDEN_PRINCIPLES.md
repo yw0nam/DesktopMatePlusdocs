@@ -4,6 +4,9 @@
 > The Background Gardening Agent uses this as its checklist — each principle has a machine-verifiable DoD.
 > When a violation is detected, a refactoring PR is opened automatically.
 
+> **CONTRIBUTING**: This document is a protected invariant. Direct commits to this file are forbidden.
+> All changes (adding, modifying, or removing a principle) **must go through a PR** and require explicit human approval before merge.
+
 ---
 
 ## GP-1: Architecture Layering
