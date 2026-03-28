@@ -30,8 +30,12 @@
 
 ### Phase 2: 관측 가능성 레이어 (Observability)
 
-<!-- cc:TODO -->
-- [ ] **Developer/Reviewer Agent용 worktree별 앱 실행 환경** — harness.txt 원칙: 에이전트가 앱을 직접 실행하고 로그/메트릭으로 검증. Backend worktree별 독립 실행 스크립트 + 로그 쿼리 인터페이스 설계. [target: backend/, scripts/]
+<!-- spec: docs/superpowers/specs/2026-03-28-backend-agent-run-env-design.md -->
+<!-- cc:DONE -->
+- [x] **OBS-1: log_query.py** — Loguru 로그 파싱 + `--level`/`--last`/`--since`/`--summary` 지원. DoD: `uv run python scripts/log_query.py --summary` 출력 정상. [target: backend/]
+- [x] **OBS-2: logs.sh** — log_query.py thin wrapper. `scripts/logs.sh --level ERROR --summary` 동작. DoD: 로그 파일 자동 감지(LOG_DIR → .run.logdir → 오늘 날짜 파일). Depends: OBS-1. [target: backend/]
+- [x] **OBS-3: run.sh** — worktree-aware 실행기. 포트 자동 해시, LOG_DIR 격리, 외부 서비스 체크 + Enter 대기, --bg/--stop/--port 플래그. DoD: `scripts/run.sh --bg` 기동 후 `scripts/run.sh --port` 일관된 포트 출력. [target: backend/]
+- [x] **OBS-4: verify.sh** — health + examples + 로그 클린 체크. DoD: `scripts/verify.sh` exit 0 (전체 PASS) / exit 1 (실패). Depends: OBS-2, OBS-3. [target: backend/]
 
 ### Phase 3: 엔트로피 제어 (Drift GC)
 
@@ -39,6 +43,10 @@
 - [ ] **Background gardening agent 설계** — harness.txt 원칙: 드리프트를 주기적으로 청소하는 백그라운드 에이전트. "황금 원칙" 위반 감지 → 자동 리팩터링 PR. Reviewer와 별도 역할. [target: workspace scripts/harness/]
 
 ## Completed
+
+### Phase 2: 관측 가능성 레이어 (2026-03-28)
+
+- [x] **OBS-1~4: Backend Agent Run Environment** — `scripts/run.sh`, `scripts/verify.sh`, `scripts/logs.sh`, `scripts/log_query.py` 신규 생성. worktree별 포트 격리, LOG_DIR 격리, 외부 서비스 Enter 대기, health/examples/로그 검증 자동화. (2026-03-28)
 
 ### Phase 1: 아키텍처 강제 (2026-03-28)
 

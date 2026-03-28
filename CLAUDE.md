@@ -82,10 +82,9 @@ Never skip phases. Never write tasks to Plans.md without a brainstorm spec first
 
 ## Agent Teams Execution (Phase 4–7)
 
-See full details: [docs/agent-teams-workflow.md](./docs/agent-teams-workflow.md)
+> **MANDATORY**: Implementation MUST use tmux-based Agent Teams. The `Agent` tool (sub-agent) is **FORBIDDEN** for implementation — loses repo isolation and bypasses the worktree workflow. Allowed only for research-only tasks (no code changes).
 
-Agent Teams enabled via `.claude/settings.json` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, `teammateMode: tmux`).
-Team: `backend-team` → `backend/`, `nanoclaw-team` → `nanoclaw/`, `dh-team` → `desktop-homunculus/`.
+See full details: [docs/agent-teams-workflow.md](./docs/agent-teams-workflow.md)
 
 ## Appendix
 

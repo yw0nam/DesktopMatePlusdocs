@@ -198,7 +198,8 @@ cd nanoclaw/
 git merge feat/{slug} --no-ff
 
 # 3. Remove worktree
-git worktree remove ../worktrees/nanoclaw-{slug}
+# Note: harness-work creates .claude/state/ files inside worktrees — always use --force
+git worktree remove --force ../worktrees/nanoclaw-{slug}
 git branch -d feat/{slug}   # only after successful merge
 ```
 
