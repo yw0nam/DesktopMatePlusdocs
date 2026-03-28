@@ -40,7 +40,7 @@
 ### Phase 3: 엔트로피 제어 (Drift GC)
 
 <!-- cc:TODO -->
-- [ ] **GC-1: 황금 원칙 문서** — `docs/GOLDEN_PRINCIPLES.md` 신규. 아키텍처 불변 조건 + 취향 규칙을 gardening agent가 파싱 가능한 구조로 인코딩. DoD: 문서 존재 + 각 원칙에 검증 방법 명시. [target: workspace scripts/harness/]
+- [x] **GC-1: 황금 원칙 문서** — `docs/GOLDEN_PRINCIPLES.md` 신규. 아키텍처 불변 조건 + 취향 규칙을 gardening agent가 파싱 가능한 구조로 인코딩. DoD: 문서 존재 + 각 원칙에 검증 방법 명시. [target: workspace scripts/harness/]
 - [ ] **GC-2: Background gardening agent 설계** — GC-1 황금 원칙 기준으로 드리프트 감지 → 자동 리팩터링 PR. 정기 실행, 대부분 1분 내 auto-merge 가능한 수준. DoD: 에이전트 실행 → 위반 1건 이상 감지 → PR 생성. Depends: GC-1. [target: workspace scripts/harness/]
 
 ### Phase 4: 문서 신선도 (Doc Freshness)
