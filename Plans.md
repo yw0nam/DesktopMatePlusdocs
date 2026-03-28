@@ -50,20 +50,20 @@
 ### Phase 4: 문서 신선도 (Doc Freshness)
 
 <!-- cc:TODO -->
-- [ ] **DOC-1: 문서 신선도 린터** — `scripts/check_docs.sh` + CI 통합. docs/ 내 죽은 링크, 스펙 vs 실제 파일 불일치, 200줄 초과 문서 감지. DoD: `scripts/check_docs.sh` exit 0 (전체 PASS). [target: workspace scripts/harness/]
-- [ ] **DOC-2: 문서 신선도 CI** — GitHub Actions 또는 pre-commit hook으로 DOC-1 자동 실행. DoD: PR 시 죽은 링크 자동 감지. Depends: DOC-1. [target: workspace scripts/harness/]
+- [x] **DOC-1: 문서 신선도 린터** — `scripts/check_docs.sh` + CI 통합. docs/ 내 죽은 링크, 스펙 vs 실제 파일 불일치, 200줄 초과 문서 감지. DoD: `scripts/check_docs.sh` exit 0 (전체 PASS). [target: workspace scripts/harness/]
+- [x] **DOC-2: 문서 신선도 garden 통합** — `scripts/garden.sh`에 `check_docs.sh` 호출 추가 + `.pre-commit-config.yaml` 등록. DoD: `scripts/garden.sh --gp DOC` 실행 시 doc check 결과 출력. Depends: DOC-1, GC-2. [target: workspace scripts/harness/]
 
 ### Phase 5: 메트릭 관측 가능성 (Metrics Observability)
 
 <!-- cc:TODO -->
-- [ ] **MET-1: 앱 메트릭 노출** — FastAPI에 Prometheus 메트릭 엔드포인트(`/metrics`) 추가. request latency, error rate, active connections. DoD: `GET /metrics` → Prometheus 포맷 응답. [target: backend/]
-- [ ] **MET-2: 메트릭 쿼리 스크립트** — `scripts/metrics.sh` — worktree별 메트릭 조회 + 임계값 초과 알림. DoD: `scripts/metrics.sh --latency p99` 정상 출력. Depends: MET-1. [target: backend/]
+- [x] **MET-1: 앱 메트릭 노출** — FastAPI에 Prometheus 메트릭 엔드포인트(`/metrics`) 추가. request latency, error rate, active connections. DoD: `GET /metrics` → Prometheus 포맷 응답. [target: backend/]
+- [x] **MET-2: 메트릭 쿼리 스크립트** — `scripts/metrics.sh` — worktree별 메트릭 조회 + 임계값 초과 알림. DoD: `scripts/metrics.sh --latency p99` 정상 출력. Depends: MET-1. [target: backend/]
 
 ### Phase 6: 품질 등급 추적 (Quality Scoring)
 
 <!-- cc:TODO -->
-- [ ] **QS-1: 품질 등급 문서** — `docs/QUALITY_SCORE.md` 신규. 도메인(backend/nanoclaw/dh)별 + 레이어별(arch/test/obs/docs) 품질 등급(A~D). DoD: 문서 존재 + 초기 등급 확정. [target: workspace scripts/harness/]
-- [ ] **QS-2: 품질 등급 자동 갱신** — gardening agent가 QS-1 문서를 주기적으로 업데이트. Depends: GC-2, QS-1. [target: workspace scripts/harness/]
+- [x] **QS-1: 품질 등급 문서** — `docs/QUALITY_SCORE.md` 신규. 도메인(backend/nanoclaw/dh)별 + 레이어별(arch/test/obs/docs) 품질 등급(A~D). DoD: 문서 존재 + 초기 등급 확정. [target: workspace scripts/harness/]
+- [x] **QS-2: 품질 등급 자동 갱신** — gardening agent가 GP 결과를 QS-1 문서에 반영. DoD: `scripts/garden.sh --dry-run` 실행 시 QUALITY_SCORE.md에 갱신 날짜 + 각 도메인 등급 출력. Depends: GC-2, QS-1. [target: workspace scripts/harness/]
 
 ## Completed
 
