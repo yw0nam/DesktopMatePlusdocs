@@ -33,8 +33,3 @@
 - [NanoClaw Task Dispatch FAQ](./faq/nanoclaw-task-dispatch.md) — IPC vs HTTP Channel 혼동 시
 - [Desktop Homunculus MOD 시스템 FAQ](./faq/desktop-homunculus-mod-system.md) — MOD 개발 시
 - [desktopmate-bridge Config Flow](./data_flow/desktopmate-bridge/CONFIG_FLOW.md) — dm-config 신호 흐름
-
-## 주의
-
-- `superpowers/` 하위 파일은 git에 커밋하지 않는다 (로컬 작업 파일).
-- `feedback/` 하위 파일은 수정하지 않는다 (외부 피드백 원본 보존).

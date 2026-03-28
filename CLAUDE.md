@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Note, Use only english or korean for code and interaction, documentation. Avoid mixing languages in the same file or code block.
+
 ## DesktopMate+ Workspace Instructions
 
 ## Architecture
@@ -68,13 +70,21 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 
 ## Planning Workflow
 
-When starting any new feature or cross-repo initiative, follow the **three-phase planning workflow** (skill: `planning-workflow`):
+When starting any new feature or cross-repo initiative, follow the **planning → execution workflow**:
 
-1. **Brainstorm** — Invoke `superpowers:brainstorming` with the feature description. Resolve intent, constraints, and which repos are affected.
-2. **Plan** — Feed brainstorm output as spec into `claude-code-harness:harness-plan`. Produces `cc:TODO` tasks in `Plans.md` with `[target: repo/]` markers.
-3. **Distribute** — Dispatch each team lead subagent (Backend/NanoClaw/DH) with their scoped tasks.
+1. **Brainstorm** — Invoke `superpowers:brainstorming`. Resolve intent, constraints, and which repos are affected.
+2. **Plan** — Feed brainstorm output into `claude-code-harness:harness-plan`. Produces `cc:TODO` tasks in `Plans.md` with `[target: repo/]` markers.
+3. **Review** — Invoke `claude-code-harness:harness-review` on the plan. Iterate until approved.
+4. **Distribute** — Spawn Agent Team (Phase 4–6 below).
 
 Never skip phases. Never write tasks to Plans.md without a brainstorm spec first.
+
+## Agent Teams Execution (Phase 4–7)
+
+See full details: [docs/agent-teams-workflow.md](./docs/agent-teams-workflow.md)
+
+Agent Teams enabled via `.claude/settings.json` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, `teammateMode: tmux`).
+Team: `backend-team` → `backend/`, `nanoclaw-team` → `nanoclaw/`, `dh-team` → `desktop-homunculus/`.
 
 ## Appendix
 
