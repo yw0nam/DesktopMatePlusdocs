@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check-docs
+        name: Check docs freshness
+        entry: scripts/check_docs.sh
+        language: script
+        pass_filenames: false

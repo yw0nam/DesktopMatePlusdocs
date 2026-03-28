@@ -294,6 +294,25 @@ verify_gp10() {
   fi
 }
 
+verify_doc() {
+  # Documentation freshness — Minor
+  local repo="$1"
+  if [[ "$repo" == "workspace" ]]; then
+    local check_script="$WORKSPACE_ROOT/scripts/check_docs.sh"
+    if [[ ! -x "$check_script" ]]; then
+      add_result DOC workspace Minor SKIP "check_docs.sh not found"
+      return
+    fi
+    local out rc=0
+    out=$("$check_script" --dry-run 2>&1) || rc=$?
+    if [[ "$rc" -eq 0 ]]; then
+      add_result DOC workspace Minor PASS "docs check passed"
+    else
+      add_result DOC workspace Minor FAIL "$(echo "$out" | grep '\[FAIL\]' | head -5)"
+    fi
+  fi
+}
+
 # ── Detection phase ────────────────────────────────────────────────
 echo "=== Garden Run $DATE ==="
 echo ""
@@ -316,12 +335,90 @@ run_detection verify_gp7  GP-7  workspace backend
 run_detection verify_gp8  GP-8  workspace
 run_detection verify_gp9  GP-9  backend
 run_detection verify_gp10 GP-10 backend nanoclaw
+run_detection verify_doc  DOC   workspace
 
 # ── Print detection results ────────────────────────────────────────
 for r in "${RESULTS[@]}"; do
   IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
   printf "[%-5s] %-7s %-10s %s\n" "$gp" "$status" "$repo" "$details"
 done
+
+# ── Update Quality Score ──────────────────────────────────────────
+update_quality_score() {
+  local qs_file="$WORKSPACE_ROOT/docs/QUALITY_SCORE.md"
+  [[ -f "$qs_file" ]] || return
+
+  # Collect failures per domain per layer
+  # GP mapping: GP-1/2/3/10 → Arch/Test; GP-7/8 → Docs; GP-4/9 → Obs; DOC → Docs
+  declare -A domain_arch=() domain_test=() domain_obs=() domain_docs=()
+
+  for r in "${RESULTS[@]}"; do
+    IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
+    [[ "$status" == "FAIL" ]] || continue
+
+    local domain="$repo"
+    [[ "$domain" == "workspace" ]] && continue  # workspace maps to docs only
+
+    case "$gp" in
+      GP-1|GP-2)  domain_arch[$domain]=$(( ${domain_arch[$domain]:-0} + 1 )) ;;
+      GP-3|GP-10) domain_test[$domain]=$(( ${domain_test[$domain]:-0} + 1 )) ;;
+      GP-4|GP-9)  domain_obs[$domain]=$(( ${domain_obs[$domain]:-0} + 1 )) ;;
+      GP-7|GP-8|DOC) domain_docs[$domain]=$(( ${domain_docs[$domain]:-0} + 1 )) ;;
+    esac
+  done
+
+  # Also count workspace doc failures
+  for r in "${RESULTS[@]}"; do
+    IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
+    [[ "$status" == "FAIL" && "$repo" == "workspace" ]] || continue
+    case "$gp" in
+      GP-7|GP-8|DOC)
+        # Apply to all domains as a workspace-level docs issue
+        domain_docs[backend]=$(( ${domain_docs[backend]:-0} + 1 ))
+        ;;
+    esac
+  done
+
+  grade_from_count() {
+    local count="${1:-0}"
+    if [[ "$count" -eq 0 ]]; then echo "A"
+    elif [[ "$count" -le 2 ]]; then echo "B"
+    elif [[ "$count" -le 4 ]]; then echo "C"
+    else echo "D"
+    fi
+  }
+
+  compute_overall() {
+    local worst="A"
+    for g in "$@"; do
+      case "$g" in
+        D) worst="D"; return ;;
+        C) [[ "$worst" == "D" ]] || worst="C" ;;
+        B) [[ "$worst" == "C" || "$worst" == "D" ]] || worst="B" ;;
+      esac
+    done
+    echo "$worst"
+  }
+
+  # Compute grades for each domain
+  for domain in backend nanoclaw desktop-homunculus; do
+    local arch_g test_g obs_g docs_g overall_g
+    arch_g=$(grade_from_count "${domain_arch[$domain]:-0}")
+    test_g=$(grade_from_count "${domain_test[$domain]:-0}")
+    obs_g=$(grade_from_count "${domain_obs[$domain]:-0}")
+    docs_g=$(grade_from_count "${domain_docs[$domain]:-0}")
+    overall_g=$(compute_overall "$arch_g" "$test_g" "$obs_g" "$docs_g")
+
+    # Update the row in QUALITY_SCORE.md
+    # Match: | domain | ... |
+    sed -i "s/| ${domain} |.*|/| ${domain} | ${arch_g} | ${test_g} | ${obs_g} | ${docs_g} | ${overall_g} |/" "$qs_file"
+  done
+
+  # Update timestamp
+  sed -i "s/^Last updated:.*/Last updated: $(date +%Y-%m-%d)/" "$qs_file"
+}
+
+update_quality_score
 
 # ── Count violations ───────────────────────────────────────────────
 VIOLATION_COUNT=0
