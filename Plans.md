@@ -40,7 +40,26 @@
 ### Phase 3: 엔트로피 제어 (Drift GC)
 
 <!-- cc:TODO -->
-- [ ] **Background gardening agent 설계** — harness.txt 원칙: 드리프트를 주기적으로 청소하는 백그라운드 에이전트. "황금 원칙" 위반 감지 → 자동 리팩터링 PR. Reviewer와 별도 역할. [target: workspace scripts/harness/]
+- [ ] **GC-1: 황금 원칙 문서** — `docs/GOLDEN_PRINCIPLES.md` 신규. 아키텍처 불변 조건 + 취향 규칙을 gardening agent가 파싱 가능한 구조로 인코딩. DoD: 문서 존재 + 각 원칙에 검증 방법 명시. [target: workspace scripts/harness/]
+- [ ] **GC-2: Background gardening agent 설계** — GC-1 황금 원칙 기준으로 드리프트 감지 → 자동 리팩터링 PR. 정기 실행, 대부분 1분 내 auto-merge 가능한 수준. DoD: 에이전트 실행 → 위반 1건 이상 감지 → PR 생성. Depends: GC-1. [target: workspace scripts/harness/]
+
+### Phase 4: 문서 신선도 (Doc Freshness)
+
+<!-- cc:TODO -->
+- [ ] **DOC-1: 문서 신선도 린터** — `scripts/check_docs.sh` + CI 통합. docs/ 내 죽은 링크, 스펙 vs 실제 파일 불일치, 200줄 초과 문서 감지. DoD: `scripts/check_docs.sh` exit 0 (전체 PASS). [target: workspace scripts/harness/]
+- [ ] **DOC-2: 문서 신선도 CI** — GitHub Actions 또는 pre-commit hook으로 DOC-1 자동 실행. DoD: PR 시 죽은 링크 자동 감지. Depends: DOC-1. [target: workspace scripts/harness/]
+
+### Phase 5: 메트릭 관측 가능성 (Metrics Observability)
+
+<!-- cc:TODO -->
+- [ ] **MET-1: 앱 메트릭 노출** — FastAPI에 Prometheus 메트릭 엔드포인트(`/metrics`) 추가. request latency, error rate, active connections. DoD: `GET /metrics` → Prometheus 포맷 응답. [target: backend/]
+- [ ] **MET-2: 메트릭 쿼리 스크립트** — `scripts/metrics.sh` — worktree별 메트릭 조회 + 임계값 초과 알림. DoD: `scripts/metrics.sh --latency p99` 정상 출력. Depends: MET-1. [target: backend/]
+
+### Phase 6: 품질 등급 추적 (Quality Scoring)
+
+<!-- cc:TODO -->
+- [ ] **QS-1: 품질 등급 문서** — `docs/QUALITY_SCORE.md` 신규. 도메인(backend/nanoclaw/dh)별 + 레이어별(arch/test/obs/docs) 품질 등급(A~D). DoD: 문서 존재 + 초기 등급 확정. [target: workspace scripts/harness/]
+- [ ] **QS-2: 품질 등급 자동 갱신** — gardening agent가 QS-1 문서를 주기적으로 업데이트. Depends: GC-2, QS-1. [target: workspace scripts/harness/]
 
 ## Completed
 
