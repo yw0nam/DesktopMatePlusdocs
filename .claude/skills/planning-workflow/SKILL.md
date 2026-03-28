@@ -150,23 +150,25 @@ Teammates work **inside the worktree path**, not in the original repo directory.
 
 Spawn Agent Team (requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in `.claude/settings.json`).
 
-Say to the Leader:
+**Teammate prompt template** — keep it lean. Do NOT include implementation instructions:
 
 ```
-Create an agent team to execute the cross-repo tasks in Plans.md.
-Spawn teammates for repos that have cc:TODO tasks:
-- backend-team (works in worktrees/backend-{slug}/)
-- nanoclaw-team (works in worktrees/nanoclaw-{slug}/)
-- dh-team (works in worktrees/dh-{slug}/)
+You are the {repo} teammate.
 
-Each teammate should:
-1. Read their repo's CLAUDE.md first (original repo path, not worktree)
-2. cd into the worktree path assigned to them
-3. Run /harness-work breezing --no-discuss all for their [target:] tasks
-4. Report back to leader when done: tasks completed, files changed, test results
+1. Read /home/.../{repo}/CLAUDE.md (the original repo, not the worktree)
+2. Load your workflow skill: /teammate-workflow
+3. Your worktree: worktrees/{repo}-{slug}/
+4. Run: /harness-work breezing --no-discuss all
+5. Report back when done: tasks completed, files changed, test results, blockers
 ```
 
-Each teammate is a full independent Claude Code session — skills auto-loaded from project context.
+**Critical rules for writing teammate prompts:**
+- NEVER include step-by-step implementation instructions — that defeats harness-work
+- NEVER specify which files to create or what code to write
+- The prompt should only specify: repo path, worktree path, and "run harness-work"
+- harness-work reads Plans.md and executes tasks autonomously
+
+Each teammate is a full independent Claude Code session.
 Use `Shift+Down` to cycle teammates, click pane to message directly.
 
 ---
