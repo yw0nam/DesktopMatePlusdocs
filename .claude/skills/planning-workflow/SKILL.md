@@ -54,6 +54,14 @@ Phase 9: Complete and save memory
 
 ## Phase 1 — Brainstorm
 
+**Before brainstorming**, query cq for known pitfalls in the relevant domain:
+
+```
+mcp: cq.query(domain=["nanoclaw", "testing"])   ← adjust to feature domain
+```
+
+If results appear, review them before writing the spec — prior incidents inform constraints.
+
 Invoke `superpowers:brainstorming` with the feature description.
 
 Output must include:
@@ -206,10 +214,12 @@ git branch -d feat/{slug}   # only after successful merge
 
 1. Update Plans.md: change `cc:TODO` → `cc:DONE` for all completed tasks
 2. Clean up Agent Team: ask leader to `Clean up the team`
-3. Save memories useful for future similar tasks:
-   - Patterns that worked well
-   - Pitfalls encountered
+3. Run `/cq:reflect` — mines the session for knowledge units worth sharing:
+   - Pitfalls encountered and how they were resolved
+   - Patterns that worked well and should be repeated
    - Cross-repo coordination decisions
+4. For each approved candidate, call `mcp: cq.propose(...)` to save to the knowledge store
+5. Save auto-memory (user/feedback/project types per memory system rules)
 
 ---
 
@@ -229,6 +239,7 @@ git branch -d feat/{slug}   # only after successful merge
 ## Quick Reference
 
 ```
+0. cq.query(domain=[...])                        ← check known pitfalls first
 1. Skill: superpowers:brainstorming
 2. Skill: claude-code-harness:harness-plan   ← brainstorm output as spec
 3. Skill: claude-code-harness:harness-review  ← iterate until approved
@@ -237,5 +248,50 @@ git branch -d feat/{slug}   # only after successful merge
 6. Spawn Agent Team → work inside worktrees → /harness-work breezing --no-discuss all
 7. Review reports → /harness-release per repo
 8. Commit in worktree → merge to working branch → remove worktree
-9. cc:DONE + clean up team + save memory
+9. cc:DONE + /cq:reflect → cq.propose(...) + save memory
 ```
+
+---
+
+## cq — Shared Knowledge Commons
+
+cq는 에이전트 간 학습을 공유하는 지식 저장소입니다. 작업 전 pitfall 조회, 작업 후 학습 저장을 통해 반복 실수를 방지합니다.
+
+### 도구 6개
+
+| 도구 | 용도 | 언제 |
+|------|------|------|
+| `cq.query(domain=[...])` | 도메인 태그로 KU 검색 | **Phase 1 전** — 관련 pitfall 확인 |
+| `cq.propose(...)` | 새 Knowledge Unit 저장 | **Phase 9** — 학습 저장 |
+| `/cq:reflect` | 세션 컨텍스트 마이닝 → 저장 후보 도출 | **Phase 9** — propose 전 |
+| `cq.confirm(id)` | KU 적중 시 confidence ↑ | KU가 실제로 도움됐을 때 |
+| `cq.flag(id, reason)` | KU 오류 시 confidence ↓ | stale / incorrect / duplicate |
+| `/cq:status` | 저장소 통계 확인 | 언제든지 |
+
+### propose 예시
+
+```python
+cq.propose(
+  summary="nanoclaw 구조적 테스트에서 console.log 확인 시 .test.ts 제외 필수",
+  detail="CONSOLE_PATTERN으로 src/**/*.ts 스캔 시 test 파일 포함되면 false positive 발생",
+  action="glob 패턴에서 *.test.ts, *.d.ts 를 명시적으로 제외할 것",
+  domain=["nanoclaw", "testing", "typescript"],
+  language="typescript",
+)
+```
+
+### domain 태그 관례
+
+- 컴포넌트: `nanoclaw`, `backend`, `desktop-homunculus`
+- 레이어: `testing`, `architecture`, `workflow`, `git`
+- 언어: `typescript`, `python`, `rust`
+- 주제: `agent-teams`, `worktree`, `structural-tests`
+
+### cq vs auto-memory 차이
+
+| | cq | auto-memory |
+|--|---|---|
+| 범위 | 에이전트 팀 공유 가능 (team API 설정 시) | 이 프로젝트 세션 전용 |
+| 내용 | pitfall, 패턴, 해결책 (actionable) | 사용자 프로필, 피드백, 프로젝트 컨텍스트 |
+| 신뢰도 | confirm/flag로 관리 | 수동 관리 |
+| 형식 | summary + detail + action + domain | 자유 마크다운 |
