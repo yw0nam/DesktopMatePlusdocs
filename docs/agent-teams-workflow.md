@@ -40,3 +40,5 @@ Each teammate should:
 - **Agent tool IS allowed** for: research-only tasks (reading files, web search, analysis) with no code changes.
 - Send structured messages to teammates **individually** — `SendMessage(to: "*")` fails for structured type.
 - `git worktree remove` after harness-work always requires `--force` — `.claude/state/` session files are created inside worktrees.
+- `git worktree add ../path branch` fails if branch doesn't exist — use `git worktree add -b newbranch ../path basebranch` instead.
+- `TeamCreate` fails if you already lead a team — shutdown all teammates first (`SendMessage shutdown_request`), then `TeamDelete`, then `TeamCreate`.
