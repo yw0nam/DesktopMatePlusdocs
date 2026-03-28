@@ -37,6 +37,7 @@ Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/f
 - **IPC trigger**: write task file to `ipc/{group}/tasks/` to dispatch a NanoClaw task directly
 - **Per-group config**: `groups/{name}/CLAUDE.md` (isolated memory context)
 - **Skill 적용 후 코드 복원**: 스킬을 `skill/{name}` 브랜치에 커밋한 뒤, `develop`/`main`에는 해당 소스를 두지 않는다. 설치 시에만 merge, 제거 시 원상복구. SKILL.md의 Removal 섹션을 따른다.
+- **Working Branch**: 포크해온 레포임. 내가 사용하는 브랜치는 develop 브랜치임. develop 브랜치에서 작업한 뒤, skill/{name} 브랜치로 cherry-pick → PR → merge → develop에 반영되는 흐름.
 
 ## PRD Tracking
 
