@@ -111,6 +111,14 @@ For each approved `cc:TODO` task, annotate in Plans.md and mirror to each sub-re
 
 Only distribute to repos that have assigned tasks for this session.
 
+After mirroring, **commit Plans.md in each affected sub-repo immediately**:
+
+```bash
+cd nanoclaw/  && git add Plans.md && git commit -m "docs(plans): add <feature> tasks cc:TODO"
+cd backend/   && git add Plans.md && git commit -m "docs(plans): add <feature> tasks cc:TODO"
+# workspace root Plans.md is committed in Phase 9
+```
+
 ---
 
 ## Phase 5 — Worktree Setup
@@ -214,13 +222,24 @@ git branch -d feat/{slug}   # only after successful merge
 ## Phase 9 — Complete and Save Memory
 
 1. Update Plans.md: change `cc:TODO` → `cc:DONE` for all completed tasks
-2. Clean up Agent Team: ask leader to `Clean up the team`
-3. Run `/cq:reflect` — mines the session for knowledge units worth sharing:
+2. **Commit Plans.md in every affected repo** — Plans.md updates are code changes; they must be committed.
+
+```bash
+# Sub-repos first (each in their own git repo)
+cd nanoclaw/   && git add Plans.md && git commit -m "docs(plans): mark <tasks> as DONE"
+cd backend/    && git add Plans.md && git commit -m "docs(plans): mark <tasks> as DONE"
+
+# Workspace root last
+cd DesktopMatePlus/  && git add Plans.md && git commit -m "docs(plans): mark <tasks> as DONE"
+```
+
+3. Clean up Agent Team: ask leader to `Clean up the team`
+4. Run `/cq:reflect` — mines the session for knowledge units worth sharing:
    - Pitfalls encountered and how they were resolved
    - Patterns that worked well and should be repeated
    - Cross-repo coordination decisions
-4. For each approved candidate, call `mcp: cq.propose(...)` to save to the knowledge store
-5. Save auto-memory (user/feedback/project types per memory system rules)
+5. For each approved candidate, call `mcp: cq.propose(...)` to save to the knowledge store
+6. Save auto-memory (user/feedback/project types per memory system rules)
 
 ---
 
@@ -244,7 +263,7 @@ git branch -d feat/{slug}   # only after successful merge
 1. Skill: superpowers:brainstorming
 2. Skill: claude-code-harness:harness-plan   ← brainstorm output as spec
 3. Skill: claude-code-harness:harness-review  ← iterate until approved
-4. Mirror tasks to sub-repo Plans.md
+4. Mirror tasks to sub-repo Plans.md + commit Plans.md in each sub-repo
 5. Create worktrees: cd {repo}/ && git worktree add ../worktrees/{repo}-{slug} feat/{slug}
 6. Spawn Agent Team → work inside worktrees → /harness-work breezing --no-discuss all
 7. Review reports → /harness-release per repo
