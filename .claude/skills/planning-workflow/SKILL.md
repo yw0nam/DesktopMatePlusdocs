@@ -13,6 +13,8 @@ Full 9-phase workflow for DesktopMatePlus cross-repo features.
 ```
 [Feature request / idea]
         ↓
+> **PM Agent handles Phase 1–3.** Lead Agent enters at Phase 4 upon receiving `SPEC_READY` from PM Agent. If you are the Lead Agent, skip to Phase 4.
+
 Phase 1: superpowers:brainstorming
         ↓
 [Brainstorm output = spec.md ]
@@ -52,7 +54,11 @@ Phase 9: Complete and save memory
 
 ---
 
-## Phase 1 — Brainstorm
+## Phase 1 — Brainstorm (PM Agent only)
+
+**Lead Agent skips this phase.** PM Agent invokes `superpowers:brainstorming` and drives the spec through Phase 1–3 independently.
+
+Lead Agent waits for `SPEC_READY` from PM Agent before proceeding to Phase 4.
 
 **Before brainstorming**, query cq for known pitfalls in the relevant domain:
 
@@ -95,6 +101,23 @@ Invoke `claude-code-harness:harness-review` with the spec.md as input.
 - If feedback → revise tasks in Plans.md, re-review
 - Loop Phase 2 ↔ Phase 3 until reviewer approves
 - **Do not proceed to Phase 4 without approval**
+
+---
+
+## Lead Agent Entry Point — Receiving SPEC_READY
+
+When Lead Agent receives `SPEC_READY` from PM Agent:
+
+1. Read the referenced spec file
+2. Read Plans.md `cc:TODO` tasks — these are already reviewed and approved
+3. Proceed directly to Phase 4
+
+```
+SPEC_READY received:
+spec: docs/superpowers/specs/{date}-{feature}-design.md
+plans: Plans.md
+approved-by: backend-team, nanoclaw-team
+```
 
 ---
 
@@ -261,11 +284,15 @@ cd DesktopMatePlus/  && git add Plans.md && git commit -m "docs(plans): mark <ta
 ## Quick Reference
 
 ```
+[PM Agent — Phase 1–3]
 0. cq.query(domain=[...])                        ← check known pitfalls first
 1. Skill: superpowers:brainstorming
-2. Skill: claude-code-harness:harness-plan   ← brainstorm output as spec
-3. Skill: claude-code-harness:harness-review  ← iterate until approved
-4. TaskCreate for each cc:TODO task (shared task list) — Plans.md cc:TODO stays as record
+2. Write spec.md + Plans.md cc:TODO tasks
+3. SendMessage SPEC_REVIEW_REQUEST → teammates → loop until all APPROVED
+4. SendMessage SPEC_READY → Lead Agent
+
+[Lead Agent — Phase 4–9]
+4. TaskCreate for each cc:TODO task (shared task list)
 5. Create worktrees: cd {repo}/ && git worktree add ../worktrees/{repo}-{slug} feat/{slug}
 6. Spawn Agent Team from DesktopMatePlus → teammates self-assign tasks → harness-work
 7. Review reports → /harness-release per repo
