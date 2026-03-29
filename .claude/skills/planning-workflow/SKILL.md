@@ -15,15 +15,15 @@ Full 9-phase workflow for DesktopMatePlus cross-repo features.
         ↓
 Phase 1: superpowers:brainstorming
         ↓
-[Brainstorm output = spec.md]
+[Brainstorm output = spec.md ]
         ↓
-Phase 2: claude-code-harness:harness-plan (spec.md as input)
+Phase 2: superpowers:plan (spec.md as input)
+        ↓
+[Make executabe tasks in docs/superpowers/plans.md]
+        ↓
+Phase 3: claude-code-harness:harness-plan (plan.md as input)
         ↓
 [Structured tasks in Plans.md with [target:] markers]
-        ↓
-Phase 3: claude-code-harness:harness-review (spec.md as input)
-        ↓
-[Review feedback → iterate Phase 2 until approved]
         ↓
 Phase 4: Distribute TODOs to sub-repos
         ↓
@@ -100,24 +100,21 @@ Invoke `claude-code-harness:harness-review` with the spec.md as input.
 
 ## Phase 4 — Distribute
 
-For each approved `cc:TODO` task, annotate in Plans.md and mirror to each sub-repo's Plans.md:
-
-| Target | Plans.md annotation | Sub-repo Plans.md |
-|--------|--------------------|--------------------|
-| `backend/` | `[target: backend/]` | `backend/Plans.md` |
-| `nanoclaw/` | `[target: nanoclaw/]` | `nanoclaw/Plans.md` |
-| `desktop-homunculus/` | `[target: desktop-homunculus/]` | `desktop-homunculus/Plans.md` |
-| `workspace scripts/` | `[target: workspace scripts/]` | Plans.md only |
-
-Only distribute to repos that have assigned tasks for this session.
-
-After mirroring, **commit Plans.md in each affected sub-repo immediately**:
+For each approved `cc:TODO` task in Plans.md, create a task in the shared task list:
 
 ```bash
-cd nanoclaw/  && git add Plans.md && git commit -m "docs(plans): add <feature> tasks cc:TODO"
-cd backend/   && git add Plans.md && git commit -m "docs(plans): add <feature> tasks cc:TODO"
-# workspace root Plans.md is committed in Phase 9
+TaskCreate(
+  subject: "{task-id}: {description}",
+  description: "{repo}/ directory. See Plans.md {task-id} for full spec. DoD: {acceptance criteria}",
+  metadata: { target: "{repo}", planRef: "{task-id}" }
+)
 ```
+
+Set `addBlockedBy` for tasks that have `Depends:` entries in Plans.md.
+
+Plans.md `cc:TODO` markers remain unchanged — they are the permanent planning record.
+
+Only create tasks for repos that have assigned work for this session.
 
 ---
 
@@ -153,20 +150,23 @@ Spawn Agent Team (requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in `.claude/
 **Teammate prompt template** — keep it lean. Do NOT include implementation instructions:
 
 ```
-You are the {repo} teammate.
+You are the {team-name} teammate.
+(Exact names: backend-team | nanoclaw-team | dh-team)
 
-1. Read /home/.../{repo}/CLAUDE.md (the original repo, not the worktree)
-2. Load your workflow skill: /teammate-workflow
-3. Your worktree: worktrees/{repo}-{slug}/
-4. Run: /harness-work breezing --no-discuss all
+Your worktree: /home/spow12/codes/2025_lower/worktrees/{repo}-{slug}/
+
+1. Load your workflow skill: /teammate-workflow
+2. Self-assign tasks from the shared task list tagged for your repo
+3. Run harness-work for each assigned task (inside your worktree)
+4. Apply Contract Review Protocol when contract-affecting changes are detected
 5. Report back when done: tasks completed, files changed, test results, blockers
 ```
 
 **Critical rules for writing teammate prompts:**
 - NEVER include step-by-step implementation instructions — that defeats harness-work
 - NEVER specify which files to create or what code to write
-- The prompt should only specify: repo path, worktree path, and "run harness-work"
-- harness-work reads Plans.md and executes tasks autonomously
+- ALWAYS use exact team names (`backend-team`, `nanoclaw-team`, `dh-team`) — required for SendMessage routing
+- Teammates are spawned from DesktopMatePlus and auto-load workspace skills — no sub-repo skill copies needed
 
 Each teammate is a full independent Claude Code session.
 Use `Shift+Down` to cycle teammates, click pane to message directly.
@@ -265,9 +265,9 @@ cd DesktopMatePlus/  && git add Plans.md && git commit -m "docs(plans): mark <ta
 1. Skill: superpowers:brainstorming
 2. Skill: claude-code-harness:harness-plan   ← brainstorm output as spec
 3. Skill: claude-code-harness:harness-review  ← iterate until approved
-4. Mirror tasks to sub-repo Plans.md + commit Plans.md in each sub-repo
+4. TaskCreate for each cc:TODO task (shared task list) — Plans.md cc:TODO stays as record
 5. Create worktrees: cd {repo}/ && git worktree add ../worktrees/{repo}-{slug} feat/{slug}
-6. Spawn Agent Team → work inside worktrees → /harness-work breezing --no-discuss all
+6. Spawn Agent Team from DesktopMatePlus → teammates self-assign tasks → harness-work
 7. Review reports → /harness-release per repo
 8. Commit in worktree → merge to working branch → remove worktree
 9. cc:DONE + /cq:reflect → cq.propose(...) + save memory
