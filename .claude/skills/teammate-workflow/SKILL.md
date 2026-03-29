@@ -51,8 +51,9 @@ harness-work will:
 - Mark the task complete
 
 After harness-work completes, update Plans.md:
-- Find the matching `cc:TODO` entry (use `planRef` from the task metadata)
-- Change it to `cc:DONE`
+- Run `TaskGet({taskId})` to read the task's `metadata.planRef` field (e.g. `"OBS-1"`)
+- Find the matching `cc:TODO` entry in Plans.md and change it to `cc:DONE`
+Note: harness-work updates the shared task list; Plans.md cc:DONE is a manual step.
 
 ### Step 3a — Contract Review (after each task)
 
@@ -69,6 +70,8 @@ After harness-work completes each task, scan the changed files.
 - Intra-repo service changes with no external interface impact
 
 **Judgment rule**: When uncertain, trigger (over-trigger allowed, under-trigger forbidden).
+
+Canonical team names for SendMessage: `backend-team`, `nanoclaw-team`, `dh-team`.
 
 #### Sending a CONTRACT_REVIEW_REQUEST
 
@@ -106,7 +109,8 @@ reason: <required if REJECTED — must include specific revision direction>
 
 1. Resume paused tasks
 2. Append the contract to `docs/contracts/{consumer}-{provider}.md`
-   (create file if it does not exist — follow format in `docs/contracts/README.md`)
+   (if the file does not exist, create it following the format in `docs/contracts/README.md`;
+   if that file is also missing, use the entry format: `## METHOD /path\n- description: ...\n- confirmed: DATE, approved-by: TEAM`)
 
 #### On REJECTED (round 1)
 
@@ -127,6 +131,8 @@ impact: revised impact
 
 ```
 CONTRACT_ESCALATION
+to: lead-agent
+from: {your-team-name}
 Two rounds of peer review failed. Arbitration needed.
 Round 1 request: [paste]
 Round 1 response: [paste]
