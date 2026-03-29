@@ -150,6 +150,33 @@ When all your tasks are complete, report:
 
 ---
 
+## Handling SPEC_REVIEW_REQUEST from PM Agent
+
+When a `SPEC_REVIEW_REQUEST` arrives via SendMessage while you are executing tasks:
+
+1. Pause your current task at the next natural break point
+2. Read the linked `spec` file and the `cc:TODO` tasks in Plans.md tagged `[target: your-repo/]`
+3. Assess two things only:
+   - **Feasibility**: Can this actually be implemented in your repo given current architecture?
+   - **Constraint conflicts**: Does this violate GP rules, existing patterns, or missing dependencies?
+4. Respond immediately via SendMessage:
+
+```
+SPEC_REVIEW_RESPONSE
+from: {your-team-name}
+verdict: APPROVED | CHANGES_REQUESTED
+concerns:
+  - (if CHANGES_REQUESTED) specific problem + suggested fix
+```
+
+5. Resume your current task
+
+**Review scope:** implementation feasibility and constraint conflicts only.
+**Out of scope:** design taste, style preferences, unrelated improvements.
+**Response time:** immediately — do not let PM Agent wait more than one task cycle.
+
+---
+
 ## Golden Principles (enforced by harness-work)
 
 See `docs/GOLDEN_PRINCIPLES.md` in workspace root.
