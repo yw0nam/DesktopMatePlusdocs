@@ -56,8 +56,7 @@
 ### Phase 5: 메트릭 관측 가능성 (Metrics Observability)
 
 <!-- cc:TODO -->
-- [x] **MET-1: 앱 메트릭 노출** — FastAPI에 Prometheus 메트릭 엔드포인트(`/metrics`) 추가. request latency, error rate, active connections. DoD: `GET /metrics` → Prometheus 포맷 응답. [target: backend/]
-- [x] **MET-2: 메트릭 쿼리 스크립트** — `scripts/metrics.sh` — worktree별 메트릭 조회 + 임계값 초과 알림. DoD: `scripts/metrics.sh --latency p99` 정상 출력. Depends: MET-1. [target: backend/]
+- ~~**MET-1/2**~~ — removed (over-engineered for current scope)
 
 ### Phase 6: 품질 등급 추적 (Quality Scoring)
 
