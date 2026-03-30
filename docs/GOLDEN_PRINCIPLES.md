@@ -142,6 +142,20 @@ Direct commits to `main`/`develop`/`feat/claude_harness` are forbidden during im
 
 ---
 
+## GP-11: Archive Freshness
+
+**Rule**: Completed spec/plan files must be moved to `docs/superpowers/completed/` once all Plans.md tasks referencing them are `cc:DONE`.
+
+- `spec-ref:` fields in Plans.md are parsed to identify referenced files.
+- If ALL tasks referencing a spec-ref are `[x]` (done) and the file is still in `docs/superpowers/specs/` or `docs/superpowers/plans/` (active directories), it triggers a warning.
+- Files referenced by any `[ ]` (TODO/WIP) task are exempt.
+
+**Verify**: `scripts/garden.sh --gp GP-11` — lists stale files that should be archived.
+
+**Severity**: WARN — garden.sh reports only; quality-team handles the actual `git mv` to `completed/`.
+
+---
+
 ## Appendix: Gardening Agent Usage
 
 The Background Gardening Agent runs each principle's **Verify** command and opens a PR when violations are found.
