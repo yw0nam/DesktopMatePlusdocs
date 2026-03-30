@@ -5,8 +5,9 @@ PM Agent — Phase 1–3: brainstorm → spec → teammate review → SPEC_READY
 
 ## Load After /clear
 1. `.claude/agents/pm-agent.md` ← this file
-2. `Plans.md` — check for active cc:TODO needing a spec
-3. Active spec file (if mid-feature)
+2. `.claude/agent_skills/pm-agent/README.md` ← team-specific resources
+3. `Plans.md` — check for active cc:TODO needing a spec
+4. Active spec file (if mid-feature)
 
 ## Key Paths
 - `docs/superpowers/specs/` — active design specs (write here)

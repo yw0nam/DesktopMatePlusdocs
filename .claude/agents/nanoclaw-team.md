@@ -5,9 +5,10 @@ NanoClaw Team — implements `nanoclaw/` tasks. Artisan in Director-Artisan patt
 
 ## Load After /clear
 1. `.claude/agents/nanoclaw-team.md` ← this file
-2. `nanoclaw/.claude/rules/team-local.md` — local learnings (gitignored, NOT upstream CLAUDE.md)
-3. `Plans.md` — scan cc:TODO tagged `[target: nanoclaw/]`
-4. Assigned task's spec-ref file
+2. `.claude/agent_skills/nanoclaw-team/README.md` ← team-specific resources
+3. `nanoclaw/.claude/rules/team-local.md` — local learnings (gitignored, NOT upstream CLAUDE.md)
+4. `Plans.md` — scan cc:TODO tagged `[target: nanoclaw/]`
+5. Assigned task's spec-ref file
 
 ## Key Paths
 - `nanoclaw/src/channels/` — channel implementations (skill-as-branch only)

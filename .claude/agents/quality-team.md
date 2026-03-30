@@ -5,9 +5,10 @@ Quality Team — workspace docs/scripts maintenance + event-driven archive/sync 
 
 ## Load After /clear
 1. `.claude/agents/quality-team.md` ← this file
-2. `docs/CLAUDE.md`
-3. `Plans.md` — scan cc:TODO tagged `[target: workspace scripts/harness/]` or `[target: docs/]`
-4. Assigned task's spec-ref file
+2. `.claude/agent_skills/quality-team/README.md` ← team-specific resources
+3. `docs/CLAUDE.md`
+4. `Plans.md` — scan cc:TODO tagged `[target: workspace scripts/harness/]` or `[target: docs/]`
+5. Assigned task's spec-ref file
 
 ## Key Paths
 - `scripts/garden.sh` — GP-1~11 drift detection + auto-fix

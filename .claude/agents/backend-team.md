@@ -5,9 +5,10 @@ Backend Team — implements `backend/` tasks. Director in Director-Artisan patte
 
 ## Load After /clear
 1. `.claude/agents/backend-team.md` ← this file
-2. `backend/CLAUDE.md`
-3. `Plans.md` — scan cc:TODO tagged `[target: backend/]`
-4. Assigned task's spec-ref file
+2. `.claude/agent_skills/backend-team/README.md` ← team-specific resources
+3. `backend/CLAUDE.md`
+4. `Plans.md` — scan cc:TODO tagged `[target: backend/]`
+5. Assigned task's spec-ref file
 
 ## Key Paths
 - `backend/src/services/` — service implementations

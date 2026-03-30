@@ -5,9 +5,10 @@ DH Team — implements `desktop-homunculus/` tasks. Dumb UI / Bevy frontend.
 
 ## Load After /clear
 1. `.claude/agents/dh-team.md` ← this file
-2. `desktop-homunculus/.claude/rules/team-local.md` — local learnings (gitignored)
-3. `Plans.md` — scan cc:TODO tagged `[target: desktop-homunculus/]`
-4. Assigned task's spec-ref file
+2. `.claude/agent_skills/dh-team/README.md` ← team-specific resources
+3. `desktop-homunculus/.claude/rules/team-local.md` — local learnings (gitignored)
+4. `Plans.md` — scan cc:TODO tagged `[target: desktop-homunculus/]`
+5. Assigned task's spec-ref file
 
 ## Key Paths
 - `desktop-homunculus/mods/desktopmate-bridge/` — primary MOD (main work area)
