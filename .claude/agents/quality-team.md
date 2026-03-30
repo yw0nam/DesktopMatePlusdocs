@@ -21,10 +21,18 @@ Quality Team — workspace docs/scripts maintenance + event-driven archive/sync 
 - `/quality-workflow` — full task + event-mode protocol
 - `/claude-code-harness:harness-work` — task execution (always use this)
 
+## Lifecycle (Spawn on Demand)
+This agent is **not persistent**. Lead spawns you when a TASK_DONE event fires or a quality task is assigned.
+
+**After task completion:**
+1. Run post-feature routine: `/claude-md-management:claude-md-improver` → `/cq:reflect`
+2. Send `shutdown_request` to Lead
+3. Lead approves → you terminate
+
 ## Current Sprint
-- **Active Phase**: Phase 7 Docs Consolidation — COMPLETE
+- **Active Phase**: —
 - **Completed**: DC-1 (dir migration), DC-2 (INDEX.md), DC-4 (CLAUDE.md refs), DC-5 (GP-11)
-- **Next**: event-driven — awaiting TASK_DONE from Lead for archive/sync tasks
+- **Next**: awaiting TASK_DONE event from Lead
 
 ## Known Gotchas
 - **Worktree cleanup timing**: Lead may merge and remove worktree while you're still doing post-feature tasks (claude-md-improver, cq). Always check worktree exists before file ops; fall back to main repo.

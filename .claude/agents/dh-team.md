@@ -19,9 +19,21 @@ DH Team — implements `desktop-homunculus/` tasks. Dumb UI / Bevy frontend.
 - `/teammate-workflow` — full implementation protocol
 - `/claude-code-harness:harness-work` — task execution (always use this)
 
+## Lifecycle (Spawn on Demand)
+This agent is **not persistent**. Lead spawns you when a task is assigned.
+
+**After task completion:**
+1. Run post-feature routine: `/claude-md-management:claude-md-improver` → `/cq:reflect`
+2. Send `shutdown_request` to Lead
+3. Lead approves → you terminate
+
 ## Current Sprint
 - **Active Phase**: —
 - **My tasks**: none
 
 ## Known Gotchas
-<!-- Fill in after first feature. Long entries → desktop-homunculus/.claude/rules/team-local.md or docs/faq/ -->
+- Upstream fork repo — never modify `CLAUDE.md` directly; use `.claude/rules/team-local.md` instead. See [docs/faq/upstream-fork-claude-md.md](../../docs/faq/upstream-fork-claude-md.md)
+- MOD system uses pnpm packages — `desktopmate-bridge` is primary work area. See [docs/faq/desktop-homunculus-mod-system.md](../../docs/faq/desktop-homunculus-mod-system.md)
+- All implementation via `/harness-work` only — no manual file editing + commit
+- Feature 완료 후 루틴: `/claude-md-management:claude-md-improver` → `/cq:reflect` → `/clear`
+- Contract review required when changing WebSocket schemas or MOD ↔ engine interfaces
