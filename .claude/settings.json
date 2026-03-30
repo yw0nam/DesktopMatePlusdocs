@@ -1,0 +1,36 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "teammateMode": "tmux",
+  "allowedTools": [
+    "mcp__plugin_cq_cq__query",
+    "mcp__plugin_cq_cq__propose",
+    "mcp__plugin_cq_cq__confirm",
+    "mcp__plugin_cq_cq__flag",
+    "mcp__plugin_cq_cq__reflect",
+    "mcp__plugin_cq_cq__status",
+    "mcp__plugin_code-review-graph_code-review-graph__semantic_search_nodes_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__query_graph_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__get_impact_radius_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__get_review_context_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__build_or_update_graph_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__detect_changes_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__cross_repo_search_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__find_large_functions_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__get_architecture_overview_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__get_flow_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__get_affected_flows_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__list_flows_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__list_graph_stats_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__list_repos_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__list_communities_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__get_community_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__get_wiki_page_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__generate_wiki_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__get_docs_section_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__embed_graph_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__refactor_tool",
+    "mcp__plugin_code-review-graph_code-review-graph__apply_refactor_tool"
+  ]
+}
