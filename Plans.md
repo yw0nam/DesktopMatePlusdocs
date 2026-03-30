@@ -41,6 +41,12 @@
 - [x] **AS-1: 디렉토리 구조 + README.md 생성** — `.claude/agent_skills/` 루트 README.md(컨벤션 + 스킬 작성 가이드) + 5개 팀 디렉토리(`backend-team/`, `nanoclaw-team/`, `dh-team/`, `quality-team/`, `pm-agent/`) 각각 README.md 인덱스 생성. 기존 `dh_team/` → `dh-team/`으로 rename, browser-use SKILL.md 이동. DoD: 5개 팀 README.md 존재, 루트 README.md에 컨벤션 + `superpowers:writing-skills` 참조 명시, `dh_team/` 삭제됨. spec-ref: docs/superpowers/specs/2026-03-30-agent-skills-design.md. [target: workspace/]
 - [x] **AS-2: agents/*.md "Load After /clear" 업데이트** — 5개 에이전트 컨텍스트 파일(`backend-team.md`, `nanoclaw-team.md`, `dh-team.md`, `quality-team.md`, `pm-agent.md`)의 "Load After /clear" 2번 위치에 `.claude/agent_skills/{team}/README.md` 항목 추가. DoD: 5개 agents/*.md에 agent_skills 로드 항목 존재, 기존 항목 순번 조정 완료. Depends: AS-1. spec-ref: docs/superpowers/specs/2026-03-30-agent-skills-design.md. [target: workspace/]
 
+### Phase 10: Plans.md 자동 아카이빙 (Auto-Archive)
+
+<!-- cc:TODO -->
+- [x] **AA-1: garden.sh Plans.md 자동 아카이빙 함수** — Phase 내 모든 태스크가 `[x]`이면 해당 Phase 블록을 `docs/superpowers/completed/plans/` 파일로 추출하고, Plans.md에는 Phase 제목 + archived 링크만 남긴다. 완료된 Phase가 참조하는 spec/plan 파일도 `completed/specs/`, `completed/plans/`로 이동. DoD: `garden.sh --gp GP-12` 실행 시 아카이빙 대상 감지, `--dry-run` 없이 실행 시 자동 이동 + Plans.md 갱신. [target: workspace scripts/harness/]
+- [x] **AA-2: GP-12 + pre-commit hook 등록** — `docs/GOLDEN_PRINCIPLES.md`에 GP-12 (Plans.md Auto-Archive) 추가. `.pre-commit-config.yaml`에 garden.sh archive check 등록. DoD: `garden.sh --gp GP-12` 정상 출력, pre-commit hook에서 감지 실행. Depends: AA-1. [target: workspace scripts/harness/]
+
 ## Completed
 
 ### Phase 2: 관측 가능성 레이어 (2026-03-28) — [details](docs/superpowers/completed/plans/phase-2-observability.md)
