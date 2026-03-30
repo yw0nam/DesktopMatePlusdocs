@@ -86,11 +86,12 @@ Never skip phases. Never write tasks to Plans.md without a brainstorm spec first
 
 > **MANDATORY**: Implementation MUST use Agent Teams spawned **from DesktopMatePlus**. Teammates auto-load workspace CLAUDE.md and skills at creation time.
 >
-> **Standard team members (all 4 must be spawned, team name: `desktopmate-plus`):**
+> **Standard team members (all 5 must be spawned, team name: `desktopmate-plus`):**
 > - `pm-agent` — Phase 1–3: brainstorm → spec → review → SPEC_READY (skill: /pm-workflow)
 > - `backend-team` — `backend/` implementation (skill: /teammate-workflow)
 > - `nanoclaw-team` — `nanoclaw/` implementation (skill: /teammate-workflow)
 > - `dh-team` — `desktop-homunculus/` implementation (skill: /teammate-workflow)
+> - `quality-team` — workspace docs/scripts maintenance, archive, INDEX.md sync (skill: /quality-workflow; event-driven via TASK_DONE)
 >
 > **Sub-agent rules:**
 > - Lead Agent: `Agent` tool **FORBIDDEN** for implementation — bypasses repo isolation
