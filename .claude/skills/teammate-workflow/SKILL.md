@@ -140,9 +140,42 @@ Round 2 request: [paste]
 Round 2 response: [paste]
 ```
 
-### Step 4 — Report back to Lead Agent
+### Step 4 — Post-feature routine (before reporting)
 
-When all your tasks are complete, report:
+When all tasks for a feature (Plans.md Phase) are complete, run this routine **before** reporting to Lead:
+
+**A. Update CLAUDE.md learnings:**
+```
+/claude-md-management:claude-md-improver
+```
+Record learnings, confusions, and patterns from this session.
+- `nanoclaw/`, `desktop-homunculus/`: write to `.claude/rules/team-local.md` (gitignored) — never edit upstream CLAUDE.md directly.
+- `backend/`: update `backend/CLAUDE.md` directly.
+
+**B. Save knowledge to cq (Stack Overflow for agents):**
+```
+/cq:reflect
+```
+Then `cq.propose(...)` for each valuable learning:
+- Non-obvious behaviors encountered
+- Mistakes that could repeat
+- Architectural decisions made
+- Differences between similar concepts
+
+When a past KU helped you: `cq.confirm(id)`. When a KU was wrong: `cq.flag(id, reason)`.
+
+**C. Clear context:**
+```
+/clear
+```
+Keep context clean between features. After clearing, reload only:
+- Your repo's CLAUDE.md
+- Plans.md (current cc:TODO tasks)
+- The relevant spec-ref file
+
+### Step 5 — Report back to Lead Agent
+
+After the post-feature routine, report:
 - Tasks completed (list with task IDs)
 - Files created/modified
 - Test/lint results

@@ -55,6 +55,29 @@ When all tasks complete:
 - Verification results (check_docs / garden dry-run)
 - Any blockers
 
+### Step 4 — Post-feature routine (before reporting)
+
+When all tasks for a feature (Plans.md Phase) are complete, run this routine **before** reporting to Lead:
+
+**A. Update CLAUDE.md learnings:**
+```
+/claude-md-management:claude-md-improver
+```
+Record learnings, confusions, and patterns from this session in workspace root `CLAUDE.md` or `docs/CLAUDE.md`.
+
+**B. Save knowledge to cq:**
+```
+/cq:reflect
+```
+Then `cq.propose(...)` for valuable learnings (docs migration gotchas, garden.sh patterns, GP violations found).
+When a past KU helped: `cq.confirm(id)`. When wrong: `cq.flag(id, reason)`.
+
+**C. Clear context:**
+```
+/clear
+```
+After clearing, reload only: workspace CLAUDE.md + Plans.md + relevant spec-ref.
+
 ---
 
 ## Operation Mode 2 — Event Mode (TASK_DONE Protocol)
