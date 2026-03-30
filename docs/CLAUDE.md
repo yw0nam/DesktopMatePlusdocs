@@ -27,6 +27,11 @@
 - 문서 수정 시 Appendix에 PatchNote(날짜 + 변경 내용) 추가 (backend docs만 적용)
 - 파일명: `kebab-case` 또는 `UPPER_SNAKE_CASE`
 
+## 아카이브 관리
+
+- **활성 vs 완료 분리**: `superpowers/specs/`, `plans/` = 활성만. 완료 시 `completed/`로 이동.
+- **GP-11 검증**: `scripts/garden.sh --gp GP-11` — cc:DONE 태스크의 spec-ref가 활성 디렉토리에 남아있으면 WARN.
+
 ## 자주 참조하는 문서
 
 - [PRD Index](./superpowers/INDEX.md) — 현재 구현 현황 한눈에
