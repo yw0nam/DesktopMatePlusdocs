@@ -156,8 +156,22 @@ Direct commits to `main`/`develop`/`feat/claude_harness` are forbidden during im
 
 ---
 
+## GP-12: Plans.md Auto-Archive
+
+**Rule**: Completed Phases in Plans.md (all tasks `[x]`) must be archived to `docs/superpowers/completed/plans/`. Plans.md retains only the Phase title with an `[archived]` link.
+
+- Referenced `spec-ref:` files are moved to `completed/specs/` or `completed/plans/`.
+- Already-archived Phases (with `archived` or `details` in the header) are skipped.
+- garden.sh detects and auto-archives in non-dry-run mode.
+
+**Verify**: `scripts/garden.sh --gp GP-12` — lists unarchived completed Phases.
+
+**Severity**: WARN — garden.sh auto-archives; no merge block.
+
+---
+
 ## Appendix: Gardening Agent Usage
 
 The Background Gardening Agent runs each principle's **Verify** command and opens a PR when violations are found.
-Priority order for automated remediation: GP-10 → GP-3 → GP-2 → GP-7 → GP-8.
+Priority order for automated remediation: GP-10 → GP-3 → GP-12 → GP-2 → GP-7 → GP-8.
 GP-1, GP-5, GP-6 require human review before auto-merge.

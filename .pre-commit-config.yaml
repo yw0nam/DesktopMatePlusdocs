@@ -6,3 +6,9 @@ repos:
         entry: scripts/check_docs.sh
         language: script
         pass_filenames: false
+      - id: check-archive
+        name: Check Plans.md archive freshness
+        entry: scripts/garden.sh --gp GP-12 --dry-run
+        language: script
+        pass_filenames: false
+        files: Plans.md
