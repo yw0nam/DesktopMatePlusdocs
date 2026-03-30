@@ -345,6 +345,60 @@ verify_gp11() {
   fi
 }
 
+verify_gp12() {
+  # Plans.md Auto-Archive — WARN
+  # Detect completed Phases that should be archived
+  local repo="$1"
+  if [[ "$repo" != "workspace" ]]; then return; fi
+
+  local plans_file="$WORKSPACE_ROOT/Plans.md"
+  [[ -f "$plans_file" ]] || { add_result GP-12 workspace WARN SKIP "Plans.md not found"; return; }
+
+  local stale_phases=()
+  local current_phase=""
+  local phase_has_todo=false
+  local phase_has_tasks=false
+  local phase_is_archived=false
+
+  while IFS= read -r line; do
+    if echo "$line" | grep -qP '^### Phase \d+:'; then
+      # Check previous phase
+      if [[ -n "$current_phase" && "$phase_has_tasks" == true && "$phase_has_todo" == false && "$phase_is_archived" == false ]]; then
+        stale_phases+=("$current_phase")
+      fi
+      current_phase="$line"
+      phase_has_todo=false
+      phase_has_tasks=false
+      phase_is_archived=false
+      if echo "$line" | grep -qE 'archived|details'; then
+        phase_is_archived=true
+      fi
+    fi
+    if echo "$line" | grep -qP '^\s*-\s*\[\s*\]'; then
+      phase_has_todo=true
+      phase_has_tasks=true
+    fi
+    if echo "$line" | grep -qP '^\s*-\s*\[x\]'; then
+      phase_has_tasks=true
+    fi
+  done < "$plans_file"
+
+  # Check last phase
+  if [[ -n "$current_phase" && "$phase_has_tasks" == true && "$phase_has_todo" == false && "$phase_is_archived" == false ]]; then
+    stale_phases+=("$current_phase")
+  fi
+
+  if [[ ${#stale_phases[@]} -eq 0 ]]; then
+    add_result GP-12 workspace WARN PASS "no completed phases pending archive"
+  else
+    local details=""
+    for p in "${stale_phases[@]}"; do
+      details+="$p"$'\n'
+    done
+    add_result GP-12 workspace WARN FAIL "completed phases not archived: ${details}"
+  fi
+}
+
 verify_doc() {
   # Documentation freshness — Minor
   local repo="$1"
@@ -387,6 +441,7 @@ run_detection verify_gp8  GP-8  workspace
 run_detection verify_gp9  GP-9  backend
 run_detection verify_gp10 GP-10 backend nanoclaw
 run_detection verify_gp11 GP-11 workspace
+run_detection verify_gp12 GP-12 workspace
 run_detection verify_doc  DOC   workspace
 
 # ── Print detection results ────────────────────────────────────────
@@ -492,9 +547,131 @@ fi
 # ── Auto-fix phase (skip if --dry-run) ─────────────────────────────
 declare -A AUTO_FIXED=()
 
+archive_completed_phases() {
+  local plans_file="$WORKSPACE_ROOT/Plans.md"
+  [[ -f "$plans_file" ]] || return 0
+
+  local completed_dir="$WORKSPACE_ROOT/docs/superpowers/completed/plans"
+  mkdir -p "$completed_dir"
+
+  # Collect unarchived Phase headers and their line numbers
+  local -a phase_headers=()
+  local -a phase_line_nums=()
+  local line_num=0
+
+  while IFS= read -r line; do
+    (( line_num++ )) || true
+    if echo "$line" | grep -qP '^### Phase \d+:'; then
+      if echo "$line" | grep -qE 'archived|details'; then continue; fi
+      phase_headers+=("$line")
+      phase_line_nums+=("$line_num")
+    fi
+  done < "$plans_file"
+
+  [[ ${#phase_headers[@]} -gt 0 ]] || return 0
+
+  local total_lines
+  total_lines=$(wc -l < "$plans_file")
+
+  # Process in REVERSE order so line numbers stay valid after deletions
+  local i=${#phase_headers[@]}
+  while [[ $i -gt 0 ]]; do
+    (( i-- )) || true
+    local start="${phase_line_nums[$i]}"
+    local header="${phase_headers[$i]}"
+
+    # Find block end: next ### Phase or ## header, or EOF
+    local block_end="$total_lines"
+    local scan=$((start + 1))
+    while [[ "$scan" -le "$total_lines" ]]; do
+      local scan_line
+      scan_line=$(sed -n "${scan}p" "$plans_file")
+      if echo "$scan_line" | grep -qP '^###\s+Phase\s+\d+:'; then
+        block_end=$((scan - 1))
+        break
+      fi
+      if echo "$scan_line" | grep -qP '^## '; then
+        block_end=$((scan - 1))
+        break
+      fi
+      (( scan++ )) || true
+    done
+
+    # Extract block
+    local block
+    block=$(sed -n "${start},${block_end}p" "$plans_file")
+
+    # Check: has tasks and all complete
+    local has_tasks=false has_todo=false
+    if echo "$block" | grep -qP '^\s*-\s*\[x\]'; then has_tasks=true; fi
+    if echo "$block" | grep -qP '^\s*-\s*\[\s*\]'; then has_todo=true; fi
+
+    if [[ "$has_tasks" == true && "$has_todo" == false ]]; then
+      local phase_name
+      phase_name=$(echo "$header" | sed 's/^### //')
+
+      # Generate slug: phase-N + ASCII description only
+      local slug
+      slug=$(echo "$phase_name" | grep -oP 'Phase \d+' | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+      local desc_part
+      desc_part=$(echo "$phase_name" | LC_ALL=C sed 's/^Phase [0-9]*: *//' | LC_ALL=C sed 's/[^a-zA-Z0-9 -]//g' | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | LC_ALL=C sed 's/--*/-/g; s/-$//')
+      if [[ -n "$desc_part" ]]; then
+        slug="${slug}-${desc_part}"
+      fi
+
+      echo "[GP-12] Archiving: $phase_name"
+
+      # Write archive file
+      echo "$block" > "${completed_dir}/${slug}.md"
+
+      # Replace block in Plans.md with link using awk (safe for Unicode)
+      local link_line="### ${phase_name} — [archived](docs/superpowers/completed/plans/${slug}.md)"
+      local tmp_plans
+      tmp_plans=$(mktemp)
+      awk -v s="$start" -v e="$block_end" -v r="$link_line" \
+        'NR==s{print r;next} NR>s&&NR<=e{next} {print}' "$plans_file" > "$tmp_plans"
+      mv "$tmp_plans" "$plans_file"
+
+      # Move referenced spec/plan files to completed/
+      local spec_refs
+      spec_refs=$(echo "$block" | grep -oP 'spec-ref:\s*\K\S+' | sed 's/\.$//' | sort -u) || true
+      for ref in $spec_refs; do
+        local full_path="$WORKSPACE_ROOT/$ref"
+        if [[ -e "$full_path" && "$ref" != *"/completed/"* ]]; then
+          local dest_dir=""
+          if [[ "$ref" == *"/specs/"* ]]; then
+            dest_dir="$WORKSPACE_ROOT/docs/superpowers/completed/specs"
+          elif [[ "$ref" == *"/plans/"* ]]; then
+            dest_dir="$WORKSPACE_ROOT/docs/superpowers/completed/plans"
+          fi
+          if [[ -n "$dest_dir" ]]; then
+            mkdir -p "$dest_dir"
+            echo "  Moving $ref → completed/"
+            mv "$full_path" "$dest_dir/$(basename "$full_path")"
+          fi
+        fi
+      done
+
+      REPO_HAS_FIXES[workspace]=1
+      # Recalculate total_lines after block removal
+      total_lines=$(wc -l < "$plans_file")
+    fi
+  done
+}
+
 if [[ "$DRY_RUN" == false ]]; then
   echo ""
   echo "--- Auto-fix phase ---"
+
+  # GP-12: auto-archive completed Phases
+  for r in "${RESULTS[@]}"; do
+    IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
+    if [[ "$gp" == "GP-12" && "$status" == "FAIL" ]]; then
+      archive_completed_phases
+      AUTO_FIXED["GP-12|workspace"]=1
+      break
+    fi
+  done
 
   for r in "${RESULTS[@]}"; do
     IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
