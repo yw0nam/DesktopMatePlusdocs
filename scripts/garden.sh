@@ -294,6 +294,57 @@ verify_gp10() {
   fi
 }
 
+verify_gp11() {
+  # Archive Freshness — WARN
+  # spec-ref files referenced only by cc:DONE tasks should be in completed/, not active dirs
+  local repo="$1"
+  if [[ "$repo" != "workspace" ]]; then return; fi
+
+  local plans_file="$WORKSPACE_ROOT/Plans.md"
+  [[ -f "$plans_file" ]] || { add_result GP-11 workspace WARN SKIP "Plans.md not found"; return; }
+
+  # Collect all spec-ref values from cc:DONE tasks (lines with [x])
+  # and all spec-ref values from cc:TODO/WIP tasks (lines with [ ])
+  declare -A done_refs=()
+  declare -A active_refs=()
+
+  while IFS= read -r line; do
+    # Extract spec-ref value
+    local ref=""
+    ref=$(echo "$line" | grep -oP 'spec-ref:\s*\K\S+' | sed 's/\.$//')
+    [[ -n "$ref" ]] || continue
+
+    if echo "$line" | grep -qP '^\s*-\s*\[x\]'; then
+      done_refs["$ref"]=1
+    elif echo "$line" | grep -qP '^\s*-\s*\[\s*\]'; then
+      active_refs["$ref"]=1
+    fi
+  done < "$plans_file"
+
+  # Check: spec-ref in done_refs but NOT in active_refs, and file is in active directory
+  local stale_files=()
+  for ref in "${!done_refs[@]}"; do
+    # Skip if any active (TODO/WIP) task also references this spec
+    [[ -z "${active_refs[$ref]:-}" ]] || continue
+
+    # Check if file is in active directory (not under completed/)
+    local full_path="$WORKSPACE_ROOT/$ref"
+    if [[ -e "$full_path" ]] && [[ "$ref" != *"/completed/"* ]]; then
+      stale_files+=("$ref")
+    fi
+  done
+
+  if [[ ${#stale_files[@]} -eq 0 ]]; then
+    add_result GP-11 workspace WARN PASS "all completed spec-refs archived"
+  else
+    local details=""
+    for f in "${stale_files[@]}"; do
+      details+="$f"$'\n'
+    done
+    add_result GP-11 workspace WARN FAIL "stale files in active dir: ${details}"
+  fi
+}
+
 verify_doc() {
   # Documentation freshness — Minor
   local repo="$1"
@@ -335,6 +386,7 @@ run_detection verify_gp7  GP-7  workspace backend
 run_detection verify_gp8  GP-8  workspace
 run_detection verify_gp9  GP-9  backend
 run_detection verify_gp10 GP-10 backend nanoclaw
+run_detection verify_gp11 GP-11 workspace
 run_detection verify_doc  DOC   workspace
 
 # ── Print detection results ────────────────────────────────────────

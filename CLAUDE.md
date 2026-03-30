@@ -41,12 +41,12 @@ Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/f
 
 ## PRD Tracking
 
-Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).
+Feature tasks tracked in [`docs/superpowers/INDEX.md`](docs/superpowers/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).
 
 ### docs/ 규칙 요약
 
 - **본문 200줄 한도** — 초과 시 기능 단위로 분리, 인덱스 문서로 관리 ([전체 규칙](./docs/guidelines/DOCUMENT_GUIDE.md))
-- **`docs/superpowers/`**: git 미커밋 (로컬 작업 파일)
+- **`docs/superpowers/`**: 활성 specs/plans + INDEX.md + completed/ 아카이브. 커밋 대상
 - **`docs/feedback/`**: 읽기 전용, 수정 금지 (외부 피드백 원본 보존)
 
 ### FAQ 작성 규칙
@@ -86,11 +86,12 @@ Never skip phases. Never write tasks to Plans.md without a brainstorm spec first
 
 > **MANDATORY**: Implementation MUST use Agent Teams spawned **from DesktopMatePlus**. Teammates auto-load workspace CLAUDE.md and skills at creation time.
 >
-> **Standard team members (all 4 must be spawned, team name: `desktopmate-plus`):**
+> **Standard team members (all 5 must be spawned, team name: `desktopmate-plus`):**
 > - `pm-agent` — Phase 1–3: brainstorm → spec → review → SPEC_READY (skill: /pm-workflow)
 > - `backend-team` — `backend/` implementation (skill: /teammate-workflow)
 > - `nanoclaw-team` — `nanoclaw/` implementation (skill: /teammate-workflow)
 > - `dh-team` — `desktop-homunculus/` implementation (skill: /teammate-workflow)
+> - `quality-team` — workspace docs/scripts maintenance, archive, INDEX.md sync (skill: /quality-workflow; event-driven via TASK_DONE)
 >
 > **Sub-agent rules:**
 > - Lead Agent: `Agent` tool **FORBIDDEN** for implementation — bypasses repo isolation
@@ -101,7 +102,7 @@ See full details: `.claude/skills/planning-workflow/SKILL.md`
 
 ## Appendix
 
-- [PRD Index](./docs/prds/feature/INDEX.md): Current PRD task list and status.
+- [PRD Index](./docs/superpowers/INDEX.md): Current PRD task list and status.
 - [FAQ](./docs/faq/): Frequently Asked Questions about architectural decisions and design patterns in this workspace.
 - [NanoClaw Skills](./nanoclaw/.claude/skills/): Directory of existing NanoClaw skills with installation instructions.
 - [Data Flows](./docs/data_flow/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and desktop-homunculus.

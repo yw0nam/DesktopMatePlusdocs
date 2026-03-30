@@ -11,10 +11,10 @@
 | `faq/` | 반복 혼동 설계 결정 Q&A. 새 FAQ는 여기에 추가 후 루트 `CLAUDE.md` FAQ 섹션에 링크 |
 | `feedback/` | Gemini 등 외부 AI 검토 피드백 원본. 읽기 전용 참고자료 |
 | `guidelines/DOCUMENT_GUIDE.md` | 모든 문서의 작성 규칙 (200줄 한도, 표준 구조, Appendix 전략) |
-| `plans/` | 초기 구현 계획서 (구버전). 신규 계획은 `superpowers/plans/`에 작성 |
-| `prds/feature/INDEX.md` | **PRD 진행 현황** — 기능별 P0/P1/P2 우선순위 + TODO/DONE/VERIFY 상태 |
-| `superpowers/plans/` | Claude Code 세션용 구현 계획서 (YYYY-MM-DD 접두사) |
-| `superpowers/specs/` | 구현 전 설계 스펙 문서 (계획서의 원본 요구사항) |
+| `superpowers/INDEX.md` | **PRD 진행 현황** — 기능별 P0/P1/P2 우선순위 + TODO/DONE/VERIFY 상태 |
+| `superpowers/specs/` | 활성 설계 스펙 문서 (구현 전 요구사항) |
+| `superpowers/plans/` | 활성 구현 계획서 (YYYY-MM-DD 접두사) |
+| `superpowers/completed/` | 완료된 specs, plans, PRD task 문서 아카이브 |
 | `UI/UILayout.md` | desktopmate-bridge UI 레이아웃 참고 문서 |
 
 ## 문서 작성 규칙
@@ -29,7 +29,7 @@
 
 ## 자주 참조하는 문서
 
-- [PRD Index](./prds/feature/INDEX.md) — 현재 구현 현황 한눈에
+- [PRD Index](./superpowers/INDEX.md) — 현재 구현 현황 한눈에
 - [NanoClaw Task Dispatch FAQ](./faq/nanoclaw-task-dispatch.md) — IPC vs HTTP Channel 혼동 시
 - [Desktop Homunculus MOD 시스템 FAQ](./faq/desktop-homunculus-mod-system.md) — MOD 개발 시
 - [desktopmate-bridge Config Flow](./data_flow/desktopmate-bridge/CONFIG_FLOW.md) — dm-config 신호 흐름

@@ -1,6 +1,6 @@
 # Feature Task Index
 
-**Source PRD**: [required_feature_refined.md](./required_feature_refined.md)
+**Source PRD**: [required_feature_refined.md](./completed/prds/required_feature_refined.md)
 **Architecture**: Decoupled Director-Artisan (FastAPI + NanoClaw + Frontend)
 **Last Updated**: 2026-03-18 (Phase 3 시작: Multi-Channel Slack Support 구현 완료)
 
@@ -22,9 +22,9 @@ FastAPI(Director)가 사용자와의 실시간 대화를 처리하고, 무거운
 
 | # | Task | Priority | Status | Description |
 |---|---|---|---|---|
-| 01 | [DelegateTaskTool](./fastapi_backend/task-01-delegate-task-tool.md) | P0 | DONE | PersonaAgent가 NanoClaw로 작업을 위임하는 LangGraph Tool |
-| 02 | [Callback Endpoint](./fastapi_backend/task-02-callback-endpoint.md) | P0 | DONE | NanoClaw 결과 수신 + synthetic message 삽입 |
-| 03 | [Background Sweep](./fastapi_backend/task-03-background-sweep.md) | P1 | DONE | TTL 초과 task를 failed 처리하는 주기적 스캔 |
+| 01 | [DelegateTaskTool](./completed/prds/fastapi_backend/task-01-delegate-task-tool.md) | P0 | DONE | PersonaAgent가 NanoClaw로 작업을 위임하는 LangGraph Tool |
+| 02 | [Callback Endpoint](./completed/prds/fastapi_backend/task-02-callback-endpoint.md) | P0 | DONE | NanoClaw 결과 수신 + synthetic message 삽입 |
+| 03 | [Background Sweep](./completed/prds/fastapi_backend/task-03-background-sweep.md) | P1 | DONE | TTL 초과 task를 failed 처리하는 주기적 스캔 |
 | 04 | Multi-Channel Slack Support | P1 | DONE | Slack 채널 통합: webhook 수신 → Yuri 에이전트 → Slack 응답. channel_service, session_lock, process_message 공통 진입점, BackgroundSweepService Slack 알림 포함 |
 
 ### nanoclaw — §2 The Artisan Team
@@ -33,22 +33,22 @@ NanoClaw 내부의 HTTP 채널 추가. 핵심 브릿지 역할만 담당.
 
 | # | Task | Priority | Status | Description |
 |---|---|---|---|---|
-| 01 | [HTTP Channel](./core_bridge/task-01-http-channel.md) | P0 | DONE | NanoClaw에 HTTP 채널 추가 (Ingress/Egress) |
+| 01 | [HTTP Channel](./completed/prds/core_bridge/task-01-http-channel-skill.md) | P0 | DONE | NanoClaw에 HTTP 채널 추가 (Ingress/Egress) |
 
 ### data_flow — §3 Interaction Flow
 
 | # | Task | Priority | Status | Description |
 |---|---|---|---|---|
-| 01 | [Delegation Flow E2E](./data_flow/task-01-delegation-flow.md) | P0 | DONE | mock 검증 완료 (test_delegation_e2e.py 9/9 Green). 실제 E2E도 완료 (test_real_e2e.py 11/11 Green — backend+NanoClaw 모두 실제 HTTP) |
-| 02 | [TTS Flow](./data_flow/task-02-tts-flow.md) | P1 | DONE | 스트리밍 → 문장 감지 → TTS → FE push 검증 완료. VLLMOmniTTS 커버리지 추가 |
-| 03 | [LTM Consolidation](./data_flow/task-03-ltm-consolidation.md) | P1 | DONE | turn counter(len//2) + synthetic message 포함 검증 완료. 12개 테스트 추가 |
-| 04 | [LTM Turn Counter Fix](./data_flow/task-04-ltm-turn-counter.md) | P1 | DONE | turn counter를 HumanMessage only로 수정. synthetic 메시지 부풀림 및 slice 경계 버그 동시 수정 |
+| 01 | [Delegation Flow E2E](./completed/prds/data_flow/task-01-delegation-flow.md) | P0 | DONE | mock 검증 완료 (test_delegation_e2e.py 9/9 Green). 실제 E2E도 완료 (test_real_e2e.py 11/11 Green — backend+NanoClaw 모두 실제 HTTP) |
+| 02 | [TTS Flow](./completed/prds/data_flow/task-02-tts-flow.md) | P1 | DONE | 스트리밍 → 문장 감지 → TTS → FE push 검증 완료. VLLMOmniTTS 커버리지 추가 |
+| 03 | [LTM Consolidation](./completed/prds/data_flow/task-03-ltm-consolidation.md) | P1 | DONE | turn counter(len//2) + synthetic message 포함 검증 완료. 12개 테스트 추가 |
+| 04 | [LTM Turn Counter Fix](./completed/prds/data_flow/task-04-ltm-turn-counter.md) | P1 | DONE | turn counter를 HumanMessage only로 수정. synthetic 메시지 부풀림 및 slice 경계 버그 동시 수정 |
 
 ### Appendix: 검증 항목 (코드 변경 없음)
 
 별도 task가 아닌 E2E 테스트 시 확인할 체크리스트.
 
-- [ ] **Frontend Dumb UI** ([상세](./frontend/task-01-dumb-ui.md)): 위임 결과가 일반 대화와 동일하게 렌더링된다. Frontend는 NanoClaw를 직접 인식하지 않는다.
+- [ ] **Frontend Dumb UI** ([상세](./completed/prds/frontend/task-01-dumb-ui.md)): 위임 결과가 일반 대화와 동일하게 렌더링된다. Frontend는 NanoClaw를 직접 인식하지 않는다.
 
 ### fastapi_backend — KB 에이전트 툴 확장
 
@@ -62,16 +62,16 @@ NanoClaw 내부의 HTTP 채널 추가. 핵심 브릿지 역할만 담당.
 
 | # | Task | Priority | Status | Description |
 |---|---|---|---|---|
-| H04 | [Push Notification](./TODO/task-01-push-notification.md) | P2 | HOLD | Callback 수신 시 PersonaAgent -> FE 형태로 즉시 알림 |
-| H05 | [Delegation Policy](./TODO/task-02-delegation-policy.md) | P2 | HOLD | 위임 vs 직접 처리 경계 규칙 정의 |
-| H06 | [Barge-in Interrupt](./TODO/task-03-barge-in-interrupt.md) | P2 | HOLD | 사용자 끼어들기 시 파이프라인 즉시 중단 |
-| H07 | [Cross-Runtime Sub-Agent](./TODO/task-04-cross-runtime-subagent.md) | P2 | HOLD | MCP 기반 runtime-agnostic Sub-agent delegation |
+| H04 | [Push Notification](./completed/prds/TODO/task-01-push-notification.md) | P2 | HOLD | Callback 수신 시 PersonaAgent -> FE 형태로 즉시 알림 |
+| H05 | [Delegation Policy](./completed/prds/TODO/task-02-delegation-policy.md) | P2 | HOLD | 위임 vs 직접 처리 경계 규칙 정의 |
+| H06 | [Barge-in Interrupt](./completed/prds/TODO/task-03-barge-in-interrupt.md) | P2 | HOLD | 사용자 끼어들기 시 파이프라인 즉시 중단 |
+| H07 | [Cross-Runtime Sub-Agent](./completed/prds/TODO/task-04-cross-runtime-subagent.md) | P2 | HOLD | MCP 기반 runtime-agnostic Sub-agent delegation |
 
 ### DONE — 구현 완료, 검증 중
 
 | # | Task | Priority | Status | Description |
 |---|---|---|---|---|
-| H08 | [Knowledge Store](../../superpowers/specs/knowledge-store) | P2 | DONE | 구조화된 경험·지식 아카이브 (FastAPI KB서비스 + NanoClaw MCP 서버) |
+| H08 | [Knowledge Store](./completed/specs/knowledge-store) | P2 | DONE | 구조화된 경험·지식 아카이브 (FastAPI KB서비스 + NanoClaw MCP 서버) |
 
 ---
 
