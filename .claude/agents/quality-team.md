@@ -32,7 +32,7 @@ This agent is **not persistent**. Lead spawns you when a TASK_DONE event fires o
 
 ## Current Sprint
 - **Active Phase**: —
-- **Completed**: DC-1 (dir migration), DC-2 (INDEX.md), DC-4 (CLAUDE.md refs), DC-5 (GP-11), AS-1 (agent_skills dirs), AS-2 (agents load update)
+- **Completed**: DC-1 (dir migration), DC-2 (INDEX.md), DC-4 (CLAUDE.md refs), DC-5 (GP-11), AS-1 (agent_skills dirs), AS-2 (agents load update), AA-1 (GP-12 garden.sh), AA-2 (GP-12 docs+hook)
 - **Next**: awaiting TASK_DONE event from Lead
 
 ## Known Gotchas
