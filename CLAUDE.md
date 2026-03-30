@@ -73,16 +73,24 @@ Feature tasks tracked in [`docs/prds/feature/INDEX.md`](docs/prds/feature/INDEX.
 
 When starting any new feature or cross-repo initiative, follow the **planning → execution workflow**:
 
-1. **Brainstorm** — Invoke `superpowers:brainstorming`. Resolve intent, constraints, and which repos are affected.
-2. **Plan** — Feed brainstorm output into `claude-code-harness:harness-plan`. Produces `cc:TODO` tasks in `Plans.md` with `[target: repo/]` markers.
-3. **Review** — Invoke `claude-code-harness:harness-review` on the plan. Iterate until approved.
-4. **Distribute** — Spawn Agent Team (Phase 4–6 below).
+> **PM Agent owns Phase 1–3.** Lead Agent enters at Phase 4 upon receiving `SPEC_READY`.
+
+- **Phase 1** (PM): Brainstorm — `superpowers:brainstorming` → spec.md
+- **Phase 2** (PM): Plan — `claude-code-harness:harness-plan` → `cc:TODO` tasks in `Plans.md` with `[target: repo/]`
+- **Phase 3** (PM): Review — `claude-code-harness:harness-review` → loop until approved → send `SPEC_READY` to Lead
+- **Phase 4** (Lead): Distribute — TaskCreate per TODO → spawn Agent Team (below)
 
 Never skip phases. Never write tasks to Plans.md without a brainstorm spec first.
 
 ## Agent Teams Execution (Phase 4–7)
 
 > **MANDATORY**: Implementation MUST use Agent Teams spawned **from DesktopMatePlus**. Teammates auto-load workspace CLAUDE.md and skills at creation time.
+>
+> **Standard team members (all 4 must be spawned, team name: `desktopmate-plus`):**
+> - `pm-agent` — Phase 1–3: brainstorm → spec → review → SPEC_READY (skill: /pm-workflow)
+> - `backend-team` — `backend/` implementation (skill: /teammate-workflow)
+> - `nanoclaw-team` — `nanoclaw/` implementation (skill: /teammate-workflow)
+> - `dh-team` — `desktop-homunculus/` implementation (skill: /teammate-workflow)
 >
 > **Sub-agent rules:**
 > - Lead Agent: `Agent` tool **FORBIDDEN** for implementation — bypasses repo isolation
