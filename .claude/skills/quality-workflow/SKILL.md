@@ -29,14 +29,19 @@ Tasks with unresolved `blockedBy` dependencies cannot be claimed yet.
 Your worktree path is specified in your spawn prompt.
 Always work inside that path. Never commit directly to `master`.
 
-### Step 3 — Implement tasks
+### Step 3 — Implement tasks via harness-work
 
-For script/docs tasks, implement directly (no harness-work needed — harness-work is for code repos).
+**MANDATORY: Always use harness-work for ALL tasks, including docs/scripts:**
 
-After implementation:
+```
+/harness-work {task-number}
+```
+
+harness-work handles TDD, lint checks, and commit formatting automatically. Direct implementation bypasses these checks.
+
+After harness-work completes:
 - Run `scripts/check_docs.sh` to verify dead links (for docs/ changes)
 - Run `scripts/garden.sh --dry-run` to verify GP compliance (for scripts/harness changes)
-- Commit with conventional commit messages
 
 Update Plans.md after each task:
 - Read `TaskGet({taskId})` → get `metadata.planRef` (e.g. `"DC-1"`)
