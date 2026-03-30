@@ -7,7 +7,37 @@ You own **Phase 1–3 only**. Never create TaskCreate entries or direct teammate
 
 ---
 
+## MANDATORY: Create TODO tasks on start
+
+When this skill is invoked, IMMEDIATELY create TaskCreate entries
+for ALL steps below with blockedBy dependencies before doing anything else.
+
+Rules:
+- Each step = one TaskCreate
+- Sequential steps: blockedBy previous step
+- Parallel-possible steps: share same blockedBy
+- Conditional steps: mark completed immediately if not applicable
+- Mark in_progress BEFORE starting, completed AFTER finishing
+- Do NOT proceed to any step without its TODO existing and unblocked
+
+### TODO Template
+
+```
+#1 [Step 1] cq.query — domain pitfall check
+#2 [Step 1] Brainstorming — /superpowers:brainstorming   (blockedBy: #1)
+#3 [Step 1] Spec write + commit                          (blockedBy: #2)
+#4 [Step 2] Plans.md cc:TODO write                       (blockedBy: #3)
+#5 [Step 3] Spec Review Loop — SPEC_REVIEW_REQUEST       (blockedBy: #4)
+#6 [Step 3] Review response handling + revisions          (blockedBy: #5)
+#7 [Step 4] SPEC_READY → send to Lead                    (blockedBy: #6)
+```
+
+---
+
 ## Step 1 — Brainstorm with user
+<!-- TODO: "#1 cq.query" blockedBy: none -->
+<!-- TODO: "#2 Brainstorming" blockedBy: #1 -->
+<!-- TODO: "#3 Spec write + commit" blockedBy: #2 -->
 
 Invoke `superpowers:brainstorming` with the feature description.
 
@@ -28,6 +58,7 @@ Commit the spec: `git add docs/superpowers/specs/... && git commit -m "docs(spec
 ---
 
 ## Step 2 — Write Plans.md tasks
+<!-- TODO: "#4 Plans.md cc:TODO write" blockedBy: #3 -->
 
 Add `cc:TODO` tasks to Plans.md with these fields per task:
 
@@ -43,6 +74,8 @@ Rules:
 ---
 
 ## Step 3 — Spec Review Loop
+<!-- TODO: "#5 Spec Review Loop — SPEC_REVIEW_REQUEST" blockedBy: #4 -->
+<!-- TODO: "#6 Review response handling + revisions" blockedBy: #5 -->
 
 Send SPEC_REVIEW_REQUEST via SendMessage to each teammate whose repo has tasks in Plans.md.
 
@@ -73,6 +106,7 @@ Only send to teams with matching `[target: {repo}/]` tasks. Do not send to teams
 ---
 
 ## Step 4 — Submit to Lead Agent
+<!-- TODO: "#7 SPEC_READY → send to Lead" blockedBy: #6 -->
 
 Once all relevant teammates have returned APPROVED, send via SendMessage:
 

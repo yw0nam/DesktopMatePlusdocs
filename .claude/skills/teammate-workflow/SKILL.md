@@ -18,9 +18,38 @@ This is not optional. `harness-work` handles TDD, lint checks, and commit format
 
 ---
 
+## MANDATORY: Create TODO tasks on start
+
+When this skill is invoked, IMMEDIATELY create TaskCreate entries
+for ALL steps below with blockedBy dependencies before doing anything else.
+
+Rules:
+- Each step = one TaskCreate
+- Sequential steps: blockedBy previous step
+- Parallel-possible steps: share same blockedBy
+- Conditional steps (e.g. Contract Review): mark completed immediately if not applicable
+- Mark in_progress BEFORE starting, completed AFTER finishing
+- Do NOT proceed to any step without its TODO existing and unblocked
+
+### TODO Template
+
+```
+#1 [Step 1] Self-assign tasks
+#2 [Step 2] Verify worktree path                         (blockedBy: #1)
+#3 [Step 3] Execute tasks via /harness-work              (blockedBy: #2)
+#4 [Step 3a] Contract Review (if triggered)              (blockedBy: #3)
+#5 [Step 4] Post-feature: /claude-md-improver            (blockedBy: #4)
+#6 [Step 4] Post-feature: /cq:reflect                    (blockedBy: #5)
+#7 [Step 4] Post-feature: /harness-release               (blockedBy: #6)
+#8 [Step 5] Report to Lead + shutdown_request             (blockedBy: #7)
+```
+
+---
+
 ## Your Responsibilities
 
 ### Step 1 — Self-assign your tasks
+<!-- TODO: "#1 Self-assign tasks" blockedBy: none -->
 
 View the shared task list and claim tasks tagged for your repo:
 
@@ -34,11 +63,13 @@ Only claim tasks tagged for your repo (`backend`, `nanoclaw`, `desktop-homunculu
 Tasks with unresolved `blockedBy` dependencies cannot be claimed yet.
 
 ### Step 2 — Work inside your assigned worktree
+<!-- TODO: "#2 Verify worktree path" blockedBy: #1 -->
 
 Your worktree path is specified in your spawn prompt (e.g., `/home/spow12/codes/2025_lower/worktrees/{repo}-{slug}/`).
 Always work inside that path. Never commit directly to `main` / `develop` / `feat/claude_harness`.
 
 ### Step 3 — Execute tasks via harness-work
+<!-- TODO: "#3 Execute tasks via /harness-work" blockedBy: #2 -->
 
 ```
 /harness-work {task-number}
@@ -56,6 +87,7 @@ After harness-work completes, update Plans.md:
 Note: harness-work updates the shared task list; Plans.md cc:DONE is a manual step.
 
 ### Step 3a — Contract Review (after each task)
+<!-- TODO: "#4 Contract Review (if triggered)" blockedBy: #3 — mark completed immediately if not applicable -->
 
 After harness-work completes each task, scan the changed files.
 
@@ -141,6 +173,9 @@ Round 2 response: [paste]
 ```
 
 ### Step 4 — Post-feature routine (before reporting)
+<!-- TODO: "#5 Post-feature: /claude-md-improver" blockedBy: #4 -->
+<!-- TODO: "#6 Post-feature: /cq:reflect" blockedBy: #5 -->
+<!-- TODO: "#7 Post-feature: /harness-release" blockedBy: #6 -->
 
 When all tasks for a feature (Plans.md Phase) are complete, run this routine **before** reporting to Lead:
 
@@ -180,6 +215,7 @@ Keep context clean between features. After clearing, reload only:
 - The relevant spec-ref file
 
 ### Step 5 — Report back to Lead Agent
+<!-- TODO: "#8 Report to Lead + shutdown_request" blockedBy: #7 -->
 
 After the post-feature routine, report:
 - Tasks completed (list with task IDs)
