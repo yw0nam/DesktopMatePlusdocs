@@ -111,7 +111,7 @@ Never skip phases. Never write tasks to Plans.md without a brainstorm spec first
 >
 > **On-demand teammate lifecycle:**
 > 1. Lead spawns teammate when task is assigned
-> 2. Teammate completes task → runs post-feature routine (`/claude-md-management:claude-md-improver` → `/cq:reflect`)
+> 2. Teammate completes task → runs post-feature routine (`/claude-md-management:claude-md-improver` → `/cq:reflect` → `/claude-code-harness:harness-release`)
 > 3. Teammate sends `shutdown_request` to Lead
 > 4. Lead approves → teammate terminates
 > 5. Lead re-spawns on next task assignment

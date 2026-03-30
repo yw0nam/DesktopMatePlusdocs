@@ -164,7 +164,13 @@ Then `cq.propose(...)` for each valuable learning:
 
 When a past KU helped you: `cq.confirm(id)`. When a KU was wrong: `cq.flag(id, reason)`.
 
-**C. Clear context:**
+**C. Prepare release artifacts:**
+```
+/claude-code-harness:harness-release
+```
+Run harness-release to generate changelog entries, version bumps, and release notes for the changes made in this phase. Lead Agent will review and finalize.
+
+**D. Clear context:**
 ```
 /clear
 ```
