@@ -22,8 +22,13 @@ Quality Team — workspace docs/scripts maintenance + event-driven archive/sync 
 - `/claude-code-harness:harness-work` — task execution (always use this)
 
 ## Current Sprint
-- **Active Phase**: —
-- **My tasks**: none (event-driven — awaiting TASK_DONE from Lead)
+- **Active Phase**: Phase 7 Docs Consolidation — COMPLETE
+- **Completed**: DC-1 (dir migration), DC-2 (INDEX.md), DC-4 (CLAUDE.md refs), DC-5 (GP-11)
+- **Next**: event-driven — awaiting TASK_DONE from Lead for archive/sync tasks
 
 ## Known Gotchas
-<!-- Fill in after first feature. Long entries → docs/faq/ -->
+- **Worktree cleanup timing**: Lead may merge and remove worktree while you're still doing post-feature tasks (claude-md-improver, cq). Always check worktree exists before file ops; fall back to main repo.
+- **INDEX.md link recalculation**: When moving INDEX.md across directory levels, ALL relative links change. Verify every link after move with `[ -e "$path" ]` loop — don't trust manual counting.
+- **GP-11 false positive guard**: A spec-ref file must only be flagged if ALL referencing tasks are `[x]`. If any `[ ]` task also references it, it's still active. Use separate `done_refs` and `active_refs` associative arrays.
+- **Pre-existing dead links in check_docs.sh**: Sub-repo refs (`backend/`, `nanoclaw/`, `desktop-homunculus/`) always fail in worktrees since those repos aren't present. These are known failures, not regressions.
+- **docs/superpowers/ is committed now**: Old CLAUDE.md said "git 미커밋 (로컬 작업 파일)" — this was updated in DC-4. If you see this in any doc, it's stale.
