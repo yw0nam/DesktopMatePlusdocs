@@ -150,6 +150,20 @@ quality-team uses `/teammate-workflow` skill like other implementation teammates
 - Changes to individual repo docs/ structures
 - Plans.md format overhaul beyond adding spec-ref field
 
+## Task Ownership
+
+| Task | Target | Owner |
+|------|--------|-------|
+| DC-0: quality-team skill definition | workspace scripts/harness/ | Lead (bootstrap) |
+| DC-1: Directory migration | docs/ | quality-team |
+| DC-2: INDEX.md migration | docs/ | quality-team |
+| DC-3: Plans.md spec-ref field | workspace/ | Lead (Plans.md is Lead's doc) |
+| DC-4: CLAUDE.md reference update | docs/ | quality-team |
+| DC-5: garden.sh GP-11 | workspace scripts/harness/ | quality-team |
+| DC-6: Team config update | workspace/ | Lead (coordination docs) |
+
+**Bootstrap order:** DC-0 (Lead creates quality-team skill) → DC-6 (Lead updates team config) → DC-1~DC-5 (quality-team executes, DC-3 by Lead in parallel)
+
 ## Risks
 
 - **Migration breaks links**: Existing cross-references in CLAUDE.md, FAQ, etc. must be updated
