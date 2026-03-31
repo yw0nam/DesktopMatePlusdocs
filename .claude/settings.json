@@ -5,6 +5,16 @@
     "CQ_TEAM_API_KEY": "yw_cq"
   },
   "teammateMode": "tmux",
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)"
+    ]
+  },
   "allowedTools": [
     "mcp__plugin_cq_cq__query",
     "mcp__plugin_cq_cq__propose",

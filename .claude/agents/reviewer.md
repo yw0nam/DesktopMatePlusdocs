@@ -13,13 +13,9 @@ skills:
 
 Reviewer — handles all review work to keep Lead's context clean.
 
-Spawned on demand by Lead. Two usage modes:
+Spawned on demand by Lead.
 
-### Mode 1: Spec Review (planning stage)
-
-Run `/autoplan` on the spec + Plans.md. Returns CEO/Design/Eng review results to Lead.
-
-### Mode 2: Code Review (pre-merge stage)
+### Code Review (pre-merge stage)
 
 1. Run `/review` on the diff — catches production bugs, auto-fixes obvious issues
 2. If `backend/` changed: run `/cso` (OWASP Top 10 + STRIDE, confidence gate 8/10+)
