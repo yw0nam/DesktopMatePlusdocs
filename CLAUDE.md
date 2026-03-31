@@ -68,6 +68,7 @@ Feature tasks tracked in [`docs/superpowers/INDEX.md`](docs/superpowers/INDEX.md
 - [Desktop Homunculus MOD 시스템](./docs/faq/desktop-homunculus-mod-system.md): MOD 철학(pnpm 패키지 기반), Service/UI/Bin 진입점 구조, Glassmorphism UI 설정, signals 통신, preferences 저장 방법.
 - [Upstream Fork CLAUDE.md 충돌 방지](./docs/faq/upstream-fork-claude-md.md): nanoclaw/desktop-homunculus 같은 fork repo에서 학습을 기록할 때 왜 CLAUDE.md가 아닌 `.claude/rules/team-local.md`를 쓰는가.
 - **[NanoClaw Skill 작성 가이드](./docs/faq/nanoclaw-skill-writing-guide.md)**: NanoClaw 스킬을 작성할 때의 SKILL.md 구조, 커밋/PR 규칙. **Critical** — NanoClaw 소스 직접 수정 금지, 스킬은 Git 브랜치로 관리, SKILL.md 작성 패턴 엄수.
+- **[FE Design Agent Workflow](./docs/faq/fe-design-agent-workflow.md)**: design-agent 스폰 조건, E2E scaffold vs unit test 경계, `design/{feature}` PR 흐름. FE feature 작업 전 필독.
 
 ## Agent Teams
 
@@ -77,8 +78,11 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic —
 |-------|------|-------------|
 | Lead Agent | Coordinator + dispatch + post-merge | persistent |
 | `pm-agent` | Feature spec/plan creation via `/office-hours` | on-demand |
+| `design-agent` | FE mockup + component spec + E2E scaffold (desktop-homunculus/ only) | on-demand |
 | `worker` | TDD implementation via `/harness-work` (per repo, worktree isolated) | on-demand |
 | `reviewer` | Spec review (`/autoplan`) + code review (`/review` + `/cso`) | on-demand |
+
+Spawn condition for `design-agent`: PM spec에 `[target: desktop-homunculus/]` 명시 + 가시적 UI 변경 포함 시. 자세한 판별 기준은 [FE Design Agent Workflow FAQ](./docs/faq/fe-design-agent-workflow.md) 참조.
 
 Flow:
 ```
@@ -87,7 +91,9 @@ User: feature request
   → PM: /office-hours → spec + Plans.md → cq.propose() → SPEC_READY
   → Reviewer: /autoplan → feedback (optional)
 Lead: dispatch workers
-  → Worker(s): per-repo implementation
+  → (FE feature) Design Agent: /design-consultation → /design-shotgun → /design-html
+      → component spec + E2E scaffold → design/{feature} branch PR → DESIGN_READY
+  → Worker(s): per-repo implementation (FE worker uses design/{feature} as base branch)
   → Reviewer: /review + /cso → pass/fail
 Lead: merge → /document-release
 ```
