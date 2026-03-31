@@ -1,6 +1,8 @@
 {
   "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CQ_TEAM_ADDR": "http://localhost:8742",
+    "CQ_TEAM_API_KEY": "yw_cq"
   },
   "teammateMode": "tmux",
   "allowedTools": [

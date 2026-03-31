@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # garden.sh — Background Gardening Agent
-# Runs GOLDEN_PRINCIPLES.md verify commands, auto-fixes Minor violations, creates PRs.
+# Runs GOLDEN_PRINCIPLES.md verify commands, auto-fixes Minor violations, generates reports.
 set -euo pipefail
 
 # ── Workspace root (script lives in scripts/) ──────────────────────
@@ -43,7 +43,7 @@ Usage: scripts/garden.sh [OPTIONS]
 Background Gardening Agent — verifies Golden Principles and auto-fixes violations.
 
 Options:
-  --dry-run      Detect only, skip auto-fix / commit / PR
+  --dry-run      Detect only, skip auto-fix and report generation
   --gp GP-N      Run only the specified GP (e.g. GP-3)
   --repo NAME    Run only for the specified repo (backend, nanoclaw, workspace)
   -h, --help     Show this help message
@@ -719,7 +719,7 @@ if [[ "$DRY_RUN" == false ]]; then
   done
 else
   echo ""
-  echo "--- Dry run: skipping auto-fix, commit, and PR ---"
+  echo "--- Dry run: skipping auto-fix and report generation ---"
 fi
 
 # ── Generate GARDEN_REPORT.md ──────────────────────────────────────
@@ -759,52 +759,20 @@ generate_report() {
   echo "$report"
 }
 
-# ── PR creation phase (skip if --dry-run) ──────────────────────────
+# ── Report generation phase (skip if --dry-run) ──────────────────
+REPORT_DIR="$WORKSPACE_ROOT/docs/garden-reports"
+
 if [[ "$DRY_RUN" == false ]]; then
   echo ""
-  echo "--- PR creation phase ---"
+  echo "--- Report generation phase ---"
+  mkdir -p "$REPORT_DIR"
 
   for repo in "${!REPO_VIOLATIONS[@]}"; do
-    local_dir="${REPO_DIRS[$repo]}"
-    base_branch="${REPO_BRANCHES[$repo]}"
-    branch_name="fix/garden-${DATE}"
-
-    [[ -d "$local_dir/.git" || -f "$local_dir/.git" ]] || {
-      echo "Skipping $repo — not a git repo"
-      continue
-    }
-
-    echo "Creating PR for $repo..."
-
-    # Generate report
     report_content="$(generate_report "$repo")"
+    report_file="${REPORT_DIR}/${repo}-${DATE}.md"
 
-    (
-      cd "$local_dir"
-
-      # Create branch
-      git checkout -b "$branch_name" 2>/dev/null || git checkout "$branch_name" 2>/dev/null || true
-
-      # If there are auto-fixed files, commit them
-      if [[ -n "${REPO_HAS_FIXES[$repo]:-}" ]]; then
-        git add -A src/ 2>/dev/null || true
-        git commit -m "fix: garden auto-fix GP violations ($DATE)" 2>/dev/null || true
-      fi
-
-      # Write and commit report
-      echo "$report_content" > GARDEN_REPORT.md
-      git add GARDEN_REPORT.md
-      git commit -m "docs: garden report $DATE" 2>/dev/null || true
-
-      # Push and create PR
-      git push -u origin "$branch_name" 2>/dev/null || true
-      pr_url=$(gh pr create \
-        --title "garden: drift report $DATE" \
-        --base "$base_branch" \
-        --body "$report_content" 2>&1) || true
-
-      echo "  $repo → $pr_url"
-    )
+    echo "$report_content" > "$report_file"
+    echo "  $repo → $report_file"
   done
 else
   # In dry-run, still show what the report would look like
@@ -839,5 +807,7 @@ done
 
 if [[ "$DRY_RUN" == true ]]; then
   echo ""
-  echo "(dry-run mode — no commits or PRs were created)"
+  echo "(dry-run mode — no auto-fixes or reports were generated)"
+else
+  echo "Reports written to: $REPORT_DIR"
 fi

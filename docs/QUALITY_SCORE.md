@@ -1,12 +1,12 @@
 # Quality Score
 
-Last updated: 2026-03-29
+Last updated: 2026-03-31
 
 | Domain | Arch | Test | Obs | Docs | Overall |
 |--------|------|------|-----|------|---------|
-| backend | B | B | A | B | B |
-| nanoclaw | B | B | C | C | C |
-| desktop-homunculus | C | D | D | D | D |
+| backend | A | B | B | B | B |
+| nanoclaw | A | B | A | A | B |
+| desktop-homunculus | A | A | A | A | A |
 
 ## Grade Definitions
 

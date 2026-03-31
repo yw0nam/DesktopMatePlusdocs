@@ -15,7 +15,7 @@ Note, Use only english or korean for code and interaction, documentation. Avoid 
 - **desktop-homunculus** (`desktop-homunculus/`): Frontend (Dumb UI) — Bevy desktop mascot engine + MOD system. Renders output only, unaware of NanoClaw. MOD code lives here (e.g. `mods/desktopmate-bridge`). Has its own git.
 - **DesktopMatePlus**: Only documentation and workspace-level instructions; no code. path:/home/spow12/codes/2025_lower/DesktopMatePlus
 
-Note: NanoClaw, Backend, and desktop-homunculus each have their own git repo. Code changes go into their respective repos — do NOT commit code to DesktopMatePlus root. Workspace root has no `.github/workflows/` — automation uses `scripts/garden.sh` or `.pre-commit-config.yaml` only.
+Note: NanoClaw, Backend, and desktop-homunculus each have their own git repo. Code changes go into their respective repos — do NOT commit code to DesktopMatePlus root. Workspace root has no `.github/workflows/` — automation uses `scripts/garden.sh` (drift detection + report generation) or `.pre-commit-config.yaml` only.
 
 Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/fastapi` (NanoClaw) → `POST /v1/callback/nanoclaw/{session_id}` (FastAPI)
 
@@ -69,59 +69,38 @@ Feature tasks tracked in [`docs/superpowers/INDEX.md`](docs/superpowers/INDEX.md
 - [Upstream Fork CLAUDE.md 충돌 방지](./docs/faq/upstream-fork-claude-md.md): nanoclaw/desktop-homunculus 같은 fork repo에서 학습을 기록할 때 왜 CLAUDE.md가 아닌 `.claude/rules/team-local.md`를 쓰는가.
 - **[NanoClaw Skill 작성 가이드](./docs/faq/nanoclaw-skill-writing-guide.md)**: NanoClaw 스킬을 작성할 때의 SKILL.md 구조, 커밋/PR 규칙. **Critical** — NanoClaw 소스 직접 수정 금지, 스킬은 Git 브랜치로 관리, SKILL.md 작성 패턴 엄수.
 
-## Planning Workflow
+## Agent Teams
 
-When starting any new feature or cross-repo initiative, follow the **planning → execution workflow**:
+Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic — no custom workflow skills.
 
-> **PM Agent owns Phase 1–3.** Lead Agent enters at Phase 4 upon receiving `SPEC_READY`.
+| Agent | Role | Persistence |
+|-------|------|-------------|
+| Lead Agent | Coordinator + dispatch + post-merge | persistent |
+| `pm-agent` | Feature spec/plan creation via `/office-hours` | on-demand |
+| `worker` | TDD implementation via `/harness-work` (per repo, worktree isolated) | on-demand |
+| `reviewer` | Spec review (`/autoplan`) + code review (`/review` + `/cso`) | on-demand |
 
-- **Phase 1** (PM): Brainstorm — `superpowers:brainstorming` → spec.md
-- **Phase 2** (PM): Plan — `claude-code-harness:harness-plan` → `cc:TODO` tasks in `Plans.md` with `[target: repo/]`
-- **Phase 3** (PM): Review — `claude-code-harness:harness-review` → loop until approved → send `SPEC_READY` to Lead
-- **Phase 4** (Lead): Distribute — TaskCreate per TODO → spawn Agent Team (below)
-
-Never skip phases. Never write tasks to Plans.md without a brainstorm spec first.
-
-### Plans.md cc:TODO 포맷
-
-```markdown
-- [ ] **TASK-ID: description** — summary. DoD: criteria. Depends: id or none. spec-ref: docs/superpowers/specs/{file}.md. [ref: INDEX#{section}/{id}] (feature tasks only). [target: repo/]
+Flow:
+```
+User: feature request
+  → Lead spawns pm-agent
+  → PM: /office-hours → spec + Plans.md → cq.propose() → SPEC_READY
+  → Reviewer: /autoplan → feedback (optional)
+Lead: dispatch workers
+  → Worker(s): per-repo implementation
+  → Reviewer: /review + /cso → pass/fail
+Lead: merge → /document-release
 ```
 
-- `spec-ref:`: 설계 스펙 파일 경로 (GP-11 파싱 대상). 기능 태스크 필수.
-- `[ref: INDEX#...]`: INDEX.md 기능 ID 참조. PM Agent가 생성 시 추가, Lead는 마킹만.
-- 인프라/품질 태스크는 ref, spec-ref 없이 가능.
+Task tracking: `Plans.md` with `cc:TODO` / `cc:DONE` markers.
 
-## Agent Teams Execution (Phase 4–7)
+## gstack
 
-> **MANDATORY**: Implementation MUST use Agent Teams spawned **from DesktopMatePlus**. Teammates auto-load workspace CLAUDE.md and skills at creation time.
->
-> **Session start**: After `/clear`, agents may have stale/missing transcripts. Check with SendMessage — if it fails ("no transcript to resume"), respawn the agent.
->
-> **Persistence model (team name: `desktopmate-plus`, 6 members total):**
-> - **Always persistent**: Lead Agent + `pm-agent`
-> - **Spawn on demand**: `backend-team`, `nanoclaw-team`, `dh-team`, `quality-team` — spawned when tasks are assigned, shut down after completion
->
-> **Standard team members:**
-> - `pm-agent` — Phase 1–3: brainstorm → spec → review → SPEC_READY (skill: /pm-workflow) — **persistent**
-> - `backend-team` — `backend/` implementation (skill: /teammate-workflow) — spawn on demand
-> - `nanoclaw-team` — `nanoclaw/` implementation (skill: /teammate-workflow) — spawn on demand
-> - `dh-team` — `desktop-homunculus/` implementation (skill: /teammate-workflow) — spawn on demand
-> - `quality-team` — workspace docs/scripts maintenance, archive, INDEX.md sync (skill: /quality-workflow) — spawn on demand
->
-> **On-demand teammate lifecycle:**
-> 1. Lead spawns teammate when task is assigned
-> 2. Teammate completes task → runs post-feature routine (`/claude-md-management:claude-md-improver` → `/cq:reflect` → `/claude-code-harness:harness-release`)
-> 3. Teammate sends `shutdown_request` to Lead
-> 4. Lead approves → teammate terminates
-> 5. Lead re-spawns on next task assignment
->
-> **Sub-agent rules:**
-> - Lead Agent: `Agent` tool **FORBIDDEN** for implementation — bypasses repo isolation
-> - Teammates: sub-agents allowed internally (harness-work uses them for TDD/review loops)
-> - `Agent` tool allowed for research-only tasks (no code changes)
+Use the `/browse` skill from gstack for all web browsing. **Never use `mcp__claude-in-chrome__*` tools.**
 
-See full details: `.claude/skills/planning-workflow/SKILL.md`
+Available gstack skills: `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/retro`, `/investigate`, `/document-release`, `/codex`, `/cso`, `/autoplan`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
+
+If gstack skills aren't working, run `cd .claude/skills/gstack && ./setup` to build the binary and register skills.
 
 ## Appendix
 
@@ -130,4 +109,4 @@ See full details: `.claude/skills/planning-workflow/SKILL.md`
 - [NanoClaw Skills](./nanoclaw/.claude/skills/): Directory of existing NanoClaw skills with installation instructions.
 - [Data Flows](./docs/data_flow/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and desktop-homunculus.
 - [desktopmate-bridge CLAUDE.md](./desktop-homunculus/mods/desktopmate-bridge/CLAUDE.md): Mod-specific build/test commands, config flow, React gotchas.
-- [Plans.md](./Plans.md): Cross-repo task tracking (Lead Agent coordination log).
+- [Plans.md](./Plans.md): Cross-repo task tracking with `cc:TODO` / `cc:DONE` markers.

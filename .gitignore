@@ -28,4 +28,5 @@ agents-v3/
 .claude/memory
 .claude/sessions
 .claude/state
+.claude/skills
 # .claude/settings.json is committed (allowedTools for teammates)
