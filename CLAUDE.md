@@ -81,6 +81,7 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic —
 | `design-agent` | FE mockup + component spec + E2E scaffold (desktop-homunculus/ only) | on-demand |
 | `worker` | TDD implementation via `/harness-work` (per repo, worktree isolated) | on-demand |
 | `reviewer` | Spec review (`/autoplan`) + code review (`/review` + `/cso`) | on-demand |
+| `pr-merge-agent` | PR 리뷰 코멘트 분류(valid/false positive) → 답변 → 자동 머지 | on-demand |
 
 Spawn condition for `design-agent`: PM spec에 `[target: desktop-homunculus/]` 명시 + 가시적 UI 변경 포함 시. 자세한 판별 기준은 [FE Design Agent Workflow FAQ](./docs/faq/fe-design-agent-workflow.md) 참조.
 
@@ -96,6 +97,7 @@ Lead: dispatch workers
   → Worker(s): per-repo implementation (FE worker uses design/{feature} as base branch)
   → Reviewer: /review + /cso → pass/fail
 Lead: merge → /document-release
+  → (PR에 리뷰 코멘트 있으면) pr-merge-agent: 분류 → 답변 → 머지
 ```
 
 Task tracking: `Plans.md` with `cc:TODO` / `cc:DONE` markers.

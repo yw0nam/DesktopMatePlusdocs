@@ -7,6 +7,34 @@ Adapted from claude-code-harness R01-R13.
 
 ---
 
+## Agent Dispatch Rules — MANDATORY
+
+### R00-L: Lead Agent — 팀 위임 전용, sub-agent 자제
+
+**Lead Agent는 구현/리뷰/조사 작업을 직접 수행하거나 sub-agent로 처리하지 않는다.**
+모든 실질적 작업은 Agent Team에 위임한다. 유저가 명시적으로 요청하지 않는 한 `general-purpose` 또는 타입 미지정 Agent 스폰은 **전면 금지**.
+
+| 작업 유형 | 위임 대상 (subagent_type) |
+|-----------|--------------------------|
+| 코드 구현 (backend/, nanoclaw/, desktop-homunculus/) | `worker` |
+| 스펙/PRD 작성, office-hours | `pm-agent` |
+| PR 리뷰, 코드 리뷰 | `reviewer` |
+| FE UI 목업/컴포넌트 스펙 | `design-agent` |
+| PR 머지 (리뷰 코멘트 처리) | `pr-merge-agent` |
+
+Lead가 직접 해도 되는 것: Plans.md 업데이트, 팀 간 조율, 간단한 파일 확인(Read/Glob/Grep 1~2회).
+
+### R00-W: Worker / 팀원 — sub-agent 적극 활용 권장
+
+`worker`, `pm-agent`, `reviewer`, `design-agent` 등 팀원은 자신의 작업 범위 내에서
+`Explore`, `general-purpose` 등 sub-agent를 **적극 활용**하여 조사/병렬 처리를 수행한다.
+
+**Worker 스폰 시 필수 조건**:
+1. `desktop-homunculus/`, `backend/`, `nanoclaw/` 각 repo에서 **git worktree 먼저 생성** 후 그 안에서 작업
+2. 구현은 **반드시 `/harness-work` 스킬**로 진행 — 직접 코드 작성/Edit 금지
+
+---
+
 ## DENY — Never allowed
 
 ### R01: No sudo

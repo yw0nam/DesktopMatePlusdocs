@@ -37,8 +37,8 @@ If only backend logic changes in `desktop-homunculus/` (e.g., signal wiring only
 7. **Design agent scaffolds** Vitest E2E tests (signal setup + describe/it blocks + scenario comments)
 8. **Design agent previews mockup in browser** — open `mockup.html` via `/agent-browser`, take annotated screenshot, verify glassmorphism rendering
 9. **Design agent runs `/design-review`** — visual audit of the final HTML mockup
-9. **Design agent creates PR** to `design/{feature}` branch with all 3 artifacts
-10. **Design agent notifies** Lead with `DESIGN_READY` signal
+10. **Design agent creates PR** to `design/{feature}` branch with all 3 artifacts
+11. **Design agent notifies** Lead with `DESIGN_READY` signal
 
 ## Output (3 required artifacts)
 

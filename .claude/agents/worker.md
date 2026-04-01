@@ -30,15 +30,40 @@ Spawned on demand by Lead. One worker per repo.
 `/careful` is loaded — warns before destructive commands.
 If you see a warning, STOP and confirm with Lead.
 
-## Visual Verification (desktop-homunculus FE tasks)
+## Visual Verification (desktop-homunculus FE tasks) — MANDATORY DoD Gate
 
-When implementing UI changes in `desktop-homunculus/mods/*/ui/`:
+> **BLOCKING**: FE tasks in `desktop-homunculus/mods/*/ui/` MUST pass all 3 gates before marking complete. Skipping any gate = task NOT done.
 
-1. Run `pnpm dev` from the mod's `ui/` directory
-2. Use `/agent-browser` to open `http://localhost:5173` and take a screenshot
-3. Verify the rendered output matches the design spec before marking task complete
+### Gate 1 — Unit Tests
+```bash
+npx vitest run   # from mods/desktopmate-bridge/
+```
+All tests must pass.
 
-For static HTML mockups from design-agent, open via `file://` URL.
+### Gate 2 — Visual Verification (agent-browser)
+```bash
+# from mods/desktopmate-bridge/ui/
+pnpm dev   # starts dev server at http://localhost:5173
+```
+Use `/agent-browser`:
+- `$B goto http://localhost:5173`
+- `$B screenshot /tmp/preview.png`
+- Read `/tmp/preview.png` and verify rendered output matches design spec
+- For each interactive state (toggle ON/OFF, mode switch, etc.), interact and screenshot
+
+### Gate 3 — Backend E2E Integration
+Start mock-homunculus or real backend, then verify actual data flow:
+```bash
+# from mods/desktopmate-bridge/
+npx tsx scripts/mock-homunculus.ts   # mock backend
+```
+Run E2E tests:
+```bash
+npx vitest run --config vitest.e2e.config.ts
+```
+Verify: actual messages flow through WS → backend → response rendered in UI.
+
+Report all 3 gate results (screenshot path + E2E output) to Lead before marking complete.
 
 ## Escalate to Lead if
 

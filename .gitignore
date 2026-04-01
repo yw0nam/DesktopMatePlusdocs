@@ -30,3 +30,5 @@ agents-v3/
 .claude/state
 .claude/skills
 # .claude/settings.json is committed (allowedTools for teammates)
+.gstack/
+regacy/
