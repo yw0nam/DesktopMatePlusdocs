@@ -92,4 +92,26 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 - [x] **DH-BUG-12: Webview drag 스케일 오류 + async 레이스** cc:DONE [a624ed0] — 동적 scale 계산, RAF throttle (latestMoveRef 패턴). Depends: none. [target: desktop-homunculus/]
 - [x] **DH-BUG-13: Reconnect 버튼** cc:DONE [f628053] — service.ts reconnect RPC, api.ts reconnect(), ControlBar ReconnectButton 컴포넌트 (isReconnecting 상태). Depends: none. [target: desktop-homunculus/]
 
+### Phase 16: Irodori TTS 교체 + Emoji Emotion + 버그 수정
+
+<!-- spec-ref: ~/.gstack/projects/yw0nam-DesktopMatePlusdocs/spow12-master-design-20260401-170837.md -->
+
+- [x] **BE-FEAT-1: IrodoriTTSService 클라이언트** cc:DONE [9766cb2] — `src/services/tts_service/irodori_tts.py` + `src/configs/tts/irodori.py` 구현. TTSService ABC 준수 (generate_speech/list_voices/is_healthy). httpx.Client로 POST /synthesize (multipart form: text, reference_audio?, seconds, num_steps, cfg_scale_text, cfg_scale_speaker, seed) → WAV bytes. 서버 다운 시 None 반환 (graceful degradation). TTSFactory에 `irodori` 타입 추가. DoD: /synthesize 호출 성공 + is_healthy() 정상 + structural tests 통과. Depends: none. [target: backend/]
+
+- [x] **BE-FEAT-2: Emoji 기반 Emotion 시스템 교체 + Fish Speech 제거** cc:DONE [PR#7] — Fish Speech 제거 (`fish_speech.py`, `fish_local.py`, TTSFactory `fish_local_tts` 케이스). `yaml_files/tts_rules.yml` 교체: emotion_motion_map 이모지 키(😊😭😠😮 등)로 변경, rules에서 `\([^)]*\)` 제거 규칙 삭제. `AgentTTSTextProcessor.process_text()`의 괄호 감정 파싱 → 이모지 감지로 교체 (EmotionMotionMapper.known_emojis 참조). `personas.yml`에 EMOJI_ANNOTATIONS.md 이모지 annotation 가이드 주입 (Agent가 이모지 출력). DoD: 이모지 포함 텍스트 → emotion_tag 추출 → 올바른 keyframes + sh scripts/lint.sh 통과 + Agent가 이모지 실제 출력. Depends: BE-FEAT-1. [target: backend/]
+
+- [x] **DH-BUG-14: dm-stream-token / dm-tts-chunk 역할 분리** cc:DONE [0260b12] — `useSignals.ts`: dm-stream-token 구독 추가 (appendStreamChunk), dm-tts-chunk에서 text append 제거. DoD: stream_token만 텍스트 표시, tts_chunk는 트리거하지 않음. store.test.ts 동시 수신 시나리오 추가. Depends: Phase 15 PR 머지. [target: desktop-homunculus/]
+
+- [x] **DH-BUG-15: handleDragStart mouseup listener leak** cc:DONE [PR#5] — `ControlBar.tsx`: dragPending ref 추가. await wv.info() 전에 dragPending=true, await 완료 후 dragPending이 false면 listeners 부착 생략. drag handle div에 onMouseUp으로 dragPending=false 처리. DoD: await 중 mouseup 시 listeners 부착하지 않음. 단위 테스트 추가. Depends: none. [target: desktop-homunculus/]
+
+- [x] **DH-BUG-16: TtsChunkQueue reset() in-flight chain 미취소** cc:DONE [PR#5] — `tts-chunk-queue.ts`: generation counter 추가. reset() 시 generation++. scheduleProcessor()에서 generation 캡처해 실행 시점에 비교, 불일치 시 processor 호출 스킵. DoD: reset() 후 in-flight chunk processor 미호출. flush() 중 reset() 시나리오 포함 단위 테스트. Depends: none. [target: desktop-homunculus/]
+
+### Phase 17: Irodori Multi-Voice + Backend Verification
+
+<!-- spec-ref: ~/.gstack/projects/yw0nam-DesktopMatePlusdocs/spow12-master-design-20260401-213056.md -->
+
+- [x] **BE-FEAT-3: IrodoriTTSService Multi-Voice 지원** cc:DONE [3c883af] — `IrodoriTTSConfig.reference_audio_path` → `ref_audio_dir` 교체. `IrodoriTTSService.__init__` 파라미터 교체(`reference_audio_path` 제거). `_scan_voices()`: `{ref_audio_dir}/{voice_name}/merged_audio.mp3` 스캔 → `_available_voices` 저장. `generate_speech(reference_id=...)` 실제 동작: `{ref_audio_dir}/{reference_id}/merged_audio.mp3` 로드 + POST /synthesize 전송. 잘못된 reference_id → None 반환. `list_voices()` → 스캔 결과 반환. `list_voices()` no-reference mode → `[]`. `src/services/tts_service/tts_factory.py` + `yaml_files/services/tts_service/irodori.yml` 동시 업데이트. DoD: `uv run pytest tests/services/test_irodori_tts.py tests/services/test_list_voices.py -v` 전체 통과 + `scripts/check-task.sh -k irodori` PASSED. Depends: none. [target: backend/]
+
+- [x] **BE-DOC-1: Backend Task Verification 표준화** cc:DONE [315dd13] — `scripts/check-task.sh` 신규 작성: Phase1(lint.sh) + Phase2(pytest `-k <keyword>`) + Phase3(랜덤 포트 5000-9999로 backend 자동 시작 → health 대기 30s → `realtime_tts_streaming_demo.py --ws-url ws://localhost:{PORT}/...` 실행 → 로그 ERROR 확인 → backend 자동 종료). `backend/AGENTS.md`에 "Task Completion Checklist (DoD)" 섹션 추가 (TDD 흐름 + check-task.sh 실행 + PASSED 확인). DoD: `scripts/check-task.sh -k irodori` 실행 시 PASSED 출력. Depends: none. [target: backend/]
+
 ## Completed

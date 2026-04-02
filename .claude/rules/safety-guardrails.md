@@ -24,14 +24,38 @@ Adapted from claude-code-harness R01-R13.
 
 Lead가 직접 해도 되는 것: Plans.md 업데이트, 팀 간 조율, 간단한 파일 확인(Read/Glob/Grep 1~2회).
 
+**Lead가 하면 안 되는 것**:
+- 코드를 읽고 분석하는 행위 (worker 또는 Explore agent에 위임)
+- 구현 방향/설계 판단 (worker의 `/harness-work`가 처리)
+- repo별 상세 컨텍스트 유지 (각 repo의 `.claude/rules/` 파일이 담당)
+
 ### R00-W: Worker / 팀원 — sub-agent 적극 활용 권장
 
 `worker`, `pm-agent`, `reviewer`, `design-agent` 등 팀원은 자신의 작업 범위 내에서
 `Explore`, `general-purpose` 등 sub-agent를 **적극 활용**하여 조사/병렬 처리를 수행한다.
 
 **Worker 스폰 시 필수 조건**:
-1. `desktop-homunculus/`, `backend/`, `nanoclaw/` 각 repo에서 **git worktree 먼저 생성** 후 그 안에서 작업
+1. worktree는 **대상 sub-repo 내부**에서 생성 (e.g., `git -C backend/ worktree add ...`). `isolation: "worktree"` 사용 금지 — workspace root에 worktree가 생김.
 2. 구현은 **반드시 `/harness-work` 스킬**로 진행 — 직접 코드 작성/Edit 금지
+
+### R00-CQ: cq 지식 공유 — 필수
+
+모든 팀원(worker, reviewer, pm-agent)은 cq MCP를 통해 지식을 공유한다.
+
+**작업 시작 시** (worker, pm-agent):
+```
+cq.query(domain=["<repo>", "<task-domain>"])
+```
+기존 지식을 확인하고 작업에 반영한다.
+
+**작업 완료 시** (worker, reviewer):
+```
+cq.propose(summary="...", detail="...", action="...", domain=["<repo>", "<area>"])
+```
+새로 발견한 비자명한 패턴, 함정, API 제약 등을 기록한다.
+이미 알려진 사실이거나 배운 것이 없으면 스킵 가능.
+
+**유저 승인 불필요** — cq 도구는 에이전트가 자율적으로 호출한다.
 
 ---
 

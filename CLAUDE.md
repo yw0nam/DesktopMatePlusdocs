@@ -76,7 +76,7 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic —
 
 | Agent | Role | Persistence |
 |-------|------|-------------|
-| Lead Agent | Coordinator + dispatch + post-merge | persistent |
+| Lead Agent | Coordinator — spawn + Plans.md + delegation only | persistent |
 | `pm-agent` | Feature spec/plan creation via `/office-hours` | on-demand |
 | `design-agent` | FE mockup + component spec + E2E scaffold (desktop-homunculus/ only) | on-demand |
 | `worker` | TDD implementation via `/harness-work` (per repo, worktree isolated) | on-demand |
@@ -86,6 +86,7 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic —
 Spawn condition for `design-agent`: PM spec에 `[target: desktop-homunculus/]` 명시 + 가시적 UI 변경 포함 시. 자세한 판별 기준은 [FE Design Agent Workflow FAQ](./docs/faq/fe-design-agent-workflow.md) 참조.
 
 Flow:
+
 ```
 User: feature request
   → Lead spawns pm-agent
@@ -101,6 +102,19 @@ Lead: merge → /document-release
 ```
 
 Task tracking: `Plans.md` with `cc:TODO` / `cc:DONE` markers.
+
+### cq Knowledge Sharing — Mandatory
+
+All team members use cq MCP for knowledge sharing. See `safety-guardrails.md` R00-CQ for details.
+
+- **Before work**: `cq.query()` to check existing knowledge
+- **After work**: `cq.propose()` to capture non-obvious learnings
+- Autonomous — no user approval needed
+
+### Worktree Rules
+
+Workers create worktrees **inside the target sub-repo**: `git -C <repo>/ worktree add ...`
+Do NOT use `isolation: "worktree"` from workspace root — it creates worktrees at the wrong level.
 
 ## gstack
 

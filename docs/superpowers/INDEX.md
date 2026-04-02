@@ -2,7 +2,7 @@
 
 **Source PRD**: [required_feature_refined.md](./completed/prds/required_feature_refined.md)
 **Architecture**: Decoupled Director-Artisan (FastAPI + NanoClaw + Frontend)
-**Last Updated**: 2026-03-18 (Phase 3 시작: Multi-Channel Slack Support 구현 완료)
+**Last Updated**: 2026-04-02 (Phase 16~17: Irodori TTS 교체, Emoji Emotion, 버그 수정 완료)
 
 ---
 
@@ -26,6 +26,7 @@ FastAPI(Director)가 사용자와의 실시간 대화를 처리하고, 무거운
 | 02 | [Callback Endpoint](./completed/prds/fastapi_backend/task-02-callback-endpoint.md) | P0 | DONE | NanoClaw 결과 수신 + synthetic message 삽입 |
 | 03 | [Background Sweep](./completed/prds/fastapi_backend/task-03-background-sweep.md) | P1 | DONE | TTL 초과 task를 failed 처리하는 주기적 스캔 |
 | 04 | Multi-Channel Slack Support | P1 | DONE | Slack 채널 통합: webhook 수신 → Yuri 에이전트 → Slack 응답. channel_service, session_lock, process_message 공통 진입점, BackgroundSweepService Slack 알림 포함 |
+| 05 | Irodori TTS + Emoji Emotion | P1 | DONE | Fish Speech 제거 → Irodori TTS 교체. 이모지 기반 감정 시스템(😊😭😠😮)으로 전환. Multi-Voice(ref_audio_dir 스캔) 지원. check-task.sh 검증 harness 추가 |
 
 ### nanoclaw — §2 The Artisan Team
 
