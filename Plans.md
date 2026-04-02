@@ -114,4 +114,34 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 
 - [x] **BE-DOC-1: Backend Task Verification 표준화** cc:DONE [315dd13] — `scripts/check-task.sh` 신규 작성: Phase1(lint.sh) + Phase2(pytest `-k <keyword>`) + Phase3(랜덤 포트 5000-9999로 backend 자동 시작 → health 대기 30s → `realtime_tts_streaming_demo.py --ws-url ws://localhost:{PORT}/...` 실행 → 로그 ERROR 확인 → backend 자동 종료). `backend/AGENTS.md`에 "Task Completion Checklist (DoD)" 섹션 추가 (TDD 흐름 + check-task.sh 실행 + PASSED 확인). DoD: `scripts/check-task.sh -k irodori` 실행 시 PASSED 출력. Depends: none. [target: backend/]
 
+### Phase 18: OpenSpace 시범 도입 (backend) — 유저 지시 시 진행
+
+<!-- triggered by: user request only. Do NOT start autonomously. -->
+<!-- OpenSpace: 로컬 실행. Dashboard backend: http://localhost:7788, Frontend: http://localhost:3789 -->
+<!-- Cloud 미사용 (OPENSPACE_API_KEY 불필요). 모든 스킬은 로컬 저장. -->
+<!-- LLM: 로컬 vLLM (http://192.168.0.41:5535, OpenAI-compatible API). OPENSPACE_LLM_API_BASE=http://192.168.0.41:5535/v1, OPENSPACE_LLM_API_KEY=token-abc123, OPENSPACE_MODEL=openai/chat_model -->
+
+- [ ] **INFRA-1: OpenSpace MCP 설정 (backend)** cc:TODO — `OpenSpace/` repo를 backend worker용 MCP 서버로 등록 (로컬 전용, cloud 미사용). `.claude/settings.json`에 openspace MCP 추가, `OPENSPACE_HOST_SKILL_DIRS`를 backend skills 경로로 지정. Dashboard: backend `http://localhost:7788`, frontend `http://localhost:3789`. DoD: worker가 openspace MCP 도구 호출 가능. Depends: none. [target: DesktopMatePlus/]
+- [ ] **INFRA-2: OpenSpace host_skills 배치** cc:TODO — `delegate-task/SKILL.md` + `skill-discovery/SKILL.md`를 backend worker가 참조할 수 있는 위치에 복사. DoD: worker가 skill-discovery로 기존 스킬 검색 가능. Depends: INFRA-1. [target: backend/]
+- [ ] **INFRA-3: 효과 측정 기준 정의** cc:TODO — 토큰 사용량 비교(Phase 17 대비), 자동 캡처된 스킬 수, 스킬 재사용률 지표 정의. DoD: 측정 기준 문서 작성. Depends: INFRA-1. [target: DesktopMatePlus/]
+- [ ] **INFRA-4: 파일럿 태스크 실행 + 평가** cc:TODO — backend 태스크 2~3개를 OpenSpace 적용 worker로 실행, Phase 17 동일 유형 태스크와 비교. DoD: 효과 측정 보고서 작성. Depends: INFRA-2, INFRA-3. [target: backend/]
+
+### Phase 19: Agent E2E Verification Pipeline
+
+<!-- spec-ref: ~/.gstack/projects/yw0nam-DesktopMatePlusdocs/spow12-master-design-20260402-142307.md -->
+<!-- DoD 표준: 각 backend 태스크 완료 시 bash backend/scripts/e2e.sh PASSED 필수 -->
+<!-- NOTE: BE-E2E-1 ∥ DH-PROBE-1 — 두 태스크는 의존성 없으므로 병렬 실행 가능 -->
+
+- [x] **BE-E2E-1: backend/scripts/e2e.sh 작성 + run.sh BACKEND_PORT 지원** cc:DONE [e6c23dd] — run.sh에 BACKEND_PORT env var 또는 --port 인자 지원 추가. e2e.sh 구현 요건: (1) `set -euo pipefail` 선언 (2) Phase1: nc로 MongoDB+Qdrant 확인 — 호스트/포트는 yaml_files에서 읽기(localhost 하드코딩 금지, run.sh 기존 `_check_mongodb`/`_check_qdrant` 패턴 재사용) (3) Phase1.5: TTS 서버 확인 — 없으면 WARNING+SKIP (4) Phase2: 7000-8999 랜덤 포트로 `bash scripts/run.sh --bg` 실행, `.run.pid`로 PID 추적, `.run.logdir`로 LOG_DIR 읽기(`LOG_DIR=$LOG_DIR` env 주입 방식 금지) (5) Phase3: health wait 30s — kill -0 PID(프로세스 생존) + curl -sf /health(HTTP 200) 동시 체크, PID 죽으면 즉시 FAILED (6) Phase4: 모든 examples를 BACKEND_PORT 주입하여 실행, exit code≠0이면 FAILED (7) Phase5: `grep -E '\|\s+ERROR\s+\|' | grep -v 'uvicorn\.error'` 로그 확인 (8) Phase6: cleanup — `trap 'bash scripts/run.sh --stop || true; exit 1' ERR INT TERM` 패턴, 정상 종료도 run.sh --stop 호출 (9) Phase7: 전체 PASSED/FAILED summary 출력. DoD: `bash backend/scripts/e2e.sh` → PASSED 출력 (MongoDB/Qdrant 사전 실행 전제). Depends: none. [target: backend/]
+
+- [x] **BE-E2E-2: backend examples 재작성 (args 방식)** cc:DONE [e6c23dd] — examples/test_stm.py(--base-url, STM add/get/clear 라운드트립), examples/test_ltm.py(--base-url, LTM store/search 라운드트립, Qdrant 미실행 시 SKIP — Phase7 summary에 "LTM SKIPPED (Qdrant not running)" 출력), examples/test_websocket.py(--ws-url, 2-turn 대화 stream_end 확인 — `asyncio.wait_for(stream_end, timeout=30.0)` 또는 동등한 timeout 처리 필수) 3개 작성. 모두 assert 실패 시 sys.exit(1). 기존 stm_api_demo.py, multiturn_session_test.py deprecated 처리. DoD: 3개 파일 모두 --base-url/--ws-url 인자 필수, 하드코딩(5500, 5600) 없음, `bash backend/scripts/e2e.sh` PASSED. Depends: BE-E2E-1. [target: backend/]
+
+- [ ] **DH-PROBE-1: DH MOD standalone 실행 가능 여부 확인** cc:TODO — desktop-homunculus/mods/desktopmate-bridge/ 에서 pnpm dev로 Bevy 없이 브라우저 접근 가능한지 확인. 가능 시: 실행 방법 + data-testid 선택자 목록 문서화. 불가 시: 불가 사유 + TODO 문서화. DoD: 확인 결과 docs/ 또는 CLAUDE.md에 기록. Depends: none. [target: desktop-homunculus/]
+
+- [ ] **DH-E2E-1: DH MOD E2E 프로토콜 작성** cc:TODO — DH-PROBE-1 가능 결론 시에만 진행. **e2e.sh는 shell-automatable phases만 담당**: `set -euo pipefail` → pnpm dev 시작(4000-4499 랜덤 포트, stdout에 포트 출력) → HTTP 200 대기 → console.error 없음 확인 → pnpm dev stop → PASSED/FAILED 출력. **UI 검증(Agent browse)은 e2e.sh와 분리된 별도 프로토콜**: Agent가 DH-E2E-1 완료 후 수동으로 browse 실행(페이지 로드 + SettingsPanel 렌더링 + send button → backend 메시지 전송 → output 렌더링 확인) — e2e.sh exit code와 무관. DoD(DH standalone 가능): `bash desktop-homunculus/scripts/e2e.sh` PASSED + Agent browse 프로토콜 문서화. DoD(DH standalone 불가): CONDITIONAL TODO 표시 + 이유 문서화. Depends: DH-PROBE-1. [target: desktop-homunculus/]
+
+- [ ] **WS-E2E-1: workspace root scripts/e2e.sh 작성** cc:TODO — `set -euo pipefail`. backend/scripts/e2e.sh → desktop-homunculus/scripts/e2e.sh 순차 실행. **shell-automatable phases만 포함** (DH UI browse 검증은 Agent 별도 프로토콜, 이 스크립트 scope 외). DoD(DH standalone 가능): `bash scripts/e2e.sh` → backend PASSED + DH shell phases PASSED. DoD(DH standalone 불가): `bash scripts/e2e.sh` → backend PASSED + DH CONDITIONAL TODO 출력. Depends: BE-E2E-1, DH-E2E-1. [target: DesktopMatePlus/]
+
+- [ ] **DOC-E2E-1: Plans.md DoD 템플릿 표준화** cc:TODO — 신규 backend Plans.md 태스크 템플릿에 "bash backend/scripts/e2e.sh PASSED 필수" 명시. backend/AGENTS.md(또는 동등 문서)에 DoD 체크리스트 추가. 기존 cc:DONE 태스크 소급 제외. DoD: Plans.md 표준 주석 업데이트 + backend/AGENTS.md DoD 체크리스트 작성 완료. Depends: BE-E2E-1. [target: DesktopMatePlus/]
+
 ## Completed
