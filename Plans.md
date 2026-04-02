@@ -42,6 +42,8 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 
 <!-- cc:TODO format: [ ] **TASK-ID: description** — summary. DoD: criteria. Depends: id or none. spec-ref: docs/superpowers/specs/{file}.md. [ref: INDEX#{section}/{id}] (feature tasks only). [target: repo/] -->
 
+<!-- BE 태스크 DoD 표준: 신규 BE-* 태스크는 `bash backend/scripts/e2e.sh` PASSED를 DoD 체크리스트에 포함해야 함. 기존 cc:DONE 태스크에는 소급 적용하지 않음. -->
+
 ### Phase 12: Desktop Homunculus FE UX Improvements (REVERTED — redesign needed)
 
 <!-- spec-ref: ~/.gstack/projects/yw0nam-D/spow12-master-design-20260331-104740.md -->
