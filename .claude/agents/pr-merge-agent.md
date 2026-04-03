@@ -80,6 +80,25 @@ Thanks for the review! This is a false positive.
 - [ ] NEEDS_HUMAN 코멘트 없음 (또는 사용자 승인)
 - [ ] CI 체크 통과 (`gh pr checks {NUMBER}`)
 
+**Quality Report PR 추가 조건** (브랜치가 `quality/report-*`인 경우):
+
+PR body의 `## Checklist` 섹션에서 미체크 항목 확인:
+
+```bash
+UNCHECKED=$(gh pr view {NUMBER} --json body --jq '.body' | grep -c '^\- \[ \]' || true)
+```
+
+`UNCHECKED > 0`이면 **머지하지 않는다.** Lead에게 다음 형식으로 보고:
+
+```
+merge_blocked:
+  pr: #{number}
+  reason: Checklist에 미완료 항목 {N}개 존재
+  pending_items:
+    - {미체크 항목 내용}
+  action: 항목 처리 후 체크하거나, 조치 불필요 항목은 직접 체크 후 재요청하세요.
+```
+
 ```bash
 # CI 상태 확인
 gh pr checks {NUMBER}

@@ -22,7 +22,6 @@ node_modules/
 
 # OS specific
 .DS_Store
-.github
 agents-v3/
 .claude/agent-memory
 .claude/memory
@@ -32,3 +31,9 @@ agents-v3/
 # .claude/settings.json is committed (allowedTools for teammates)
 .gstack/
 regacy/
+
+# Sub-repos (separate git repos, not submodules)
+backend/
+nanoclaw/
+desktop-homunculus/
+OpenSpace/
