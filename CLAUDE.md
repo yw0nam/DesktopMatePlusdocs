@@ -83,7 +83,7 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic —
 | `design-agent` | FE mockup + component spec + E2E scaffold (desktop-homunculus/ only) | on-demand |
 | `worker` | TDD implementation via `/harness-work` (per repo, worktree isolated) | on-demand, reuse preferred |
 | `reviewer` | Spec review (`/autoplan`) + code review (`/review` + `/cso`) | on-demand |
-| `pr-merge-agent` | PR 리뷰 코멘트 분류(valid/false positive) → 답변 → 자동 머지 | on-demand |
+| `pr-merge-agent` | PR 리뷰 코멘트 분류(valid/false positive) → 답변 → 자동 머지 | 수동 긴급용 (normal flow는 /babysit cron으로 대체) |
 | `quality-agent` | 주기적 품질 모니터링 — garden.sh + check_docs.sh + QUALITY_SCORE.md 갱신, docs/reports/ 보고서 작성 | on-demand |
 
 **Worker 재활용 원칙**: 같은 레포에 연속 태스크가 있으면 새 worker를 스폰하지 않고 `SendMessage`로 기존 worker에게 이어서 맡긴다. 다음 중 하나라도 해당하면 새로 스폰: 이전 태스크 `total_tokens` ≥ 80,000 / `tool_uses` ≥ 60 / 대상 레포 변경.
@@ -103,14 +103,15 @@ Lead: dispatch workers
   → Worker(s): per-repo implementation → /simplify (코드 태스크만) → /ship (PR 생성, worker 책임)
   → Reviewer: /review + /cso → pass/fail
   → (Reviewer APPROVE 후) Worker runs /ship to create PR
-Lead: spawn pr-merge-agent
-  → pr-merge-agent: 리뷰 코멘트 분류 → 답변 → 머지 → /document-release (pr-merge-agent 책임)
+Lead: (no action needed)
+  → /babysit cron (5min): PR 코멘트 자동 분류·대응 → 머지 → /document-release 자동 처리
+  → pr-merge-agent: 긴급/수동 처리 시에만 스폰 (optional)
 ```
 
 **스킬 책임 분리**:
 - `/ship`: **worker** 또는 **design-agent** — 구현 완료 후 PR 생성 (context 소비 독립 처리)
 - `/simplify`: **worker** — 코드 변경 태스크에서 /ship 전 실행 (docs-only 태스크는 생략)
-- `/document-release`: **pr-merge-agent** — 머지 직후 실행 (context 소비 독립 처리)
+- `/document-release`: **/babysit cron** 또는 **pr-merge-agent** — 머지 직후 실행 (context 소비 독립 처리)
 - Lead는 두 스킬을 직접 실행하지 않는다
 
 Task tracking: `Plans.md` with `cc:TODO` / `cc:DONE` markers.

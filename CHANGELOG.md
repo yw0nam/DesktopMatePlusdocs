@@ -4,6 +4,13 @@ All notable changes to the DesktopMatePlus workspace coordination layer are docu
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.0.5] - 2026-04-04
+
+### Changed
+- `babysit.md` — 머지 후 `/document-release` 실행 단계(Step 5) 추가; 기존 Step 5(결과 요약) → Step 6으로 번호 변경
+- `CLAUDE.md` — Agent Teams Flow에서 `Lead: spawn pr-merge-agent` 제거; `/babysit` cron이 자동 처리함을 명시; 스킬 책임 분리 표 및 에이전트 표 업데이트
+- `pr-merge-agent.md` — Normal flow에서는 `/babysit` cron으로 대체됨을 상단 Note로 명시
+
 ## [0.1.0.4] - 2026-04-04
 
 ### Added
