@@ -4,6 +4,16 @@ All notable changes to the DesktopMatePlus workspace coordination layer are docu
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.0.1] - 2026-04-03
+
+### Changed
+- `quality-agent.md` — Constraints에 PR 생성 금지 명시 (PR은 run-quality-agent.sh 담당)
+- `pr-merge-agent.md` — Quality PR block을 AUTO_FIX/ACKNOWLEDGE/NEEDS_LEAD 분류 체계로 교체; reviewer 용어를 "GitHub Bot Reviewer" / "GitHub Human Reviewer"로 통일
+- `pm-agent.md` — Lifecycle Step 4: PM이 docs/TODO.md 작성하도록 수정 (Plans.md는 Lead 책임)
+- `CLAUDE.md` — Reviewer APPROVE 후 Worker /ship 타이밍 명시; 브랜치 prefix 컨벤션 `{prefix}/p{N}-t{id}` 추가
+- `docs/faq/fe-design-agent-workflow.md` — design-agent → worker 브랜치 인계 흐름 추가
+- `.github/pull_request_template.md` — 첫 번째 체크박스를 E2E 확인 항목으로 교체
+
 ## [0.1.0.0] - 2026-04-03
 
 ### Added
