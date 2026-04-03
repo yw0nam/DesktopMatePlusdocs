@@ -15,7 +15,7 @@ Note, Use only english or korean for code and interaction, documentation. Avoid 
 - **desktop-homunculus** (`desktop-homunculus/`): Frontend (Dumb UI) — Bevy desktop mascot engine + MOD system. Renders output only, unaware of NanoClaw. MOD code lives here (e.g. `mods/desktopmate-bridge`). Has its own git.
 - **DesktopMatePlus**: Only documentation and workspace-level instructions; no code. path:/home/spow12/codes/2025_lower/DesktopMatePlus
 
-Note: NanoClaw, Backend, and desktop-homunculus each have their own git repo. Code changes go into their respective repos — do NOT commit code to DesktopMatePlus root. Workspace root has no `.github/workflows/` — automation uses `scripts/garden.sh` (drift detection + report generation), `scripts/e2e.sh` (cross-repo E2E verification wrapper), or `.pre-commit-config.yaml` only.
+Note: NanoClaw, Backend, and desktop-homunculus each have their own git repo. Code changes go into their respective repos — do NOT commit code to DesktopMatePlus root. Workspace root has no `.github/workflows/` — automation uses `scripts/garden.sh` (drift detection + report generation), `scripts/e2e.sh` (cross-repo E2E verification wrapper), `scripts/run-quality-agent.sh` (daily cron quality-agent runner, 09:07 KST), or `.pre-commit-config.yaml` only.
 
 Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/fastapi` (NanoClaw) → `POST /v1/callback/nanoclaw/{session_id}` (FastAPI)
 
