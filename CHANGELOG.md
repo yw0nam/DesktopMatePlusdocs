@@ -4,6 +4,13 @@ All notable changes to the DesktopMatePlus workspace coordination layer are docu
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.0.4] - 2026-04-04
+
+### Added
+- `.claude/commands/babysit.md` — PR Lifecycle Manager: 오픈 PR 전수 점검, 리뷰 코멘트 자동 대응, 리베이스, APPROVED+CI통과 PR 자동 머지
+- `.claude/commands/post-merge-sweeper.md` — Post-Merge Comment Sweeper: 최근 24h 내 머지된 PR의 미처리 리뷰 코멘트 탐색 및 후속 fix PR 생성
+- `.claude/commands/pr-pruner.md` — Stale PR Pruner: 14일 이상 활동 없는 PR 탐색, 경고 코멘트 및 자동 close
+
 ## [0.1.0.3] - 2026-04-04
 
 ### Added
