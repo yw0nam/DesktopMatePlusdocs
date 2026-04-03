@@ -10,7 +10,6 @@ tools:
   - Write
 disallowedTools:
   - Edit
-  - Agent
 ---
 
 # Background Quality Agent
