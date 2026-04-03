@@ -4,6 +4,17 @@ All notable changes to the DesktopMatePlus workspace coordination layer are docu
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.0.3] - 2026-04-04
+
+### Added
+- `.claude/commands/cleanup.md` — Phase cleanup checklist (teammate shutdown, TeamDelete, worktree removal, Plans.md verification)
+- `.claude/commands/phase-dispatch.md` — Lead standard dispatch procedure (TeamCreate → TaskCreate → TaskUpdate → spawn workers), includes repo-to-worker mapping table, branch naming, worktree setup, and `/simplify` gate reference
+
+### Changed
+- `CLAUDE.md` — `/simplify` gate added to Agent Teams Flow (worker runs `/simplify` before `/ship` for code-change tasks)
+- `CLAUDE.md` — 스킬 책임 분리 section updated with `/simplify` responsibility entry
+- `.claude/agents/worker.md` — Step 5 added: run `/simplify` after implementation, before `/ship`; docs-only tasks exempt
+
 ## [0.1.0.2] - 2026-04-03
 
 ### Fixed

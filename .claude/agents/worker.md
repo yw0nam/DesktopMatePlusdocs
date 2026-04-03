@@ -23,7 +23,9 @@ Spawned on demand by Lead. One worker per repo.
 2. **Receive** task ID + repo + worktree path from Lead
 3. **Investigate** code with `/investigate` before any changes (no fix without investigation)
 4. **Implement** with `/harness-work` — auto-selects mode by task count (Solo/Parallel/Breezing), handles TDD → review loop → commit → completion report
-5. **Report** to Lead: files changed, test results, blockers
+5. **Simplify** (코드 변경 태스크만) — 구현 완료 후 `/simplify` 실행하여 코드 품질 검토 및 정리. docs-only 태스크(workspace root docs 수정 등)는 생략하고 바로 /ship.
+   - 순서: 구현 완료 → `/simplify` → `/ship`
+6. **Report** to Lead: files changed, test results, blockers
 6. **Knowledge sharing** — If non-obvious patterns, pitfalls, or architectural decisions were discovered, document them in `docs/faq/` and add a link to the FAQ section in CLAUDE.md.
 
 ## Visual Verification (desktop-homunculus FE tasks) — MANDATORY DoD Gate
