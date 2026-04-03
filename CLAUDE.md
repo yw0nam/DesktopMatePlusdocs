@@ -100,7 +100,7 @@ User: feature request
 Lead: dispatch workers
   → (FE feature) Design Agent: /design-consultation → /design-shotgun → /design-html
       → component spec + E2E scaffold → design/{feature} branch PR → DESIGN_READY
-  → Worker(s): per-repo implementation → /ship (PR 생성, worker 책임)
+  → Worker(s): per-repo implementation → /simplify (코드 태스크만) → /ship (PR 생성, worker 책임)
   → Reviewer: /review + /cso → pass/fail
   → (Reviewer APPROVE 후) Worker runs /ship to create PR
 Lead: spawn pr-merge-agent
@@ -109,6 +109,7 @@ Lead: spawn pr-merge-agent
 
 **스킬 책임 분리**:
 - `/ship`: **worker** 또는 **design-agent** — 구현 완료 후 PR 생성 (context 소비 독립 처리)
+- `/simplify`: **worker** — 코드 변경 태스크에서 /ship 전 실행 (docs-only 태스크는 생략)
 - `/document-release`: **pr-merge-agent** — 머지 직후 실행 (context 소비 독립 처리)
 - Lead는 두 스킬을 직접 실행하지 않는다
 
