@@ -7,7 +7,7 @@ Last updated: 2026-04-03
 | backend | A | B | B | B | B |
 | nanoclaw | A | A | A | A | A |
 | desktop-homunculus(Rust) | UNCHECKED | UNCHECKED | UNCHECKED | UNCHECKED | UNCHECKED |
-| desktop-homunculus(MOD) | A | A | UNCHECKED | UNCHECKED | A |
+| desktop-homunculus(MOD) | B | B | UNCHECKED | UNCHECKED | B |
 
 > **UNCHECKED**: garden.sh does not scan DH Rust code (no cargo dependency required).
 > DH MOD (TS) rows are updated by `garden.sh` on each run.

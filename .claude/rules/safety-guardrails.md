@@ -113,6 +113,26 @@ When modifying these files, flag to the user:
 - Database schema files (`schema.prisma`, migration files)
 - `CLAUDE.md`, `Plans.md` (workspace coordination files)
 
+### R14: Agent changes must go through PR
+
+**에이전트가 파일을 변경할 때는 반드시 feature 브랜치 + PR을 통해야 한다.**
+
+PR은 두 가지 목적을 동시에 달성한다:
+- **사람**: GitHub에서 diff를 직접 확인하고 승인/거부 가능
+- **AI 팀원**: `reviewer`가 `/review`로 코드 품질 검토, `pr-merge-agent`가 댓글 분류 후 머지 — 사람이 직접 볼 필요 없이 에이전트 팀이 자동 처리
+
+**PR 없이 직접 push 시 팀원이 변경사항을 인지할 방법이 없다.** PR이 강제 체크포인트다.
+
+예외 (직접 커밋 허용):
+- `worker` — worktree 내부 커밋 (이후 `/ship`으로 PR 생성)
+- `pr-merge-agent` — merge 직후 `/document-release` 커밋
+
+적용 대상 및 브랜치 규칙:
+- `quality-agent` → `quality/report-YYYY-MM-DD`
+- `pm-agent` → `docs/spec-{slug}`
+- `design-agent` → `design/{feature}`
+- 기타 → `feat/{slug}` 또는 `chore/{slug}`
+
 ---
 
 ## Role-specific restrictions
