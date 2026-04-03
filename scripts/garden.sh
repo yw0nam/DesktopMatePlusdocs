@@ -179,13 +179,13 @@ verify_gp3_dh_mod() {
     return
   fi
 
-  # console.log check: scan all .ts/.tsx files under mods/
+  # console.log/warn/info check: scan all .ts/.tsx files under mods/
   local consolelog_out
-  consolelog_out=$(grep -rn 'console\.log' "$dh_mods_dir" --include='*.ts' --include='*.tsx' \
+  consolelog_out=$(grep -rn 'console\.\(log\|warn\|info\)' "$dh_mods_dir" --include='*.ts' --include='*.tsx' \
     --exclude-dir='node_modules' --exclude-dir='dist' 2>/dev/null | head -20) || true
 
   if [[ -z "$consolelog_out" ]]; then
-    add_result "GP-13" dh-mod Major PASS "no console.log in DH MODs"
+    add_result "GP-13-console" dh-mod Major PASS "no console.log/warn/info in DH MODs"
   else
     local violations
     violations=$(echo "$consolelog_out" | head -5 | \
@@ -194,7 +194,7 @@ verify_gp3_dh_mod() {
         split($0, a, ":")
         print "[" a[1] ":" a[2] "]"
       }' | tr '\n' ' ')
-    add_result "GP-13" dh-mod Major FAIL "$violations"
+    add_result "GP-13-console" dh-mod Major FAIL "$violations"
   fi
 
   # File size check: TS/TSX files > 400 lines
@@ -210,9 +210,9 @@ verify_gp3_dh_mod() {
     -not -path '*/node_modules/*' -not -path '*/dist/*' 2>/dev/null)
 
   if [[ -z "$oversize_out" ]]; then
-    add_result "GP-13" dh-mod Major PASS "all DH MOD TS files ≤ 400 lines"
+    add_result "GP-13-size" dh-mod Major PASS "all DH MOD TS files ≤ 400 lines"
   else
-    add_result "GP-13" dh-mod Major FAIL "$oversize_out"
+    add_result "GP-13-size" dh-mod Major FAIL "$oversize_out"
   fi
 }
 
@@ -582,7 +582,8 @@ update_quality_score() {
     IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
     [[ "$repo" == "dh-mod" && "$status" == "FAIL" ]] || continue
     case "$gp" in
-      "GP-13") (( dh_mod_consolelog_fail++ )) || true ;;
+      "GP-13-console") (( dh_mod_consolelog_fail++ )) || true ;;
+      "GP-13-size")    (( dh_mod_size_fail++ )) || true ;;
     esac
   done
   local dh_mod_total=$(( dh_mod_consolelog_fail + dh_mod_size_fail ))

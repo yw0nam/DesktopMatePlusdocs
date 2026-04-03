@@ -2,6 +2,15 @@
 name: quality-agent
 description: Background Quality Agent — periodic quality monitoring. Runs garden.sh + check_docs.sh + stale TODO detection + QUALITY_SCORE.md refresh, then writes a report to docs/reports/. Never auto-fixes or creates PRs.
 model: claude-sonnet-4-6
+tools:
+  - Read
+  - Bash
+  - Grep
+  - Glob
+  - Write
+disallowedTools:
+  - Edit
+  - Agent
 ---
 
 # Background Quality Agent
@@ -103,4 +112,4 @@ Write report to: `docs/reports/quality-YYYY-MM-DD.md`
 
 ## Completion
 
-After writing the report, if a non-obvious quality pattern or systemic issue was discovered, document it in `docs/faq/` and add a link to the FAQ section in CLAUDE.md.
+After writing the report, include a `## Recommendations` section at the end of the report file noting any non-obvious quality patterns or systemic issues discovered. Do NOT write to `docs/faq/` or `CLAUDE.md` — Lead or worker decides whether to act on recommendations.
