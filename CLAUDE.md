@@ -81,10 +81,12 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic —
 | Lead Agent | Coordinator — spawn + Plans.md + delegation only | persistent |
 | `pm-agent` | Feature spec/plan creation via `/office-hours` | on-demand |
 | `design-agent` | FE mockup + component spec + E2E scaffold (desktop-homunculus/ only) | on-demand |
-| `worker` | TDD implementation via `/harness-work` (per repo, worktree isolated) | on-demand |
+| `worker` | TDD implementation via `/harness-work` (per repo, worktree isolated) | on-demand, reuse preferred |
 | `reviewer` | Spec review (`/autoplan`) + code review (`/review` + `/cso`) | on-demand |
 | `pr-merge-agent` | PR 리뷰 코멘트 분류(valid/false positive) → 답변 → 자동 머지 | on-demand |
 | `quality-agent` | 주기적 품질 모니터링 — garden.sh + check_docs.sh + QUALITY_SCORE.md 갱신, docs/reports/ 보고서 작성 | on-demand |
+
+**Worker 재활용 원칙**: 같은 레포에 연속 태스크가 있으면 새 worker를 스폰하지 않고 `SendMessage`로 기존 worker에게 이어서 맡긴다. 다음 중 하나라도 해당하면 새로 스폰: 이전 태스크 `total_tokens` ≥ 80,000 / `tool_uses` ≥ 60 / 대상 레포 변경.
 
 Spawn condition for `design-agent`: PM spec에 `[target: desktop-homunculus/]` 명시 + 가시적 UI 변경 포함 시. 자세한 판별 기준은 [FE Design Agent Workflow FAQ](./docs/faq/fe-design-agent-workflow.md) 참조.
 
