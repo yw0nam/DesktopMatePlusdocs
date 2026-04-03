@@ -8,7 +8,7 @@ PM agent가 office-hours 상담 후 작성. Lead가 Plans.md로 가져가 태스
 
 | # | Feature | Priority | Status | Spec |
 |---|---------|----------|--------|------|
-| 6 | 워크플로우 문서 모순 해소 | P1 | TODO | [spec](#spec-6-워크플로우-문서-모순-해소) |
+| 6 | 워크플로우 문서 모순 해소 | P1 | DONE | [spec](#spec-6-워크플로우-문서-모순-해소) |
 
 ---
 
@@ -40,3 +40,5 @@ PM agent가 office-hours 상담 후 작성. Lead가 Plans.md로 가져가 태스
 ## Completed
 
 Spec 1~5 (Phase 20 완료) → [docs/archive/todo-2026-04.md](./archive/todo-2026-04.md)
+
+Spec 6 (Phase 21 완료, 2026-04-03) — 워크플로우 문서 모순 해소. PR #5 (docs/p21-twf → master) 머지 완료.
