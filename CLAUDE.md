@@ -102,6 +102,7 @@ Lead: dispatch workers
       → component spec + E2E scaffold → design/{feature} branch PR → DESIGN_READY
   → Worker(s): per-repo implementation → /ship (PR 생성, worker 책임)
   → Reviewer: /review + /cso → pass/fail
+  → (Reviewer APPROVE 후) Worker runs /ship to create PR
 Lead: spawn pr-merge-agent
   → pr-merge-agent: 리뷰 코멘트 분류 → 답변 → 머지 → /document-release (pr-merge-agent 책임)
 ```
@@ -121,6 +122,12 @@ Task tracking: `Plans.md` with `cc:TODO` / `cc:DONE` markers.
 - Workspace root 작업: `git worktree add ../DesktopMatePlus-feat-<slug> feat/<slug>`
 - Do NOT use `isolation: "worktree"` from workspace root — it creates worktrees at the wrong level.
 - Do NOT commit directly to `master`/`main`/`develop` — always via feature branch + PR.
+
+**Branch prefix convention**: `{prefix}/p{N}-t{id}`
+
+- `prefix` ∈ `{feat, fix, docs, refactor, chore, test, ci, build}`
+- `N` = Phase number, `id` = task ID from Plans.md (e.g. `feat/p21-t1`, `docs/p21-twf`)
+- design-agent가 생성한 `design/{feature}` 브랜치를 worker가 인계받을 경우, 동일 브랜치에서 작업 계속 (별도 브랜치 불필요)
 
 ## gstack
 

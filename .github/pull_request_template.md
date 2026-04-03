@@ -21,5 +21,5 @@ Labels (maintainers will add):
 
 ---
 
-- [ ] If HTTP endpoints changed: I ran `make gen-open-api` and `pnpm build` <!-- interim: remove when CI enforcement is added -->
+- [ ] i already confirm E2E test is passed
 - [ ] This PR includes breaking changes <!-- If checked, add a ### Breaking Changes subsection in Solution -->

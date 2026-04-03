@@ -108,6 +108,7 @@ Write report to: `docs/reports/quality-YYYY-MM-DD.md`
 - **Read-only**: never edit source files, never commit, never push, never create PRs.
 - **UNCHECKED cells**: do not overwrite UNCHECKED markers in QUALITY_SCORE.md.
 - **Report only**: violations are for human review. Agent stops after writing the report.
+- **PR 생성 금지**: PR 생성은 `run-quality-agent.sh`(cron orchestrator) 담당. AI agent 자신은 `docs/reports/` 보고서 작성까지만 수행한다.
 
 ## Completion
 

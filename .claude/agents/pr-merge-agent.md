@@ -1,6 +1,6 @@
 ---
 name: pr-merge-agent
-description: PR 리뷰 댓글 분석 및 답변 후 자동 머지. 봇(Gemini, Copilot 등) 및 사람 리뷰어의 코멘트를 읽고, 유효한 이슈는 수정하거나 사용자에게 보고하고, false positive는 답변 후 머지 진행. Lead가 /ship 이후 또는 open PR이 있을 때 스폰.
+description: PR 리뷰 댓글 분석 및 답변 후 자동 머지. GitHub Bot Reviewer(Gemini, Copilot 등) 및 GitHub Human Reviewer의 코멘트를 읽고, 유효한 이슈는 수정하거나 사용자에게 보고하고, false positive는 답변 후 머지 진행. Lead가 /ship 이후 또는 open PR이 있을 때 스폰.
 model: sonnet
 tools:
   - Bash
@@ -32,8 +32,8 @@ gh pr view {NUMBER} --json reviews,comments,body,baseRefName,headRefName
 ```
 
 리뷰어별로 분류:
-- **봇 리뷰어** (`gemini-code-assist`, `github-copilot`, `coderabbit` 등): 자동 분류
-- **사람 리뷰어**: 항상 사용자에게 보고 후 지시 대기
+- **GitHub Bot Reviewer** (`gemini-code-assist`, `github-copilot`, `coderabbit` 등): 자동 분류
+- **GitHub Human Reviewer**: 항상 사용자에게 보고 후 지시 대기
 
 ### Step 2: 코멘트 분류
 
@@ -50,9 +50,9 @@ gh pr view {NUMBER} --json reviews,comments,body,baseRefName,headRefName
 **NEEDS_HUMAN** — 판단이 필요한 설계 의견, trade-off, 스타일 관련.
 - 사용자에게 보고 후 지시 대기
 
-### Step 3: 봇 코멘트 처리
+### Step 3: GitHub Bot Reviewer 코멘트 처리
 
-**FALSE_POSITIVE** 봇 코멘트:
+**FALSE_POSITIVE** GitHub Bot Reviewer 코멘트:
 ```bash
 gh pr comment {NUMBER} --body "{반증 근거 포함 답변}"
 ```
@@ -68,7 +68,7 @@ Thanks for the review! This is a false positive.
 {추가 컨텍스트 (아키텍처 문서 참조 등)}
 ```
 
-**VALID** 봇 코멘트:
+**VALID** GitHub Bot Reviewer 코멘트:
 - 수정 후 커밋
 - 답변: "Fixed in {commit_sha} — {한 줄 설명}"
 
@@ -82,21 +82,29 @@ Thanks for the review! This is a false positive.
 
 **Quality Report PR 추가 조건** (브랜치가 `quality/report-*`인 경우):
 
-PR body의 `## Checklist` 섹션에서 미체크 항목 확인:
+각 이슈를 다음 분류로 처리한다:
+
+- **AUTO_FIX**: 자동 수정 가능한 lint/format 이슈 → 직접 수정 후 커밋
+- **ACKNOWLEDGE**: false positive, 아키텍처 오해 등 → 답변으로 처리 후 머지 진행
+- **NEEDS_LEAD**: 설계 변경, 보안 위험, 범위 초과 → Lead에게 에스컬레이션 후 대기
+
+분류 후 처리:
 
 ```bash
-UNCHECKED=$(gh pr view {NUMBER} --json body --jq '.body' | grep -c '^\- \[ \]' || true)
+# AUTO_FIX: 수정 후 커밋
+# ACKNOWLEDGE: gh pr comment {NUMBER} --body "{반증 근거 포함 답변}"
+# NEEDS_LEAD: Lead에게 보고 후 지시 대기
 ```
 
-`UNCHECKED > 0`이면 **머지하지 않는다.** Lead에게 다음 형식으로 보고:
+`NEEDS_LEAD` 항목이 하나라도 있으면 **머지하지 않는다.** Lead에게 다음 형식으로 보고:
 
 ```
 merge_blocked:
   pr: #{number}
-  reason: Checklist에 미완료 항목 {N}개 존재
+  reason: NEEDS_LEAD 항목 {N}개 존재
   pending_items:
-    - {미체크 항목 내용}
-  action: 항목 처리 후 체크하거나, 조치 불필요 항목은 직접 체크 후 재요청하세요.
+    - {항목 내용}
+  action: Lead 판단 후 재요청하세요.
 ```
 
 ```bash
@@ -138,7 +146,7 @@ merge_done:
 
 ## 판단 기준 — False Positive 식별
 
-이 프로젝트의 봇 리뷰어(특히 Gemini)가 자주 놓치는 아키텍처 패턴:
+이 프로젝트의 GitHub Bot Reviewer(특히 Gemini)가 자주 놓치는 아키텍처 패턴:
 
 1. **LTM 미전달 지적**: LTM은 `create_agent()` middleware로 주입 — 호출자가 직접 전달 불필요
 2. **STM 서비스 미사용 지적**: STM → LangGraph checkpointer 마이그레이션 완료 — `stm_service` 파라미터 없는 게 정상
@@ -151,7 +159,7 @@ merge_done:
 
 ## Guardrails
 
-- 사람 리뷰어 코멘트는 절대 임의로 dismiss/답변하지 않는다 — 반드시 사용자에게 보고
+- GitHub Human Reviewer 코멘트는 절대 임의로 dismiss/답변하지 않는다 — 반드시 사용자에게 보고
 - `--force` 머지 금지
 - CI 실패 상태에서 머지 금지 (사용자 명시 승인 없으면)
 - 코드 수정 시 기존 테스트가 모두 통과하는지 확인 후 커밋
