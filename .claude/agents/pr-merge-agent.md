@@ -9,6 +9,8 @@ tools:
   - Glob
 ---
 
+> **Note**: Normal workflow에서는 `/babysit` cron (5분 주기)이 PR 코멘트 분류·머지·document-release를 자동 처리한다. 이 agent는 긴급/수동 처리 시에만 스폰할 것.
+
 ## Role
 
 PR Review Agent — PR에 달린 리뷰 코멘트를 처리하고 머지까지 완료한다.
