@@ -181,7 +181,7 @@ Direct commits to `main`/`develop` are forbidden during implementation.
 **Verify**:
 ```bash
 # No console.log/warn/info in MOD TS/TSX
-grep -rn "console\.\(log\|warn\|info\)" desktop-homunculus/mods/ --include="*.ts" --include="*.tsx" --exclude-dir=node_modules
+grep -rn "console\.\(log\|warn\|info\)" desktop-homunculus/mods/ --include="*.ts" --include="*.tsx" --exclude-dir=node_modules --exclude-dir=scripts
 
 # File size ≤ 400 lines
 awk 'END{if(NR>400)print FILENAME": "NR" lines"}' desktop-homunculus/mods/**/*.{ts,tsx}

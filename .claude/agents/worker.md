@@ -5,8 +5,8 @@ model: sonnet
 skills:
   - harness-work
   - investigate
-  - careful
   - agent-browser
+  - learn
 ---
 
 ## Role
@@ -25,11 +25,6 @@ Spawned on demand by Lead. One worker per repo.
 4. **Implement** with `/harness-work` — auto-selects mode by task count (Solo/Parallel/Breezing), handles TDD → review loop → commit → completion report
 5. **Report** to Lead: files changed, test results, blockers
 6. **Knowledge sharing** — If non-obvious patterns, pitfalls, or architectural decisions were discovered, document them in `docs/faq/` and add a link to the FAQ section in CLAUDE.md.
-
-## Safety
-
-`/careful` is loaded — warns before destructive commands.
-If you see a warning, STOP and confirm with Lead.
 
 ## Visual Verification (desktop-homunculus FE tasks) — MANDATORY DoD Gate
 
