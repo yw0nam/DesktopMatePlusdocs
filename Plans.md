@@ -157,7 +157,7 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 
 - [x] **WS-QA-1: Background Quality Agent 신설 + garden.sh 개선** cc:DONE — `.claude/agents/quality-agent.md` 작성. garden.sh DH MOD 체크 + 위반위치 + docs/reports/ 경로 통일. QUALITY_SCORE.md UNCHECKED + Violations Summary. docs/reports/.gitkeep 추가. Depends: none. [target: DesktopMatePlus/]
 
-- [ ] **WS-GP-1: GOLDEN_PRINCIPLES.md 일관성 수정** cc:TODO — `docs/GOLDEN_PRINCIPLES.md` 수정. GP-9 브랜치 참조 `feat/claude_harness` → `develop`으로 업데이트. GP-11/12 superpowers 기반 아카이브 규칙 → docs/TODO.md 기반으로 변경. DH MOD GP 추가(GP-13 또는 GP-2 확장): TS console.log 금지 + 파일크기 ≤ 400줄 (garden.sh DH 체크 기준과 일치). **주의: CONTRIBUTING 규칙상 PR 생성 + human approval 필수 — 직접 커밋 금지.** garden.sh archive freshness 감지 로직 업데이트는 Phase 21+에서 판단. DoD: GP-9/11/12 텍스트 현행 일치 + DH GP 항목 존재 + PR+human approval로 머지됨. Depends: none. [target: DesktopMatePlus/]
+- [x] **WS-GP-1: GOLDEN_PRINCIPLES.md 일관성 수정** cc:DONE [PR#3 merged 2496b78] — `docs/GOLDEN_PRINCIPLES.md` GP-9/11/12/13 업데이트. garden.sh DH MOD 체크, docs/reports/ 경로 통일. PR+human approval로 머지 완료. Depends: none. [target: DesktopMatePlus/]
 
 - [x] **WS-CQ-1: cq 강제 사용 제거 → docs/faq 문서화 규칙 대체** cc:DONE — safety-guardrails.md R00-CQ 규칙 제거. worker.md/reviewer.md/quality-agent.md에서 cq.query()/cq.propose() 스텝 제거. CLAUDE.md "cq Knowledge Sharing" 섹션 제거. 대체: "비자명한 학습은 docs/faq/에 문서화" 규칙 명시. settings.json cq env/allowedTools는 유지(수동 사용 가능). DoD: R00-CQ 삭제 + agent .md cq 스텝 제거 + CLAUDE.md cq 섹션 제거. Depends: none. [target: DesktopMatePlus/]
 

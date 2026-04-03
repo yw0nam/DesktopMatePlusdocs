@@ -84,6 +84,7 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic —
 | `worker` | TDD implementation via `/harness-work` (per repo, worktree isolated) | on-demand |
 | `reviewer` | Spec review (`/autoplan`) + code review (`/review` + `/cso`) | on-demand |
 | `pr-merge-agent` | PR 리뷰 코멘트 분류(valid/false positive) → 답변 → 자동 머지 | on-demand |
+| `quality-agent` | 주기적 품질 모니터링 — garden.sh + check_docs.sh + QUALITY_SCORE.md 갱신, docs/reports/ 보고서 작성 | on-demand |
 
 Spawn condition for `design-agent`: PM spec에 `[target: desktop-homunculus/]` 명시 + 가시적 UI 변경 포함 시. 자세한 판별 기준은 [FE Design Agent Workflow FAQ](./docs/faq/fe-design-agent-workflow.md) 참조.
 
