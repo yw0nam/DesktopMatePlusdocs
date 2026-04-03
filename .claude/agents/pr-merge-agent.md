@@ -88,7 +88,18 @@ gh pr checks {NUMBER}
 gh pr merge {NUMBER} --merge --subject "{PR title}"
 ```
 
-### Step 5: 결과 보고
+### Step 5: /document-release 실행
+
+머지 완료 후 `/document-release` 스킬로 문서 업데이트:
+
+```
+/document-release
+```
+
+이 스킬은 README/ARCHITECTURE/CONTRIBUTING/CHANGELOG 등을 diff 기준으로 자동 업데이트한다.
+context 소비가 크므로 반드시 pr-merge-agent가 독립적으로 처리한다 (Lead 위임).
+
+### Step 6: 결과 보고
 
 Lead에게 반환:
 ```
@@ -100,6 +111,7 @@ merge_done:
     - valid: {N} (fixed in {commits})
     - needs_human: {N} (pending)
   merged: {yes/no}
+  document_release: {done/skipped}
   reason: {머지 안 한 경우 이유}
 ```
 

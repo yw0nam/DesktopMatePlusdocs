@@ -123,7 +123,7 @@ Plans.md changes must be committed in the same session as the task they track.
 ## GP-9: Worktree Isolation for Implementation
 
 **Rule**: All implementation work happens inside a `git worktree` on a `feat/{slug}` branch.
-Direct commits to `main`/`develop`/`feat/claude_harness` are forbidden during implementation.
+Direct commits to `main`/`develop` are forbidden during implementation.
 
 **Verify**: `git log --oneline main..HEAD` in any sub-repo should only show merge commits from worktree branches.
 
@@ -144,34 +144,55 @@ Direct commits to `main`/`develop`/`feat/claude_harness` are forbidden during im
 
 ## GP-11: Archive Freshness
 
-**Rule**: Completed spec/plan files must be moved to `docs/superpowers/completed/` once all Plans.md tasks referencing them are `cc:DONE`.
+**Rule**: Completed specs in `docs/TODO.md` must be reflected in Plans.md. When a spec's Status becomes `DONE` in `docs/TODO.md`, all corresponding Plans.md tasks must be `cc:DONE`, and the spec row must remain in `docs/TODO.md` under a Completed section (not deleted).
 
-- `spec-ref:` fields in Plans.md are parsed to identify referenced files.
-- If ALL tasks referencing a spec-ref are `[x]` (done) and the file is still in `docs/superpowers/specs/` or `docs/superpowers/plans/` (active directories), it triggers a warning.
-- Files referenced by any `[ ]` (TODO/WIP) task are exempt.
+- Active specs: Status = `TODO` in `docs/TODO.md`
+- Completed specs: Status = `DONE` in `docs/TODO.md`; all linked Plans.md tasks are `cc:DONE`
+- If a `DONE` spec still has open (`cc:TODO`) Plans.md tasks, it triggers a warning.
 
-**Verify**: `scripts/garden.sh --gp GP-11` — lists stale files that should be archived.
+**Verify**: `scripts/garden.sh --gp GP-11` — lists DONE specs with open Plans.md tasks.
 
-**Severity**: WARN — garden.sh reports only; quality-team handles the actual `git mv` to `completed/`.
+**Severity**: WARN — garden.sh reports only; PM agent handles status updates.
 
 ---
 
 ## GP-12: Plans.md Auto-Archive
 
-**Rule**: Completed Phases in Plans.md (all tasks `[x]`) must be archived to `docs/superpowers/completed/plans/`. Plans.md retains only the Phase title with an `[archived]` link.
+**Rule**: Completed Phases in Plans.md (all tasks `cc:DONE`) must be collapsed to a single summary line. Plans.md retains only the Phase title with a `[completed]` annotation; task details are removed.
 
-- Referenced `spec-ref:` files are moved to `completed/specs/` or `completed/plans/`.
-- Already-archived Phases (with `archived` or `details` in the header) are skipped.
-- garden.sh detects and auto-archives in non-dry-run mode.
+- Already-collapsed Phases (single line with `[completed]` annotation) are skipped.
+- garden.sh detects unarchived completed Phases in dry-run mode; quality-team performs the actual collapse.
+- `docs/superpowers/` paths are legacy — no new archives go there.
 
-**Verify**: `scripts/garden.sh --gp GP-12` — lists unarchived completed Phases.
+**Verify**: `scripts/garden.sh --gp GP-12` — lists uncollapsed completed Phases.
 
-**Severity**: WARN — garden.sh auto-archives; no merge block.
+**Severity**: WARN — garden.sh reports only; no merge block.
+
+---
+
+## GP-13: DH MOD Logging and File Size
+
+**Rule**: `desktop-homunculus/mods/` 하위 TS/TSX 소스 파일에서 `console.log`, `console.warn`, `console.info` 사용 금지. 파일 크기 ≤ 400줄.
+
+- 적용 범위: `desktop-homunculus/mods/**/*.{ts,tsx}` (테스트 파일 제외)
+- DH Rust 코드(`src/` Bevy 엔진)는 이 GP에서 제외 — `cargo clippy` 영역
+- 새 위반은 즉시 수정; `_KNOWN_*` 예외 목록 추가 불가
+
+**Verify**:
+```bash
+# No console.log/warn/info in MOD TS/TSX
+grep -rn "console\.\(log\|warn\|info\)" desktop-homunculus/mods/ --include="*.ts" --include="*.tsx" --exclude-dir=node_modules
+
+# File size ≤ 400 lines
+awk 'END{if(NR>400)print FILENAME": "NR" lines"}' desktop-homunculus/mods/**/*.{ts,tsx}
+```
+
+**Severity**: Major.
 
 ---
 
 ## Appendix: Gardening Agent Usage
 
 The Background Gardening Agent runs each principle's **Verify** command and opens a PR when violations are found.
-Priority order for automated remediation: GP-10 → GP-3 → GP-12 → GP-2 → GP-7 → GP-8.
+Priority order for automated remediation: GP-10 → GP-3 → GP-13 → GP-12 → GP-2 → GP-7 → GP-8.
 GP-1, GP-5, GP-6 require human review before auto-merge.

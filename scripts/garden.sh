@@ -26,13 +26,14 @@ declare -A REPO_DIRS=(
   [workspace]="$WORKSPACE_ROOT"
 )
 declare -A REPO_BRANCHES=(
-  [backend]="feat/claude_harness"
+  [backend]="develop"
   [nanoclaw]="develop"
   [workspace]="master"
 )
 
 # ── CLI flags ──────────────────────────────────────────────────────
 DRY_RUN=false
+METRICS_ONLY=false
 FILTER_GP=""
 FILTER_REPO=""
 
@@ -44,13 +45,15 @@ Background Gardening Agent — verifies Golden Principles and auto-fixes violati
 
 Options:
   --dry-run      Detect only, skip auto-fix and report generation
+  --metrics      Run detection + update QUALITY_SCORE.md only (skip auto-fix and report)
   --gp GP-N      Run only the specified GP (e.g. GP-3)
-  --repo NAME    Run only for the specified repo (backend, nanoclaw, workspace)
+  --repo NAME    Run only for the specified repo (backend, nanoclaw, workspace, dh-mod)
   -h, --help     Show this help message
 
 Examples:
   scripts/garden.sh                 # Full run
   scripts/garden.sh --dry-run       # Detect only
+  scripts/garden.sh --metrics       # Detect + update QUALITY_SCORE.md only
   scripts/garden.sh --gp GP-3      # Check GP-3 only
   scripts/garden.sh --repo backend  # Check backend only
 EOF
@@ -59,6 +62,7 @@ EOF
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run)  DRY_RUN=true; shift ;;
+    --metrics)  METRICS_ONLY=true; shift ;;
     --gp)       FILTER_GP="$2"; shift 2 ;;
     --repo)     FILTER_REPO="$2"; shift 2 ;;
     -h|--help)  usage; exit 0 ;;
@@ -144,12 +148,15 @@ verify_gp3() {
   if [[ "$repo" == "backend" ]]; then
     [[ -d "$dir" ]] || { add_result GP-3 "$repo" Major SKIP "repo dir not found"; return; }
     local out rc=0
-    # GP-3 verify: grep for bare print() in src/ (ruff doesn't have T201 enabled)
+    # GP-3 verify: grep for bare print() in src/ with file:line format
     out=$(cd "$dir" && grep -rn 'print(' src/ --include='*.py' | grep -v '__pycache__' | grep -v '# noqa' | head -20) || rc=$?
     if [[ "$rc" -ne 0 || -z "$out" ]]; then
       add_result GP-3 "$repo" Major PASS "no bare print() found"
     else
-      add_result GP-3 "$repo" Major FAIL "$(echo "$out" | head -5)"
+      # Format as [file:line] entries
+      local violations
+      violations=$(echo "$out" | head -5 | awk -F: '{print "[" $1 ":" $2 "]"}' | tr '\n' ' ')
+      add_result GP-3 "$repo" Major FAIL "$violations"
     fi
   elif [[ "$repo" == "nanoclaw" ]]; then
     [[ -d "$dir" ]] || { add_result GP-3 "$repo" Major SKIP "repo dir not found"; return; }
@@ -160,6 +167,52 @@ verify_gp3() {
     else
       add_result GP-3 "$repo" Major FAIL "$(echo "$out" | tail -10)"
     fi
+  fi
+}
+
+verify_gp3_dh_mod() {
+  # DH MOD (TS) No console.log + file size ≤ 400 lines — Major
+  # DH Rust code is NOT checked (UNCHECKED)
+  local dh_mods_dir="${REAL_ROOT}/desktop-homunculus/mods"
+  if [[ ! -d "$dh_mods_dir" ]]; then
+    add_result GP-13 dh-mod Major SKIP "desktop-homunculus/mods not found"
+    return
+  fi
+
+  # console.log check: scan all .ts/.tsx files under mods/
+  local consolelog_out
+  consolelog_out=$(grep -rn 'console\.log' "$dh_mods_dir" --include='*.ts' --include='*.tsx' \
+    --exclude-dir='node_modules' --exclude-dir='dist' 2>/dev/null | head -20) || true
+
+  if [[ -z "$consolelog_out" ]]; then
+    add_result "GP-13" dh-mod Major PASS "no console.log in DH MODs"
+  else
+    local violations
+    violations=$(echo "$consolelog_out" | head -5 | \
+      awk -v base="$dh_mods_dir" '{
+        sub(base "/", "", $0)
+        split($0, a, ":")
+        print "[" a[1] ":" a[2] "]"
+      }' | tr '\n' ' ')
+    add_result "GP-13" dh-mod Major FAIL "$violations"
+  fi
+
+  # File size check: TS/TSX files > 400 lines
+  local oversize_out=""
+  while IFS= read -r f; do
+    local lines
+    lines=$(wc -l < "$f" | tr -d ' ')
+    if [[ "$lines" -gt 400 ]]; then
+      local rel="${f#$dh_mods_dir/}"
+      oversize_out+="[${rel}:${lines}lines] "
+    fi
+  done < <(find "$dh_mods_dir" \( -name '*.ts' -o -name '*.tsx' \) \
+    -not -path '*/node_modules/*' -not -path '*/dist/*' 2>/dev/null)
+
+  if [[ -z "$oversize_out" ]]; then
+    add_result "GP-13" dh-mod Major PASS "all DH MOD TS files ≤ 400 lines"
+  else
+    add_result "GP-13" dh-mod Major FAIL "$oversize_out"
   fi
 }
 
@@ -444,6 +497,11 @@ run_detection verify_gp11 GP-11 workspace
 run_detection verify_gp12 GP-12 workspace
 run_detection verify_doc  DOC   workspace
 
+# DH MOD (TS) checks — Rust code is UNCHECKED
+if [[ (-z "$FILTER_REPO" || "$FILTER_REPO" == "dh-mod") && (-z "$FILTER_GP" || "$FILTER_GP" == "GP-13") ]]; then
+  verify_gp3_dh_mod
+fi
+
 # ── Print detection results ────────────────────────────────────────
 for r in "${RESULTS[@]}"; do
   IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
@@ -507,19 +565,31 @@ update_quality_score() {
     echo "$worst"
   }
 
-  # Compute grades for each domain
-  for domain in backend nanoclaw desktop-homunculus; do
+  # Compute grades for backend and nanoclaw (fully checked)
+  for domain in backend nanoclaw; do
     local arch_g test_g obs_g docs_g overall_g
     arch_g=$(grade_from_count "${domain_arch[$domain]:-0}")
     test_g=$(grade_from_count "${domain_test[$domain]:-0}")
     obs_g=$(grade_from_count "${domain_obs[$domain]:-0}")
     docs_g=$(grade_from_count "${domain_docs[$domain]:-0}")
     overall_g=$(compute_overall "$arch_g" "$test_g" "$obs_g" "$docs_g")
-
-    # Update the row in QUALITY_SCORE.md
-    # Match: | domain | ... |
     sed -i "s/| ${domain} |.*|/| ${domain} | ${arch_g} | ${test_g} | ${obs_g} | ${docs_g} | ${overall_g} |/" "$qs_file"
   done
+
+  # DH MOD (TS): update only the dh-mod row; DH Rust row stays UNCHECKED
+  local dh_mod_consolelog_fail=0 dh_mod_size_fail=0
+  for r in "${RESULTS[@]}"; do
+    IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
+    [[ "$repo" == "dh-mod" && "$status" == "FAIL" ]] || continue
+    case "$gp" in
+      "GP-13") (( dh_mod_consolelog_fail++ )) || true ;;
+    esac
+  done
+  local dh_mod_total=$(( dh_mod_consolelog_fail + dh_mod_size_fail ))
+  local dh_mod_g
+  dh_mod_g=$(grade_from_count "$dh_mod_total")
+  # Update DH MOD row (if it exists); leave DH Rust UNCHECKED rows untouched
+  sed -i "s/| desktop-homunculus(MOD) |.*|/| desktop-homunculus(MOD) | ${dh_mod_g} | ${dh_mod_g} | UNCHECKED | UNCHECKED | ${dh_mod_g} |/" "$qs_file" || true
 
   # Update timestamp
   sed -i "s/^Last updated:.*/Last updated: $(date +%Y-%m-%d)/" "$qs_file"
@@ -659,7 +729,7 @@ archive_completed_phases() {
   done
 }
 
-if [[ "$DRY_RUN" == false ]]; then
+if [[ "$DRY_RUN" == false && "$METRICS_ONLY" == false ]]; then
   echo ""
   echo "--- Auto-fix phase ---"
 
@@ -717,6 +787,9 @@ if [[ "$DRY_RUN" == false ]]; then
       fi
     fi
   done
+elif [[ "$METRICS_ONLY" == true ]]; then
+  echo ""
+  echo "--- Metrics-only mode: skipping auto-fix and report generation ---"
 else
   echo ""
   echo "--- Dry run: skipping auto-fix and report generation ---"
@@ -760,9 +833,9 @@ generate_report() {
 }
 
 # ── Report generation phase (skip if --dry-run) ──────────────────
-REPORT_DIR="$WORKSPACE_ROOT/docs/garden-reports"
+REPORT_DIR="$WORKSPACE_ROOT/docs/reports"
 
-if [[ "$DRY_RUN" == false ]]; then
+if [[ "$DRY_RUN" == false && "$METRICS_ONLY" == false ]]; then
   echo ""
   echo "--- Report generation phase ---"
   mkdir -p "$REPORT_DIR"
@@ -775,7 +848,7 @@ if [[ "$DRY_RUN" == false ]]; then
     echo "  $repo → $report_file"
   done
 else
-  # In dry-run, still show what the report would look like
+  # In dry-run or metrics-only, still show what the report would look like
   for repo in "${!REPO_VIOLATIONS[@]}"; do
     echo ""
     echo "--- Report for $repo ---"
@@ -808,6 +881,9 @@ done
 if [[ "$DRY_RUN" == true ]]; then
   echo ""
   echo "(dry-run mode — no auto-fixes or reports were generated)"
+elif [[ "$METRICS_ONLY" == true ]]; then
+  echo ""
+  echo "(metrics-only mode — QUALITY_SCORE.md updated, no auto-fixes or reports)"
 else
   echo "Reports written to: $REPORT_DIR"
 fi

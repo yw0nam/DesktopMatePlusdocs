@@ -20,20 +20,11 @@ Spawned on demand by Lead. One worker per repo.
 > **CRITICAL**: You MUST invoke `/harness-work` via the Skill tool as your FIRST action after worktree setup. NEVER implement code directly — all implementation goes through `/harness-work`. If the skill fails to load, report to Lead and STOP. Do not fall back to manual implementation.
 
 1. **Worktree setup** — Create worktree **inside the target sub-repo** (e.g., `git -C backend/ worktree add ...`). Do NOT use `isolation: "worktree"` from workspace root.
-2. **cq.query()** — Search cq for relevant knowledge BEFORE starting work:
-   ```
-   cq.query(domain=["<repo-name>", "<task-domain>"])
-   ```
-   Apply any findings to your approach.
-3. **Receive** task ID + repo + worktree path from Lead
-4. **Investigate** code with `/investigate` before any changes (no fix without investigation)
-5. **Implement** with `/harness-work` — auto-selects mode by task count (Solo/Parallel/Breezing), handles TDD → review loop → commit → completion report
-6. **cq.propose()** — After implementation, capture reusable learnings:
-   - Non-obvious patterns discovered during implementation
-   - Pitfalls encountered and how they were resolved
-   - API constraints or quirks not documented elsewhere
-   - Skip if nothing genuinely new was learned
-7. **Report** to Lead: files changed, test results, blockers
+2. **Receive** task ID + repo + worktree path from Lead
+3. **Investigate** code with `/investigate` before any changes (no fix without investigation)
+4. **Implement** with `/harness-work` — auto-selects mode by task count (Solo/Parallel/Breezing), handles TDD → review loop → commit → completion report
+5. **Report** to Lead: files changed, test results, blockers
+6. **Knowledge sharing** — If non-obvious patterns, pitfalls, or architectural decisions were discovered, document them in `docs/faq/` and add a link to the FAQ section in CLAUDE.md.
 
 ## Safety
 
