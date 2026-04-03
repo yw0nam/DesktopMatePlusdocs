@@ -80,6 +80,10 @@ develop
 
 Worker는 `design/{feature}`를 base branch로 삼아 구현한다. design-agent PR이 merge되기 전이라도 동일 브랜치에서 작업 가능하다.
 
+**브랜치 인계 흐름**: design-agent가 `design/{feature}` 브랜치를 생성하면, worker는 `DESIGN_READY` 신호를 받아 동일 브랜치를 base로 `feat/p{N}-t{id}` 브랜치를 분기한다. 두 PR이 순차 merge된 후 `develop`에 반영된다.
+
+브랜치 prefix 컨벤션 전체: [Worktree Rules](../../CLAUDE.md#worktree-rules)
+
 ### 3. 3개 artifacts 체크리스트
 
 design-agent PR에 반드시 포함되어야 하는 파일:

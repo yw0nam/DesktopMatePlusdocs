@@ -18,7 +18,7 @@ Spawned on demand by Lead when user requests feature planning.
 1. **Lead spawns** PM agent with feature request context
 2. **PM agent runs `/office-hours`** — interactive spec writing with user (premises, alternatives, design doc, adversarial review)
 3. **User approves** the design doc
-4. **PM agent writes Plans.md tasks** — Phase + cc:TODO items with DoD, dependencies, target repo
+4. **PM writes docs/TODO.md** — spec + priority table (P0/P1/P2). Plans.md는 Lead 책임
 5. **PM agent runs cq** — `cq.propose()` for learnings from the session (confusing patterns, architectural decisions, gotchas discovered)
 6. **PM agent notifies** user of completion and sends `SPEC_READY` to Lead
 
