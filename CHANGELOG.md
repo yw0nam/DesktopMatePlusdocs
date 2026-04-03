@@ -4,6 +4,16 @@ All notable changes to the DesktopMatePlus workspace coordination layer are docu
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.0.2] - 2026-04-03
+
+### Fixed
+- `scripts/garden.sh` — GP-13 console.log grep now excludes `mods/*/scripts/` via `--exclude-dir=scripts`
+- `scripts/garden.sh` — `update_quality_score()` now updates QUALITY_SCORE.md Violations Summary with actual GP-3 and GP-13 violation counts (previously always showed 0)
+- `scripts/check_docs.sh` — `docs/superpowers/` excluded from dead link and oversized-doc checks
+
+### Changed
+- `Plans.md` — Phases 12–17, 19–20 (all cc:DONE) archived to `docs/archive/plans-2026-04.md`; Phase 18 (cc:TODO) retained
+
 ## [0.1.0.1] - 2026-04-03
 
 ### Changed

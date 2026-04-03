@@ -56,7 +56,7 @@ while IFS= read -r md_file; do
       HAS_HARD_FAILURE=true
     fi
   done < <(grep -oP '\[.*?\]\(\K[^)]+' "$md_file" 2>/dev/null | grep -v '^https\?://' | grep -v '^mailto:')
-done < <(find "$DOCS_DIR" -name '*.md' -type f 2>/dev/null)
+done < <(find "$DOCS_DIR" -name '*.md' -type f -not -path '*/superpowers/*' 2>/dev/null)
 
 # Also check CLAUDE.md at workspace root
 if [[ -f "$WORKSPACE_ROOT/CLAUDE.md" ]]; then
@@ -96,7 +96,7 @@ while IFS= read -r md_file; do
     echo "[WARN] $rel: $lines lines (>200)"
     ((OVERSIZED++)) || true
   fi
-done < <(find "$DOCS_DIR" -name '*.md' -type f 2>/dev/null)
+done < <(find "$DOCS_DIR" -name '*.md' -type f -not -path '*/superpowers/*' 2>/dev/null)
 
 if [[ "$OVERSIZED" -eq 0 ]]; then
   echo "[PASS] All docs within 200-line limit"

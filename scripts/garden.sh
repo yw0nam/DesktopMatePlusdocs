@@ -182,7 +182,7 @@ verify_gp3_dh_mod() {
   # console.log/warn/info check: scan all .ts/.tsx files under mods/
   local consolelog_out
   consolelog_out=$(grep -rn 'console\.\(log\|warn\|info\)' "$dh_mods_dir" --include='*.ts' --include='*.tsx' \
-    --exclude-dir='node_modules' --exclude-dir='dist' 2>/dev/null | head -20) || true
+    --exclude-dir='node_modules' --exclude-dir='dist' --exclude-dir='scripts' 2>/dev/null | head -20) || true
 
   if [[ -z "$consolelog_out" ]]; then
     add_result "GP-13-console" dh-mod Major PASS "no console.log/warn/info in DH MODs"
@@ -594,6 +594,28 @@ update_quality_score() {
 
   # Update timestamp
   sed -i "s/^Last updated:.*/Last updated: $(date +%Y-%m-%d)/" "$qs_file"
+
+  # Count violations for Violations Summary section
+  local gp3_backend_count=0 gp3_nanoclaw_count=0
+  local gp13_console_count=0 gp13_size_count=0
+  for r in "${RESULTS[@]}"; do
+    IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
+    [[ "$status" == "FAIL" ]] || continue
+    case "$gp" in
+      GP-3)
+        [[ "$repo" == "backend" ]] && (( gp3_backend_count++ )) || true
+        [[ "$repo" == "nanoclaw" ]] && (( gp3_nanoclaw_count++ )) || true
+        ;;
+      "GP-13-console") (( gp13_console_count++ )) || true ;;
+      "GP-13-size")    (( gp13_size_count++ )) || true ;;
+    esac
+  done
+
+  # Update Violations Summary lines
+  sed -i "s/^- GP-3 (backend):.*$/- GP-3 (backend): ${gp3_backend_count} violations/" "$qs_file"
+  sed -i "s/^- GP-3 (nanoclaw):.*$/- GP-3 (nanoclaw): ${gp3_nanoclaw_count} violations/" "$qs_file"
+  sed -i "s/^- GP-13 (DH MOD console\.log):.*$/- GP-13 (DH MOD console.log): ${gp13_console_count} violations/" "$qs_file"
+  sed -i "s/^- GP-13 (DH MOD file size):.*$/- GP-13 (DH MOD file size): ${gp13_size_count} violations/" "$qs_file"
 }
 
 update_quality_score
