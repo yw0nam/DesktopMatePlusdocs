@@ -148,3 +148,6 @@ If gstack skills aren't working, run `cd .claude/skills/gstack && ./setup` to bu
 - [Plans.md](./Plans.md): Cross-repo task tracking with `cc:TODO` / `cc:DONE` markers.
 - [/cleanup command](./.claude/commands/cleanup.md): Phase cleanup checklist — teammate shutdown, TeamDelete, worktree removal, Plans.md verification.
 - [/phase-dispatch command](./.claude/commands/phase-dispatch.md): Lead standard Phase dispatch procedure — TeamCreate → TaskCreate → spawn workers, branch naming, worktree setup.
+- [/babysit command](./.claude/commands/babysit.md): Open PR lifecycle manager — sweeps all open PRs, auto-responds to bot/human reviewer comments, rebases conflicting PRs, merges APPROVED+CI-passed PRs.
+- [/post-merge-sweeper command](./.claude/commands/post-merge-sweeper.md): Post-merge comment sweeper — finds unresolved review comments on PRs merged in the last 24h, classifies and creates follow-up fix PRs.
+- [/pr-pruner command](./.claude/commands/pr-pruner.md): Stale PR pruner — warns at 7+ days inactivity, closes at 14+ days; skips Draft PRs and `keep-open` labeled PRs.
