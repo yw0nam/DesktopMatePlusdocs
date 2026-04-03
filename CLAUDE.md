@@ -146,3 +146,5 @@ If gstack skills aren't working, run `cd .claude/skills/gstack && ./setup` to bu
 - [Data Flows](./docs/data_flow/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and desktop-homunculus.
 - [desktopmate-bridge CLAUDE.md](./desktop-homunculus/mods/desktopmate-bridge/CLAUDE.md): Mod-specific build/test commands, config flow, React gotchas.
 - [Plans.md](./Plans.md): Cross-repo task tracking with `cc:TODO` / `cc:DONE` markers.
+- [/cleanup command](./.claude/commands/cleanup.md): Phase cleanup checklist — teammate shutdown, TeamDelete, worktree removal, Plans.md verification.
+- [/phase-dispatch command](./.claude/commands/phase-dispatch.md): Lead standard Phase dispatch procedure — TeamCreate → TaskCreate → spawn workers, branch naming, worktree setup.
