@@ -138,12 +138,27 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 
 - [x] **BE-E2E-2: backend examples 재작성 (args 방식)** cc:DONE [e6c23dd] — examples/test_stm.py(--base-url, STM add/get/clear 라운드트립), examples/test_ltm.py(--base-url, LTM store/search 라운드트립, Qdrant 미실행 시 SKIP — Phase7 summary에 "LTM SKIPPED (Qdrant not running)" 출력), examples/test_websocket.py(--ws-url, 2-turn 대화 stream_end 확인 — `asyncio.wait_for(stream_end, timeout=30.0)` 또는 동등한 timeout 처리 필수) 3개 작성. 모두 assert 실패 시 sys.exit(1). 기존 stm_api_demo.py, multiturn_session_test.py deprecated 처리. DoD: 3개 파일 모두 --base-url/--ws-url 인자 필수, 하드코딩(5500, 5600) 없음, `bash backend/scripts/e2e.sh` PASSED. Depends: BE-E2E-1. [target: backend/]
 
-- [ ] **DH-PROBE-1: DH MOD standalone 실행 가능 여부 확인** cc:TODO — desktop-homunculus/mods/desktopmate-bridge/ 에서 pnpm dev로 Bevy 없이 브라우저 접근 가능한지 확인. 가능 시: 실행 방법 + data-testid 선택자 목록 문서화. 불가 시: 불가 사유 + TODO 문서화. DoD: 확인 결과 docs/ 또는 CLAUDE.md에 기록. Depends: none. [target: desktop-homunculus/]
+- [x] **DH-PROBE-1: DH MOD standalone 실행 가능 여부 확인** cc:DONE — desktop-homunculus/mods/desktopmate-bridge/ 에서 pnpm dev로 Bevy 없이 브라우저 접근 가능한지 확인. 가능 시: 실행 방법 + data-testid 선택자 목록 문서화. 불가 시: 불가 사유 + TODO 문서화. DoD: 확인 결과 docs/ 또는 CLAUDE.md에 기록. Depends: none. [target: desktop-homunculus/]
 
-- [ ] **DH-E2E-1: DH MOD E2E 프로토콜 작성** cc:TODO — DH-PROBE-1 가능 결론 시에만 진행. **e2e.sh는 shell-automatable phases만 담당**: `set -euo pipefail` → pnpm dev 시작(4000-4499 랜덤 포트, stdout에 포트 출력) → HTTP 200 대기 → console.error 없음 확인 → pnpm dev stop → PASSED/FAILED 출력. **UI 검증(Agent browse)은 e2e.sh와 분리된 별도 프로토콜**: Agent가 DH-E2E-1 완료 후 수동으로 browse 실행(페이지 로드 + SettingsPanel 렌더링 + send button → backend 메시지 전송 → output 렌더링 확인) — e2e.sh exit code와 무관. DoD(DH standalone 가능): `bash desktop-homunculus/scripts/e2e.sh` PASSED + Agent browse 프로토콜 문서화. DoD(DH standalone 불가): CONDITIONAL TODO 표시 + 이유 문서화. Depends: DH-PROBE-1. [target: desktop-homunculus/]
+- [x] **DH-E2E-1: DH MOD E2E 프로토콜 작성** cc:DONE — DH-PROBE-1 가능 결론 시에만 진행. **e2e.sh는 shell-automatable phases만 담당**: `set -euo pipefail` → pnpm dev 시작(4000-4499 랜덤 포트, stdout에 포트 출력) → HTTP 200 대기 → console.error 없음 확인 → pnpm dev stop → PASSED/FAILED 출력. **UI 검증(Agent browse)은 e2e.sh와 분리된 별도 프로토콜**: Agent가 DH-E2E-1 완료 후 수동으로 browse 실행(페이지 로드 + SettingsPanel 렌더링 + send button → backend 메시지 전송 → output 렌더링 확인) — e2e.sh exit code와 무관. DoD(DH standalone 가능): `bash desktop-homunculus/scripts/e2e.sh` PASSED + Agent browse 프로토콜 문서화. DoD(DH standalone 불가): CONDITIONAL TODO 표시 + 이유 문서화. Depends: DH-PROBE-1. [target: desktop-homunculus/]
 
 - [x] **WS-E2E-1: workspace root scripts/e2e.sh 작성** cc:DONE [66409d6] — `set -euo pipefail`. backend/scripts/e2e.sh → desktop-homunculus/scripts/e2e.sh 순차 실행. **shell-automatable phases만 포함** (DH UI browse 검증은 Agent 별도 프로토콜, 이 스크립트 scope 외). DoD(DH standalone 가능): `bash scripts/e2e.sh` → backend PASSED + DH shell phases PASSED. DoD(DH standalone 불가): `bash scripts/e2e.sh` → backend PASSED + DH CONDITIONAL TODO 출력. Depends: BE-E2E-1, DH-E2E-1. [target: DesktopMatePlus/]
 
 - [x] **DOC-E2E-1: Plans.md DoD 템플릿 표준화** cc:DONE [66409d6] — 신규 backend Plans.md 태스크 템플릿에 "bash backend/scripts/e2e.sh PASSED 필수" 명시. backend/AGENTS.md(또는 동등 문서)에 DoD 체크리스트 추가. 기존 cc:DONE 태스크 소급 제외. DoD: Plans.md 표준 주석 업데이트 + backend/AGENTS.md DoD 체크리스트 작성 완료. Depends: BE-E2E-1. [target: DesktopMatePlus/]
+
+### Phase 20: Agent Harness Quality Upgrade
+
+<!-- spec-ref: docs/TODO.md#spec-1-reviewermd-b-evaluator-패턴, #spec-2-docstodomd-전환, #spec-3-background-quality-agent--gardensh-개선, #spec-4-golden_principlesmd-일관성-수정 -->
+<!-- Phase 20 office-hours: 2026-04-03 (보강: 2026-04-03) -->
+
+- [x] **WS-REV-1: reviewer.md B+ Evaluator 패턴** cc:DONE — `.claude/agents/reviewer.md`에 4기준 채점 추가(correctness/security/maintainability/test coverage, 0-3점, 임계값 2/3 미달 시 FAIL). "관대하게 평가 금지" 명시. `/qa` 조건부 실행(browser-testable 변경 시) 규칙 추가. DoD: 4기준 체크리스트 + 임계값 FAIL 로직 + /qa 조건 명시. Depends: none. [target: DesktopMatePlus/]
+
+- [x] **WS-DOC-2: CLAUDE.md PRD Tracking → docs/TODO.md 전환** cc:DONE — `CLAUDE.md` PRD Tracking 섹션에서 superpowers 언급 제거 → `docs/TODO.md` 기반 흐름으로 교체. `docs/CLAUDE.md` superpowers 링크도 TODO.md로 교체. DoD: CLAUDE.md + docs/CLAUDE.md 모두 docs/TODO.md를 가리킴. Depends: none. [target: DesktopMatePlus/]
+
+- [x] **WS-QA-1: Background Quality Agent 신설 + garden.sh 개선** cc:DONE — `.claude/agents/quality-agent.md` 작성. garden.sh DH MOD 체크 + 위반위치 + docs/reports/ 경로 통일. QUALITY_SCORE.md UNCHECKED + Violations Summary. docs/reports/.gitkeep 추가. Depends: none. [target: DesktopMatePlus/]
+
+- [ ] **WS-GP-1: GOLDEN_PRINCIPLES.md 일관성 수정** cc:TODO — `docs/GOLDEN_PRINCIPLES.md` 수정. GP-9 브랜치 참조 `feat/claude_harness` → `develop`으로 업데이트. GP-11/12 superpowers 기반 아카이브 규칙 → docs/TODO.md 기반으로 변경. DH MOD GP 추가(GP-13 또는 GP-2 확장): TS console.log 금지 + 파일크기 ≤ 400줄 (garden.sh DH 체크 기준과 일치). **주의: CONTRIBUTING 규칙상 PR 생성 + human approval 필수 — 직접 커밋 금지.** garden.sh archive freshness 감지 로직 업데이트는 Phase 21+에서 판단. DoD: GP-9/11/12 텍스트 현행 일치 + DH GP 항목 존재 + PR+human approval로 머지됨. Depends: none. [target: DesktopMatePlus/]
+
+- [x] **WS-CQ-1: cq 강제 사용 제거 → docs/faq 문서화 규칙 대체** cc:DONE — safety-guardrails.md R00-CQ 규칙 제거. worker.md/reviewer.md/quality-agent.md에서 cq.query()/cq.propose() 스텝 제거. CLAUDE.md "cq Knowledge Sharing" 섹션 제거. 대체: "비자명한 학습은 docs/faq/에 문서화" 규칙 명시. settings.json cq env/allowedTools는 유지(수동 사용 가능). DoD: R00-CQ 삭제 + agent .md cq 스텝 제거 + CLAUDE.md cq 섹션 제거. Depends: none. [target: DesktopMatePlus/]
 
 ## Completed

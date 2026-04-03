@@ -41,12 +41,14 @@ Delegation flow: `PersonaAgent` → `DelegateTaskTool` → `POST /api/webhooks/f
 
 ## PRD Tracking
 
-Feature tasks tracked in [`docs/superpowers/INDEX.md`](docs/superpowers/INDEX.md) with Priority (P0/P1/P2) and Status (TODO/DONE/VERIFY).
+Feature specs written to [`docs/TODO.md`](docs/TODO.md) by PM agent after `/office-hours`. Lead reads from `docs/TODO.md` and creates tasks in `Plans.md`.
+
+Flow: PM(`/office-hours`) → `docs/TODO.md` (spec + priority table) → Lead → `Plans.md` (cc:TODO tasks) → Worker
 
 ### docs/ 규칙 요약
 
 - **본문 200줄 한도** — 초과 시 기능 단위로 분리, 인덱스 문서로 관리 ([전체 규칙](./docs/guidelines/DOCUMENT_GUIDE.md))
-- **`docs/superpowers/`**: 활성 specs/plans + INDEX.md + completed/ 아카이브. 커밋 대상
+- **`docs/TODO.md`**: PM agent가 작성하는 활성 스펙 목록. Priority (P0/P1/P2) + Status (TODO/DONE) 테이블 형식
 - **`docs/feedback/`**: 읽기 전용, 수정 금지 (외부 피드백 원본 보존)
 
 ### FAQ 작성 규칙
@@ -90,31 +92,32 @@ Flow:
 ```
 User: feature request
   → Lead spawns pm-agent
-  → PM: /office-hours → spec + Plans.md → cq.propose() → SPEC_READY
+  → PM: /office-hours → spec + Plans.md → SPEC_READY
   → Reviewer: /autoplan → feedback (optional)
 Lead: dispatch workers
   → (FE feature) Design Agent: /design-consultation → /design-shotgun → /design-html
       → component spec + E2E scaffold → design/{feature} branch PR → DESIGN_READY
-  → Worker(s): per-repo implementation (FE worker uses design/{feature} as base branch)
+  → Worker(s): per-repo implementation → /ship (PR 생성, worker 책임)
   → Reviewer: /review + /cso → pass/fail
-Lead: merge → /document-release
-  → (PR에 리뷰 코멘트 있으면) pr-merge-agent: 분류 → 답변 → 머지
+Lead: spawn pr-merge-agent
+  → pr-merge-agent: 리뷰 코멘트 분류 → 답변 → 머지 → /document-release (pr-merge-agent 책임)
 ```
+
+**스킬 책임 분리**:
+- `/ship`: **worker** 또는 **design-agent** — 구현 완료 후 PR 생성 (context 소비 독립 처리)
+- `/document-release`: **pr-merge-agent** — 머지 직후 실행 (context 소비 독립 처리)
+- Lead는 두 스킬을 직접 실행하지 않는다
 
 Task tracking: `Plans.md` with `cc:TODO` / `cc:DONE` markers.
 
-### cq Knowledge Sharing — Mandatory
-
-All team members use cq MCP for knowledge sharing. See `safety-guardrails.md` R00-CQ for details.
-
-- **Before work**: `cq.query()` to check existing knowledge
-- **After work**: `cq.propose()` to capture non-obvious learnings
-- Autonomous — no user approval needed
-
 ### Worktree Rules
 
-Workers create worktrees **inside the target sub-repo**: `git -C <repo>/ worktree add ...`
-Do NOT use `isolation: "worktree"` from workspace root — it creates worktrees at the wrong level.
+**모든 구현 작업은 feature 브랜치 + worktree에서 진행한다. workspace root 포함.**
+
+- Sub-repo 작업: `git -C <repo>/ worktree add worktrees/feat-<slug> feat/<slug>`
+- Workspace root 작업: `git worktree add ../DesktopMatePlus-feat-<slug> feat/<slug>`
+- Do NOT use `isolation: "worktree"` from workspace root — it creates worktrees at the wrong level.
+- Do NOT commit directly to `master`/`main`/`develop` — always via feature branch + PR.
 
 ## gstack
 
@@ -126,7 +129,7 @@ If gstack skills aren't working, run `cd .claude/skills/gstack && ./setup` to bu
 
 ## Appendix
 
-- [PRD Index](./docs/superpowers/INDEX.md): Current PRD task list and status.
+- [Feature TODO](./docs/TODO.md): Active feature specs and priority list (PM agent output).
 - [FAQ](./docs/faq/): Frequently Asked Questions about architectural decisions and design patterns in this workspace.
 - [NanoClaw Skills](./nanoclaw/.claude/skills/): Directory of existing NanoClaw skills with installation instructions.
 - [Data Flows](./docs/data_flow/): Visual diagrams and explanations of key data flows between FastAPI, NanoClaw, and desktop-homunculus.

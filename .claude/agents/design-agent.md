@@ -8,6 +8,7 @@ skills:
   - design-html
   - design-review
   - agent-browser
+  - browse
 ---
 
 ## Role
