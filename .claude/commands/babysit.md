@@ -64,6 +64,17 @@ gh pr merge <number> --repo <repo> --merge
 
 머지 후 `/document-release` 실행 (CHANGELOG, README, docs/ 업데이트 필요 시).
 
-### 6. 결과 요약
+### 6. 머지된 브랜치 · 워크트리 정리
 
-처리한 PR 목록과 액션(코멘트 응답 / 리베이스 / 자동 리뷰+승인 / 머지 / 스킵)을 출력.
+```bash
+bash scripts/cleanup-merged.sh
+```
+
+- 모든 서브레포(backend, nanoclaw, desktop-homunculus) + workspace root 대상
+- 머지된 `feat|fix|docs|...` 패턴 원격 브랜치 삭제 + 대응 워크트리 제거
+- nanoclaw `skill/*` 브랜치는 제외 (의도적 스킬 브랜치)
+- 문제 없이 완료되면 결과 요약에 포함
+
+### 7. 결과 요약
+
+처리한 PR 목록과 액션(코멘트 응답 / 리베이스 / 자동 리뷰+승인 / 머지 / 브랜치 정리 / 스킵)을 출력.
