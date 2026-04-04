@@ -2,53 +2,68 @@
 
 오픈 PR 전수 점검. 코드 리뷰 대응, 자동 리베이스, 프로덕션 머지까지 관리.
 
-## 대상 레포
-
-- yw0nam/DesktopMatePlusdocs
-- yw0nam/DesktopMatePlus
-- yw0nam/desktop-homunculus
-
 ## 실행 순서
 
 ### 1. 오픈 PR 수집
 
-각 레포의 오픈 PR 목록을 가져온다:
 ```bash
-gh pr list --repo yw0nam/DesktopMatePlusdocs --json number,title,reviewDecision,mergeable,baseRefName,headRefName,reviews,comments --state open
-gh pr list --repo yw0nam/DesktopMatePlus --json number,title,reviewDecision,mergeable,baseRefName,headRefName,reviews,comments --state open
-gh pr list --repo yw0nam/desktop-homunculus --json number,title,reviewDecision,mergeable,baseRefName,headRefName,reviews,comments --state open
+bash scripts/babysit-collect.sh
 ```
 
-### 2. REQUEST_CHANGES 또는 미처리 코멘트가 있는 PR
+출력 형식 (탭 구분): `REPO  NUMBER  TITLE  REVIEW_DECISION  MERGEABLE  DAYS_OLD  IS_DRAFT  LABELS`
 
-각 PR의 리뷰 코멘트를 읽고:
-- **GitHub Bot Reviewer** (Copilot, Gemini 등) 코멘트: false positive 판단 시 답변 처리. valid 이슈면 코드 수정 후 push.
-- **GitHub Human Reviewer** 코멘트: 수정하거나, 동의하면 답변 후 처리.
-- 모든 코멘트 처리 후 re-request review.
+- `REVIEW_DECISION`: `APPROVED` | `CHANGES_REQUESTED` | `REVIEW_REQUIRED` | `""` (미설정)
+- `MERGEABLE`: `MERGEABLE` | `CONFLICTING` | `UNKNOWN`
+- 출력이 없으면 오픈 PR 없음 → 종료
 
-### 3. 리베이스가 필요한 PR (base branch 뒤처짐)
+### 2. REQUEST_CHANGES 또는 미처리 인라인 코멘트가 있는 PR
 
-```bash
-gh pr view <number> --repo <repo> --json mergeable
-```
-`mergeable: CONFLICTING` 또는 base branch 뒤처진 PR: 해당 레포 로컬에서 rebase 후 force push.
-
-### 4. APPROVED + CI 통과 PR → 머지
+`REVIEW_DECISION`이 `CHANGES_REQUESTED`이거나 미처리 코멘트가 의심되는 PR:
 
 ```bash
-gh pr merge <number> --repo <repo> --merge --auto
+bash scripts/pr-comments-filter.sh <repo> <number>
 ```
-`reviewDecision: APPROVED` 이고 CI checks 통과한 PR은 즉시 머지.
 
-### 5. 머지 후 /document-release 실행
+출력:
+```
+SUMMARY: UNRESOLVED=N RESOLVED=N TOTAL=N
+UNRESOLVED  <bot>  <path>  <요약>  # UNRESOLVED > 0 일 때만
+```
 
-PR이 머지된 경우, 해당 레포의 로컬 master를 최신화한 뒤 /document-release를 실행:
-- CHANGELOG.md, README, docs/ 관련 파일을 PR diff 기준으로 업데이트
-- 변경 사항이 있으면 별도 커밋으로 master에 push
-- 변경 사항이 없으면 스킵
+- `UNRESOLVED=0`: 모든 코멘트 처리 완료 — 다음 단계로
+- `UNRESOLVED > 0`: 각 항목 검토 후 처리
+  - **false positive**: 해당 코멘트에 답변 후 넘어감
+  - **valid**: 코드 수정 후 push, re-request review
 
-머지된 PR이 없으면 이 단계는 생략.
+### 3. 리베이스가 필요한 PR
+
+`MERGEABLE`이 `CONFLICTING`인 PR: 해당 레포 로컬에서 rebase 후 force push.
+
+### 4. 미승인 PR (`REVIEW_DECISION=""`) → 자동 리뷰 후 승인
+
+`reviewer` 에이전트를 스폰하여 `/review` + `/cso` 실행.
+
+- **Pass**: GitHub API로 APPROVE 후 Step 5로 진행
+- **Fail**: 이슈 목록 코멘트 남기고 대기 (머지 안 함)
+
+```bash
+# pass 판정 시:
+gh api repos/<repo>/pulls/<number>/reviews \
+  -X POST \
+  -f body="Automated review passed (/review + /cso). Auto-approving." \
+  -f event="APPROVE"
+```
+
+### 5. APPROVED + CI 통과 PR → 머지
+
+`REVIEW_DECISION=APPROVED`이고 CI 통과한 PR:
+
+```bash
+gh pr merge <number> --repo <repo> --merge
+```
+
+머지 후 `/document-release` 실행 (CHANGELOG, README, docs/ 업데이트 필요 시).
 
 ### 6. 결과 요약
 
-처리한 PR 목록과 액션(코멘트 응답 / 리베이스 / 머지 / document-release / 스킵)을 출력.
+처리한 PR 목록과 액션(코멘트 응답 / 리베이스 / 자동 리뷰+승인 / 머지 / 스킵)을 출력.
