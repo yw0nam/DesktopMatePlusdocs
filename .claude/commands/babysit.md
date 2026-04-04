@@ -25,6 +25,7 @@ bash scripts/pr-comments-filter.sh <repo> <number>
 ```
 
 출력:
+
 ```
 SUMMARY: UNRESOLVED=N RESOLVED=N TOTAL=N
 UNRESOLVED  <bot>  <path>  <요약>  # UNRESOLVED > 0 일 때만
