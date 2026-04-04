@@ -34,7 +34,7 @@ _run() {
   if $DRY_RUN; then
     echo "[dry-run] $*"
   else
-    eval "$@"
+    "$@"
   fi
 }
 
@@ -51,24 +51,28 @@ for ENTRY in "${REPOS[@]}"; do
   MAIN_ABS="$(git -C "$REPO_PATH" rev-parse --show-toplevel)"
 
   # ── 1. Stale worktrees ─────────────────────────────────────────────────────
-  while read -r wt_path wt_hash wt_ref; do
-    [[ "$wt_path" == "$MAIN_ABS" ]] && continue          # skip main worktree
-    branch="${wt_ref#refs/heads/}"
+  # Use --porcelain for space-safe path parsing
+  current_path=""
+  while IFS= read -r wt_line; do
+    if [[ "$wt_line" == worktree\ * ]]; then
+      current_path="${wt_line#worktree }"
+    elif [[ "$wt_line" == branch\ refs/heads/* ]]; then
+      branch="${wt_line#branch refs/heads/}"
+      wt_path="$current_path"
 
-    # skip if not our naming convention
-    [[ "$branch" =~ $OUR_PATTERN ]] || continue
+      [[ "$wt_path" == "$MAIN_ABS" ]] && continue          # skip main worktree
+      [[ "$branch" =~ $OUR_PATTERN ]] || continue           # skip non-ours
 
-    # skip if not yet merged
-    if ! git -C "$REPO_PATH" branch -r --merged "$DEFAULT_BRANCH" \
-        | grep -q "origin/${branch}$"; then
-      echo "  skip worktree (not merged): $wt_path  [$branch]"
-      continue
+      if ! git -C "$REPO_PATH" branch -r --merged "$DEFAULT_BRANCH" \
+          | grep -q "origin/${branch}$"; then
+        echo "  skip worktree (not merged): $wt_path  [$branch]"
+        continue
+      fi
+
+      echo "  remove worktree: $wt_path  [$branch]"
+      _run git -C "$REPO_PATH" worktree remove --force "$wt_path"
     fi
-
-    echo "  remove worktree: $wt_path  [$branch]"
-    _run "git -C '$REPO_PATH' worktree remove --force '$wt_path'"
-  done < <(git -C "$REPO_PATH" worktree list \
-    | awk '{path=$1; hash=$2; ref=$3} ref!="" {print path, hash, substr(ref,2,length(ref)-2)}')
+  done < <(git -C "$REPO_PATH" worktree list --porcelain)
 
   # ── 2. Merged remote branches ──────────────────────────────────────────────
   git -C "$REPO_PATH" branch -r --merged "$DEFAULT_BRANCH" \
@@ -82,7 +86,7 @@ for ENTRY in "${REPOS[@]}"; do
         [[ "$branch" =~ $OUR_PATTERN ]] || continue
 
         echo "  delete remote branch: $branch"
-        _run "git -C '$REPO_PATH' push origin --delete '$branch'"
+        _run git -C "$REPO_PATH" push origin --delete "$branch"
       done
 done
 
