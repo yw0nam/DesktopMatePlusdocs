@@ -35,8 +35,11 @@ for REPO in "${REPOS[@]}"; do
     [[ -z "$NUMBER" ]] && continue
 
     # Run comment filter; grab only the SUMMARY line
-    SUMMARY=$("${SCRIPT_DIR}/pr-comments-filter.sh" "$REPO" "$NUMBER" 2>/dev/null \
-      | grep '^SUMMARY:' || echo "SUMMARY: UNRESOLVED=0 RESOLVED=0 TOTAL=0")
+    # Errors are surfaced to stderr so API failures are visible (not silently ignored)
+    FILTER_OUT=$("${SCRIPT_DIR}/pr-comments-filter.sh" "$REPO" "$NUMBER" 2>&1) || true
+    SUMMARY=$(echo "$FILTER_OUT" | grep '^SUMMARY:' \
+      || { echo "WARN: pr-comments-filter failed for ${REPO}#${NUMBER}: $(echo "$FILTER_OUT" | tail -1)" >&2; \
+           echo "SUMMARY: UNRESOLVED=0 RESOLVED=0 TOTAL=0"; })
 
     UNRESOLVED=$(echo "$SUMMARY" | grep -oP 'UNRESOLVED=\K[0-9]+')
     TOTAL=$(echo "$SUMMARY"      | grep -oP 'TOTAL=\K[0-9]+')

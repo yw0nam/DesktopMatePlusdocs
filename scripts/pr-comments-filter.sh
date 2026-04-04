@@ -22,8 +22,9 @@ echo "$COMMENTS" | jq -r '
   # IDs that are replied to
   ( [.[] | select(.in_reply_to_id != null) | .in_reply_to_id] | unique ) as $replied_ids |
 
-  # Bot comment: login ends with "[bot]" or is known bot reviewer
-  def is_bot: test("\\[bot\\]$|^gemini-code-assist$|^copilot-pull-request-reviewer$");
+  # Bot comment: login ends with "[bot]", or matches common bot prefixes.
+  # Add new bots to the alternation as needed (e.g. "^dependabot|^renovate").
+  def is_bot: test("\\[bot\\]$|^[Cc]opilot|^dependabot|^renovate");
 
   # Root bot comments (not a reply themselves)
   [ .[] | select(.user | is_bot) | select(.in_reply_to_id == null) ] as $bot_roots |
