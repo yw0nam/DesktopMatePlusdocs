@@ -2,31 +2,29 @@
 
 최근 머지된 PR에서 미처리 리뷰 코멘트를 탐색하고, 필요하면 후속 fix PR을 생성한다.
 
-## 대상 레포
-
-- yw0nam/DesktopMatePlusdocs
-- yw0nam/DesktopMatePlus
-- yw0nam/desktop-homunculus
-
 ## 실행 순서
 
-### 1. 최근 24시간 내 머지된 PR 수집
+### 1. 최근 24시간 내 머지된 PR 수집 + 미처리 코멘트 탐색
 
 ```bash
-gh pr list --repo yw0nam/DesktopMatePlusdocs --state merged --json number,title,mergedAt,reviews,comments --limit 20
-gh pr list --repo yw0nam/DesktopMatePlus --state merged --json number,title,mergedAt,reviews,comments --limit 20
-gh pr list --repo yw0nam/desktop-homunculus --state merged --json number,title,mergedAt,reviews,comments --limit 20
+bash scripts/merged-recent.sh 24
 ```
 
-mergedAt이 현재 시각 기준 24시간 이내인 PR만 처리.
+출력 형식 (탭 구분): `REPO  NUMBER  TITLE  MERGED_AT  UNRESOLVED  TOTAL_INLINE`
 
-### 2. 미처리 리뷰 코멘트 탐색
+- `UNRESOLVED=0`: 미처리 코멘트 없음 — 스킵
+- `UNRESOLVED > 0`: Step 2로 진행
+- 출력이 없으면 처리할 PR 없음 → 종료
 
-각 PR의 리뷰 코멘트 중:
-- resolved되지 않은 코멘트
-- 답변이 없는 코멘트
+### 2. 미처리 코멘트 상세 탐색
 
-를 탐색. 파일/라인 위치 포함 수집.
+`UNRESOLVED > 0`인 PR에 대해:
+
+```bash
+bash scripts/pr-comments-filter.sh <repo> <number>
+```
+
+`UNRESOLVED` 라인에서 파일·경로·내용 확인.
 
 ### 3. 유효한 이슈 분류
 

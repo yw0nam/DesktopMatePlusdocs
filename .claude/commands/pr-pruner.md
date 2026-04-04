@@ -2,24 +2,20 @@
 
 14일 이상 활동이 없는 오래된 PR을 탐색하고 정리한다.
 
-## 대상 레포
-
-- yw0nam/DesktopMatePlusdocs
-- yw0nam/DesktopMatePlus
-- yw0nam/desktop-homunculus
-
 ## 실행 순서
 
 ### 1. 오픈 PR 수집 및 staleness 판단
 
 ```bash
-gh pr list --repo <repo> --state open --json number,title,createdAt,updatedAt,author,reviewDecision --limit 50
+bash scripts/babysit-collect.sh
 ```
 
-기준:
-- `updatedAt` 기준 14일 이상 경과: **stale**
-- `updatedAt` 기준 7~13일 경과: **warning** (코멘트만)
-- 14일 미만: 스킵
+출력 형식 (탭 구분): `REPO  NUMBER  TITLE  REVIEW_DECISION  MERGEABLE  DAYS_OLD  IS_DRAFT  LABELS`
+
+`DAYS_OLD` 기준:
+- 14일 이상: **stale** → Step 3
+- 7~13일: **warning** → Step 2
+- 14일 미만 또는 `IS_DRAFT=true` 또는 `LABELS`에 `keep-open` 포함: **스킵**
 
 ### 2. Warning PR — 코멘트 남기기
 
