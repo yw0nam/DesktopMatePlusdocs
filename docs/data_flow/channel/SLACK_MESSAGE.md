@@ -1,15 +1,20 @@
 # SLACK_MESSAGE Data Flow
 
-Updated: 2026-03-19
+Updated: 2026-04-05
 
 ## Overview
 
-Slack channel 메시지 처리에는 두 가지 경로가 있다.
+Slack 채널 메시지 처리에는 두 가지 경로가 있다.
 
 1. **Direct Flow** — 에이전트가 즉시 응답 (delegation 없음)
 2. **Delegation Flow** — 에이전트가 NanoClaw에 작업을 위임하고, 완료 후 콜백으로 응답
 
 세션 ID 형식: `slack:{team_id}:{channel_id}:{user_id}` (현재 `user_id`는 상수 `"default"`)
+
+> **Architecture Note**  
+> STM 영속성은 LangGraph `MongoDBSaver` checkpointer가 자동 처리한다 — channel_service에 별도 save/load 호출 없음.  
+> LTM retrieval/consolidation은 AgentService 내부 middleware가 처리한다 (`ltm_retrieve_hook`, `ltm_consolidation_hook`).  
+> `reply_channel`은 STM metadata가 아닌 LangGraph state의 `pending_tasks[task_id]["reply_channel"]`에 저장된다.
 
 ---
 
@@ -20,8 +25,7 @@ sequenceDiagram
     actor User as User (Slack)
     participant Slack as Slack Server
     participant BE as Backend (FastAPI)
-    participant STM as STM Service
-    participant LTM as LTM Service
+    participant SR as SessionRegistry
     participant Agent as AgentService
 
     User->>Slack: Send message in channel
@@ -41,17 +45,18 @@ sequenceDiagram
     deactivate BE
 
     activate BE
-    BE->>BE: Acquire session_lock(session_id)<br/>(TTL 600s — prevents concurrent processing)
-    BE->>STM: upsert_session(session_id, user_id, agent_id)
-    BE->>STM: update_session_metadata<br/>({user_id, agent_id, reply_channel: {provider, channel_id}})
-    BE->>STM: load_context → STM chat history
-    BE->>LTM: load_context → LTM prefix (relevant memories)
+    BE->>BE: session_lock(session_id) acquired<br/>(TTLCache 600s — prevents concurrent processing)
+    BE->>SR: registry.upsert(session_id, user_id, agent_id)
 
-    BE->>Agent: invoke(context + HumanMessage(text), session_id, persona_id)
-    Agent-->>BE: {content, new_chats}
+    BE->>Agent: invoke(<br/>  messages=[HumanMessage(text)],<br/>  session_id, persona_id,<br/>  context={"reply_channel": {provider, channel_id}}<br/>)
 
-    BE->>STM: save_turn(HumanMessage + new_chats)<br/>(asyncio.create_task — non-blocking)
-    BE->>LTM: save_turn(...) — same task
+    Note right of Agent: LangGraph checkpointer auto-loads history
+    Note right of Agent: ltm_retrieve_hook fires (middleware)
+    Note right of Agent: Agent generates response
+    Note right of Agent: LangGraph checkpointer auto-saves messages
+    Note right of Agent: ltm_consolidation_hook fires async (every 10 turns)
+
+    Agent-->>BE: {content, ...}
 
     BE->>Slack: SlackService.send_message(channel_id, content)
     deactivate BE
@@ -70,8 +75,7 @@ sequenceDiagram
     actor User as User (Slack)
     participant Slack as Slack Server
     participant BE as Backend (FastAPI)
-    participant STM as STM Service
-    participant LTM as LTM Service
+    participant SR as SessionRegistry
     participant Agent as AgentService
     participant NC as NanoClaw
 
@@ -82,47 +86,43 @@ sequenceDiagram
 
     activate BE
     Note over BE: asyncio.create_task(process_message(...))
-    BE->>BE: Acquire session_lock(session_id)
-    BE->>STM: upsert_session + update_session_metadata<br/>(reply_channel 저장됨)
-    BE->>STM: load_context → history
-    BE->>LTM: load_context → memories
+    BE->>BE: session_lock(session_id)
+    BE->>SR: registry.upsert(session_id, user_id, agent_id)
 
-    BE->>Agent: invoke(context + HumanMessage(text), ...)
+    BE->>Agent: invoke(<br/>  messages=[HumanMessage(text)],<br/>  context={"reply_channel": {provider, channel_id}}<br/>)
     Note right of Agent: Agent decides to delegate
-    Agent->>NC: POST /api/webhooks/fastapi<br/>(DelegateTaskTool — task payload)
-    NC-->>Agent: {task_id} acknowledged
-    Agent-->>BE: {content: "작업 중...", new_chats: [AIMessage + ToolMessages]}
 
-    BE->>STM: save_turn(HumanMessage + new_chats)<br/>(non-blocking)
+    Agent->>Agent: DelegateTaskTool:<br/>reads reply_channel from context<br/>stores in pending_tasks[task_id]["reply_channel"]
+    Agent->>NC: POST /api/webhooks/fastapi (task payload)
+    NC-->>Agent: {task_id} acknowledged
+
+    Note right of Agent: LangGraph saves: pending_tasks + ToolMessage
+    Agent-->>BE: {content: "작업 중..."}
+
     BE->>Slack: send_message(channel_id, "작업 중...")
     deactivate BE
 
     Note over NC: NanoClaw executes task asynchronously
 
-    NC->>BE: POST /v1/callback/nanoclaw/{session_id}<br/>{task_id, status: "done", summary}
+    NC->>BE: POST /v1/callback/nanoclaw/{session_id}<br/>{task_id, status, summary}
 
     activate BE
-    BE->>STM: get_session_metadata → pending_tasks
-    BE->>STM: update pending_tasks[task_id].status = "done"
-    BE->>STM: add_chat_history([SystemMessage("[TaskResult:task_id] summary")])
-
-    Note over BE: reply_channel found in metadata
-    Note over BE: asyncio.create_task(process_message(text="", ...))
+    BE->>Agent: aget_state(config) → pending_tasks
+    BE->>BE: find task_record by task_id<br/>→ extract reply_channel
+    BE->>Agent: aupdate_state(<br/>  messages=[SystemMessage("[TaskResult:task_id] summary")],<br/>  pending_tasks[task_id].status = "done"<br/>)
     BE-->>NC: 200 {task_id, status, message}
+
+    Note over BE: asyncio.create_task(process_message(text="", ...))
     deactivate BE
 
     activate BE
-    BE->>BE: Acquire session_lock(session_id)
-    BE->>STM: upsert_session + update_session_metadata
-    BE->>STM: load_context → history (now includes TaskResult SystemMessage)
-    BE->>LTM: load_context → memories
+    BE->>BE: session_lock(session_id)
+    BE->>SR: registry.upsert(session_id, user_id, agent_id)
 
-    Note over BE: text="" → HumanMessage 추가 안 함<br/>TaskResult가 이미 STM에 있어 에이전트가 이를 기반으로 응답
-    BE->>Agent: invoke(context, ...)  ← no HumanMessage
-    Agent-->>BE: {content: "최종 결과...", new_chats}
-
-    BE->>STM: save_turn(new_chats)  ← HumanMessage 없이 저장
-    BE->>LTM: save_turn(...)
+    BE->>Agent: invoke(<br/>  messages=[],  ← text="" → no HumanMessage<br/>  session_id, ...<br/>)
+    Note right of Agent: LangGraph checkpointer loads history<br/>including [TaskResult] SystemMessage
+    Note right of Agent: Agent sees TaskResult → generates final reply
+    Agent-->>BE: {content: "최종 결과..."}
 
     BE->>Slack: send_message(channel_id, "최종 결과...")
     deactivate BE
@@ -158,22 +158,19 @@ sequenceDiagram
 
 - `session_lock(session_id)`: `cachetools.TTLCache` 기반 async context manager
 - TTL: 600s, maxsize: 1024
-- 동일 세션의 동시 처리를 방지한다 (예: 빠른 연속 메시지, callback 재진입)
+- 동일 세션의 동시 처리 방지 (빠른 연속 메시지, callback 재진입)
 
-### reply_channel Metadata
+### reply_channel 저장 위치
 
-- `process_message()` 최초 호출 시 STM session metadata에 저장됨:
-  ```json
-  {"provider": "slack", "channel_id": "C5678"}
-  ```
-- Callback 핸들러가 이 값을 확인해 Slack 라우팅 결정
-- WebSocket 세션에는 `reply_channel`이 없으므로 콜백 시 외부 전송 없음
+- `process_message(context={"reply_channel": ...})` → `agent_service.invoke(context=...)` 전달
+- `DelegateTaskTool`이 context에서 읽어 LangGraph state의 `pending_tasks[task_id]["reply_channel"]`에 저장
+- Callback 핸들러가 `aget_state()` → `pending_tasks`에서 `reply_channel` 읽어 라우팅 결정
 
 ### process_message `text=""` 경로 (Callback)
 
-- `text`가 비어있으면 `HumanMessage`를 추가하지 않음
-- STM에 이미 주입된 `[TaskResult:task_id]` `SystemMessage`가 에이전트 응답을 구동
-- `save_turn` 시에도 `HumanMessage` 없이 `new_chats`만 저장
+- `text`가 비어있으면 `HumanMessage` 미추가
+- LangGraph checkpointer가 이미 `[TaskResult:task_id]` `SystemMessage`를 포함한 상태로 로드
+- 에이전트가 TaskResult를 기반으로 최종 응답 생성
 
 ### Error Handling
 
@@ -184,6 +181,10 @@ sequenceDiagram
 
 ## Appendix
 
-- [Slack Events API Doc](../../../docs/api/Slack_Events.md)
-- [NanoClaw Callback Doc](../../../docs/api/Nanoclaw_Callback.md)
+### PatchNote
+
+2026-04-05: 전면 개정 — STM Service 참조 제거(현재 LangGraph checkpointer 자동 처리), reply_channel 저장 위치 정정(STM metadata → pending_tasks LangGraph state), load_context/save_turn explicit call 제거, LTM middleware 설명 추가.
+2026-03-19: 초기 작성.
+
+- [NanoClaw Callback](../../../backend/src/api/routes/callback.py)
 - [ADD_CHAT_MESSAGE Data Flow](../chat/ADD_CHAT_MESSAGE.md)

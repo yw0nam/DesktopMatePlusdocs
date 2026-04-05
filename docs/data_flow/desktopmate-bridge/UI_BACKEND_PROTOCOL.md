@@ -1,6 +1,6 @@
 # desktopmate-bridge ↔ FastAPI 구현 현황
 
-Updated: 2026-03-23
+Updated: 2026-04-05
 
 ## 1. WebSocket (`/v1/chat/stream`)
 
@@ -17,9 +17,14 @@ Updated: 2026-03-23
 | BE→UI | `authorize_success` | `{ connection_id }` | 인증 성공 |
 | BE→UI | `authorize_error` | — | 인증 실패 (재연결 없음) |
 | BE→UI | `stream_start` | `{ turn_id, session_id }` | AI 응답 시작 |
-| BE→UI | `tts_chunk` | `{ sequence, text, emotion, audio_base64, keyframes }` | 오디오 청크 + 립싱크 |
+| BE→UI | `tts_chunk` | `{ sequence, text, emotion, audio_base64, keyframes }` | WAV 오디오 + 모션 keyframes |
 | BE→UI | `stream_end` | `{ turn_id, session_id, content }` | 응답 완료 |
 | BE→UI | `ping` | — | heartbeat |
+
+**tts_chunk 상세:**
+- `audio_base64`: WAV base64. `tts_enabled=false` 또는 TTS 실패 시 `null`
+- `keyframes`: `TimelineKeyframe[]` — `{ duration: float, targets: { [emotion]: float } }`
+- `motion_name` / `blendshape_name` 필드 없음 (keyframes로 통합됨)
 
 ### 재연결 정책
 
@@ -32,12 +37,12 @@ Updated: 2026-03-23
 
 ## 2. REST API (`api.ts` → FastAPI `/v1/stm/`)
 
-| 메서드 | 엔드포인트 | 용도 | 상태 |
-|--------|-----------|------|------|
-| GET | `/v1/stm/sessions?user_id=&agent_id=` | 세션 목록 | ✅ |
-| GET | `/v1/stm/get-chat-history?session_id=&user_id=&agent_id=` | 채팅 히스토리 | ✅ |
-| DELETE | `/v1/stm/sessions/{session_id}?user_id=&agent_id=` | 세션 삭제 | ✅ |
-| PATCH | `/v1/stm/sessions/{session_id}/metadata` | 세션 이름 변경 | ✅ |
+| 메서드 | 엔드포인트 | 용도 |
+|--------|-----------|------|
+| GET | `/v1/stm/sessions?user_id=&agent_id=` | 세션 목록 |
+| GET | `/v1/stm/get-chat-history?session_id=&user_id=&agent_id=` | 채팅 히스토리 |
+| DELETE | `/v1/stm/sessions/{session_id}?user_id=&agent_id=` | 세션 삭제 |
+| PATCH | `/v1/stm/sessions/{session_id}/metadata` | 세션 이름 변경 |
 
 ---
 
@@ -71,7 +76,7 @@ UI가 `rpc.call()`로 service.ts에 요청:
 
 | 이벤트 | 동작 |
 |--------|------|
-| `tts_chunk` 수신 | `vrm.speakWithTimeline(audioBytes, keyframes)` — 립싱크 포함 음성 재생 |
+| `tts_chunk` 수신 | `vrm.speakWithTimeline(audioBytes, keyframes)` — WAV + keyframes 기반 립싱크 |
 | VRM state `idle` | `vrma:idle-maid` + `vrm.lookAtCursor()` |
 | VRM state `drag` | `vrma:grabbed` + `vrm.unlook()` |
 | VRM state `sitting` | `vrma:idle-sitting` + `vrm.lookAtCursor()` |
@@ -82,5 +87,14 @@ UI가 `rpc.call()`로 service.ts에 요청:
 
 | 항목 | 위치 | 내용 |
 |------|------|------|
-| VRM 캐릭터 에셋 설정 | `service.ts:224` | `desktopmate-bridge:elmer` 하드코딩 → UI 설정 연동 필요 |
-| RPC graceful shutdown | `service.ts:274` | `rpcServer.stop()` 미구현 — SDK가 `stop()` API 미제공 |
+| VRM 캐릭터 에셋 설정 | `service.ts:303` | `desktopmate-bridge:elmer` 하드코딩 (`CHARACTER_ASSET_ID`) → UI 설정 연동 필요 |
+| RPC graceful shutdown | `service.ts:352` | `rpcServer.stop()` 미구현 — `@hmcs/sdk`가 `stop()` API 미제공 |
+
+---
+
+## Appendix
+
+### PatchNote
+
+2026-04-05: tts_chunk 페이로드 정정(motion_name/blendshape_name → keyframes: TimelineKeyframe[]), 오디오 포맷 명시(WAV), TODO 라인 번호 갱신, VRM speakWithTimeline 함수명 확인.
+2026-03-23: 초기 작성.

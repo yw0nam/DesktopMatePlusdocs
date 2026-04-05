@@ -1,39 +1,40 @@
 # ADD_CHAT_MESSAGE Data Flow
 
-Updated: 2026-03-15
+Updated: 2026-04-05
 
 ## Session Persistence Flow
 
-### Correct Flow
+1. **User clicks a session in the settings** → Load session history from LangGraph checkpointer via `GET /v1/stm/get-chat-history` and display in UI.
 
-1. **User clicks a session in the settings** → Load that session's history from STM and draw the chat_history to UI.
+2. **User sends a message** → Sent over WebSocket as `chat_message` with current `session_id`.
+   - `session_id = null` → backend creates new session (UUID generated)
+   - `session_id = <uuid>` → continues existing session
 
-2. **User sends a message** → Should be stored to the currently selected session_id
-   - Saving logic handled by backend. FE only handles `session_id` for that.
-   - When `session_id` is null → backend perceives that as new chat.
-   - When `session_id` is not null → backend perceives that as existing chat.
+3. **New chat session capture**: Backend returns the generated UUID in `stream_end`. Frontend captures it and updates `currentSessionId`.
 
-3. **When creating a new chat**, `session_id` starts as null, backend generates UUID, and frontend captures it from `stream_end` event.
+> **Architecture Note**  
+> STM 영속성은 LangGraph `MongoDBSaver` checkpointer가 자동 처리한다 — no explicit save calls.  
+> LTM retrieval/consolidation은 AgentService 내부 middleware(`ltm_retrieve_hook`, `ltm_consolidation_hook`)가 처리한다.  
+> TTS 오디오 포맷은 **WAV** (base64 인코딩).
 
-## DATA FLOW DIAGRAM
+---
+
+## Data Flow Diagram
 
 ```mermaid
 sequenceDiagram
     actor User as User (Client)
-    participant FE as Mate-Engine (Front-End)
-    participant BE as Back-End (WebSocket Server)
-    participant STM as Back-End (STM Service)
+    participant DM as desktopmate-bridge (service.ts)
+    participant BE as Backend (FastAPI + LangGraph)
 
-    Note over User, FE: Trigger
-    User->>FE: User sends a new chat message (Text/Image)
+    Note over User, DM: Trigger
+    User->>DM: Send chat message (text)
 
-    Note over FE: Optimistic Update
-    FE->>FE: Append user message to Chat History
-    FE-->>User: Display user message immediately
+    Note over DM: Optimistic Update
+    DM->>DM: Append user message to UI
+    DM-->>User: Display user message immediately
 
-    Note over FE, BE: Data Flow
-    FE->>BE: Send Websocket message 'chat_message'
-    Note right of FE: params: { session_id (null for new chat),<br/>agent_id, user_id, content, images,<br/>tts_enabled (default: true), reference_id }
+    DM->>BE: WebSocket 'chat_message'<br/>{ session_id (null = new), user_id, agent_id,<br/>  content, tts_enabled (default: true) }
 
     activate BE
 
@@ -43,78 +44,85 @@ sequenceDiagram
         BE->>BE: Use provided session_id
     end
 
-    loop Streaming Response
-        BE-->>FE: stream_start (session_id)
+    Note right of BE: LangGraph checkpointer auto-loads history
+    Note right of BE: ltm_retrieve_hook fires (middleware)
 
-        Note right of BE: stream_token / tool_call / tool_result 이벤트는<br/>서버 내부 처리 전용 — FE로 전달되지 않음
-        rect rgb(255, 245, 238)
-            note right of FE: Audio & VRM Motion (Pre-synthesized by BE)
-            BE-->>FE: tts_chunk (audio_base64, motion_name, blendshape_name, sequence)
-            Note right of FE: audio_base64 is null if tts_enabled=false or synthesis failed
-            FE->>FE: Queue Task (Audio + Motion + Expression)
-            FE-->>User: Play audio with Lip Sync
-            FE-->>User: Play VRM Motion & Expression
-        end
+    BE-->>DM: stream_start { turn_id, session_id }
 
-        BE->>STM: save_turn(user+assistant messages)<br/>(asyncio.create_task — non-blocking)
-        BE-->>FE: stream_end (session_id, content)
-        Note right of FE: Guaranteed: all tts_chunk events arrive before stream_end
-        deactivate BE
+    loop Per TTS chunk (concurrent with text streaming)
+        BE-->>DM: tts_chunk<br/>{ sequence, text, emotion,<br/>  audio_base64 (WAV/null), keyframes: TimelineKeyframe[] }
+        DM->>DM: Queue tts_chunk by sequence
+        DM->>DM: vrm.speakWithTimeline(audioBytes, keyframes)
+        DM-->>User: Play audio + VRM motion/blendshape
+    end
 
-        alt New Chat Session Capture
-            Note over FE: If currentSessionId was null
-            FE->>FE: Capture session_id from stream_end
-            FE->>FE: Update currentSessionId
-            FE->>FE: Preserve optimistic UI state (no reload)
-            FE->>BE: GET /v1/stm/sessions (user_id, agent_id)
-            BE-->>FE: Updated sessions
-            FE-->>User: Show new session in sidebar
-        else Existing Session
-            Note over FE: Session already tracked
-            FE->>FE: Continue with current session
-        end
+    Note right of BE: LangGraph checkpointer auto-saves messages
+    Note right of BE: ltm_consolidation_hook fires async (every 10 turns)
+
+    BE-->>DM: stream_end { turn_id, session_id, content }
+    Note right of DM: Guaranteed: all tts_chunk events arrive before stream_end
+
+    deactivate BE
+
+    alt New Chat Session Capture
+        DM->>DM: currentSessionId was null → capture UUID from stream_end
+        DM->>BE: GET /v1/stm/sessions (user_id, agent_id)
+        BE-->>DM: Updated sessions list
+        DM-->>User: Show new session in sidebar
+    else Existing Session
+        DM->>DM: Continue with current session
     end
 ```
 
-## Detailed Point about Audio Synthesis
-
-1. **Trigger**: Backend analyzes the stream and determines a complete sentence/phrase is ready for speech.
-2. **Synthesis**: Backend synthesizes audio via TTS engine (`asyncio.to_thread`) — parallel to text streaming.
-3. **Delivery**: Backend sends `tts_chunk` WebSocket message containing pre-synthesized **audio_base64** (MP3), **emotion**, **motion_name**, **blendshape_name**, and **sequence**.
-4. **Queueing**: Frontend receives the chunk and enqueues it directly — no additional API call needed.
-   - Queue Item: `{ audio_base64, motion_name, blendshape_name, sequence }`
-5. **Playback**: Audio is played in sequence order, synchronized with Live2D lip-sync movements.
-   - Audio: MP3 base64 디코딩 후 재생 + 립싱크 모듈 연동.
-   - VRM: AnimationPlayer로 `motion_name` 재생 + `blendshape_name` 적용.
-   - `audio_base64 = null`인 경우 오디오 재생 생략, 모션은 그대로 적용.
+---
 
 ## Key Implementation Details
 
+### tts_chunk Payload
+
+```json
+{
+  "sequence": 0,
+  "text": "안녕하세요.",
+  "emotion": "happy",
+  "audio_base64": "<WAV base64 string or null>",
+  "keyframes": [
+    { "duration": 0.3, "targets": { "happy": 1.0 } }
+  ]
+}
+```
+
+- `audio_base64`: WAV base64. `tts_enabled=false` 또는 TTS 실패 시 `null`
+- `keyframes`: `list[TimelineKeyframe]` — `EmotionMotionMapper`가 emotion → keyframes 변환
+- `motion_name` / `blendshape_name` 필드는 제거됨 (keyframes로 통합)
+
 ### TTS Enabled / Disabled
 
-- `tts_enabled: true` (default) — BE synthesizes audio; `audio_base64` is a base64 MP3 string.
-- `tts_enabled: false` — BE skips synthesis; `audio_base64` is `null`. Avatar still plays motion/blendshape.
-- `reference_id` — optional voice ID. `null` = engine default voice.
+- `tts_enabled: true` (default) — BE가 WAV 합성 → `audio_base64` 설정
+- `tts_enabled: false` — 합성 건너뜀 → `audio_base64=null`. VRM motion은 그대로 적용
 
 ### TTS Barrier
 
-- Backend awaits all `tts_chunk` tasks (max 10s) before sending `stream_end`.
-- FE can safely assume that when `stream_end` arrives, all `tts_chunk` events for that turn have been delivered.
+- Backend는 모든 `tts_chunk` 태스크 완료 후 `stream_end` 전송 (max 10s per chunk)
+- FE는 `stream_end` 수신 시 해당 turn의 모든 `tts_chunk`가 이미 도착했음을 보장받음
 
-### Session ID Capture Logic
+### Session ID Capture
 
-- **New Chat**: When `session_id` is `null`, backend generates a UUID and returns it in the `stream_end` event.
-- **Frontend Capture**: Frontend checks if `currentSessionId` is null in the `stream_end` handler. If so, it captures and stores the backend-generated UUID.
-- **Optimistic UI Preservation**: The context prevents reloading messages when transitioning from `null` → UUID to avoid UI flicker.
-- **Subsequent Messages**: Next message uses the captured `session_id`, ensuring all messages belong to the same session.
+- **New Chat**: `session_id=null` → backend가 UUID 생성 → `stream_end`에 포함
+- **Frontend Capture**: `stream_end` 핸들러에서 `currentSessionId`가 null이면 UUID 캡처
+- Optimistic UI 유지 (null → UUID 전환 시 메시지 리로드 없음)
 
-### STM Persistence
-
-- Backend automatically saves both user and assistant messages to STM (Short Term Memory) when processing completes.
-- Frontend does not directly call STM APIs for saving; it only reads history when loading sessions.
-- Session persistence is guaranteed by the backend's `stream_end` logic.
+---
 
 ## Appendix
 
-- [Backend WebSocket API](../../websocket/WEBSOCKET_API_GUIDE.md)
-- [TTS Chunk Event](../../websocket/WebSocket_TtsChunk.md)
+### PatchNote
+
+2026-04-05: 전면 개정 — FE 레이블 정정(Mate-Engine → desktopmate-bridge), STM Service 참조 제거(LangGraph checkpointer 자동 처리), tts_chunk 페이로드 정정(motion_name/blendshape_name → keyframes: TimelineKeyframe[]), 오디오 포맷 정정(MP3 → WAV), LTM middleware 설명 추가.
+2026-03-15: 초기 작성.
+
+### Related
+
+- [WebSocket API Guide](../../backend/docs/websocket/CLAUDE.md)
+- [TTS Service Patterns](../../backend/src/services/tts_service/CLAUDE.md)
+- [SLACK_MESSAGE Data Flow](../channel/SLACK_MESSAGE.md)

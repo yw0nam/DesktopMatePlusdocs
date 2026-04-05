@@ -76,6 +76,15 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 - [x] **QA-4: garden.sh 버그 수정 + scripts/ 예외 처리** cc:DONE — ① GP-13 console.log 체크에서 `mods/*/scripts/` 디렉토리 제외 ② `update_quality_score()` 함수가 `QUALITY_SCORE.md` Violations Summary 섹션을 실제 위반 수로 갱신하도록 수정. DoD: GP-13-console이 scripts/ 파일을 스캔하지 않음 + QUALITY_SCORE.md Violations Summary가 정확히 갱신됨. Depends: none. [target: DesktopMatePlus/]
 - [x] **QA-5: Plans.md 아카이브 + docs/superpowers check_docs 제외** cc:DONE — ① Plans.md Phase 12~20 완료 Phase → `docs/archive/plans-2026-04.md`로 이전 ② `scripts/check_docs.sh`에서 `docs/superpowers/` 디렉토리를 dead link 및 oversized 체크 제외 목록에 추가. DoD: Plans.md cc:DONE Phase 5개 미만 잔존 + GP-12 PASS + check_docs.sh superpowers 스캔 안 함. Depends: none. [target: DesktopMatePlus/]
 
+### Phase 23: Mascot Reaction System + VRM Position UI — spec-ref: docs/TODO.md#spec-7, #spec-8
+
+<!-- source: docs/TODO.md Spec 7 (2026-04-04), Spec 8 (2026-04-04). -->
+
+- [x] **BE-23-1: TTS speak endpoint 추가** cc:DONE [1fb7a27] — `backend/src/api/routes/tts.py`에 `POST /v1/tts/speak` 추가 (`text` → `{ audio_base64 }`). DoD: Pytest TDD 통과 + `bash backend/scripts/e2e.sh` PASSED. Depends: none. [target: backend/]
+- [x] **DH-23-1: ReactionController 구현** cc:DONE [419386d] — `desktopmate-bridge/src/reaction-controller.ts` 신규. Click/Idle(5분)/ScreenContext(`active-win`) 3가지 트리거. `tts-chunk-queue.ts`에 `isBusy()` 추가(채팅 TTS 충돌 방지). `config.yaml`에 `reactions` 섹션 추가. `pnpm add active-win`. DoD: Vitest unit test 통과(click/idle/window 각 트리거) + E2E mock 테스트 통과 + 채팅 TTS 중 reaction skip. Depends: BE-23-1. [target: desktop-homunculus/]
+- [x] **BE-23-fix: e2e 버그 수정** cc:DONE [8610cc1] — `invoke()` persona SystemMessage 중복 삽입 방지 (`and not session_id`). `ltm_middleware.py` SystemMessage 중복 주입 방지. `stm.py` session_registry upsert + checkpointer.delete_thread() 추가. DoD: e2e.sh Phase 4/5 PASSED. [target: backend/]
+- [x] **DH-23-2: VRM Position Adjustment UI** cc:DONE [491d2be] — `character-settings` MOD `BasicTab.tsx`에 Position X/Y 슬라이더 + 숫자 입력 추가. `useCharacterSettings.ts` posX/posY state 추가. Save 클릭 시만 반영(실시간 미리보기 없음). `translation[2]` 보존 필수. DoD: Vitest unit test 통과 + `/agent-browser` visual verification + 슬라이더 range 실측 확인. Depends: none. [target: desktop-homunculus/]
+
 ## Completed
 
 <!-- Phases 12–17, 19–20: archived to docs/archive/plans-2026-04.md on 2026-04-03 -->

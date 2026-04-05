@@ -4,6 +4,7 @@
 
 set -euo pipefail
 
+CLAUDE_BIN="/home/spow12/.local/bin/claude"
 WORKSPACE="/home/spow12/codes/2025_lower/DesktopMatePlus"
 LOG_DIR="$WORKSPACE/docs/reports"
 DATE=$(date +%Y-%m-%d)
@@ -12,24 +13,39 @@ LOG_FILE="$LOG_DIR/quality-${DATE}.md"
 
 cd "$WORKSPACE"
 
+# ── cleanup trap: 실패 시 브랜치 정리 ────────────────────────────────
+cleanup() {
+  local exit_code=$?
+  if [ $exit_code -ne 0 ]; then
+    echo "[$(date)] ERROR: run-quality-agent.sh failed (exit $exit_code)" >> "$LOG_DIR/cron.log"
+    # 현재 브랜치가 quality 브랜치면 master로 복귀 후 삭제
+    if git rev-parse --abbrev-ref HEAD | grep -q "^quality/"; then
+      git checkout master 2>/dev/null || true
+      git branch -D "$BRANCH" 2>/dev/null || true
+    fi
+  fi
+}
+trap cleanup EXIT
+
 # ── 1. feature 브랜치 생성 ────────────────────────────────────────
 git fetch origin master
-git checkout -b "$BRANCH" origin/master
+# 이미 존재하는 경우 재사용 (-B: create or reset)
+git checkout -B "$BRANCH" origin/master
 
 # ── 2. quality-agent 실행 ─────────────────────────────────────────
-claude -p "
+"$CLAUDE_BIN" -p "
 You are the quality-agent for this workspace. Follow the checklist in .claude/agents/quality-agent.md exactly.
 
-1. Run: bash scripts/garden.sh --metrics
-2. Run: bash scripts/check_docs.sh
+1. Run GP drift detection (read-only): bash scripts/garden.sh --dry-run
+2. Run dead link / oversized doc check: bash scripts/check_docs.sh --dry-run
 3. Check stale cc:TODO tasks in Plans.md (older than 14 days based on git log)
 4. Check archive bloat: count completed Phases in Plans.md and completed items in docs/TODO.md
-5. Write the full report to: docs/reports/quality-${DATE}.md
+5. Update quality score: bash scripts/garden.sh --metrics
+6. Write the full report to: docs/reports/quality-${DATE}.md
 
 Use the report format defined in .claude/agents/quality-agent.md.
 " \
   --allowedTools "Bash,Read,Write,Grep,Glob" \
-  --output-format json \
   >> "$LOG_FILE.run.log" 2>&1
 
 # ── 3. 변경사항 없으면 브랜치 삭제 후 종료 ───────────────────────

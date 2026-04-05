@@ -7,7 +7,7 @@
 
 | 경로 | 목적 |
 |------|------|
-| `data_flow/` | 주요 흐름의 Mermaid 시퀀스 다이어그램. `chat/`, `channel/`, `desktopmate-bridge/` 별 분류 |
+| `data_flow/` | 주요 흐름의 Mermaid 시퀀스 다이어그램. `chat/`, `channel/`, `agent/`, `desktopmate-bridge/` 별 분류 |
 | `faq/` | 반복 혼동 설계 결정 Q&A. 새 FAQ는 여기에 추가 후 루트 `CLAUDE.md` FAQ 섹션에 링크 |
 | `feedback/` | Gemini 등 외부 AI 검토 피드백 원본. 읽기 전용 참고자료 |
 | `guidelines/DOCUMENT_GUIDE.md` | 모든 문서의 작성 규칙 (200줄 한도, 표준 구조, Appendix 전략) |
@@ -40,3 +40,6 @@
 - [NanoClaw Task Dispatch FAQ](./faq/nanoclaw-task-dispatch.md) — IPC vs HTTP Channel 혼동 시
 - [Desktop Homunculus MOD 시스템 FAQ](./faq/desktop-homunculus-mod-system.md) — MOD 개발 시
 - [desktopmate-bridge Config Flow](./data_flow/desktopmate-bridge/CONFIG_FLOW.md) — dm-config 신호 흐름
+- [desktopmate-bridge Startup Flow](./data_flow/desktopmate-bridge/STARTUP_FLOW.md) — 시작 시퀀스, VRM 상태 머신, WS 재연결
+- [LTM Middleware Flow](./data_flow/agent/LTM_MIDDLEWARE.md) — ltm_retrieve_hook / ltm_consolidation_hook
+- [DelegateTask Flow](./data_flow/agent/DELEGATE_TASK.md) — NanoClaw 위임 → Callback → 채널 응답

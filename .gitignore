@@ -37,3 +37,4 @@ backend/
 nanoclaw/
 desktop-homunculus/
 OpenSpace/
+scheduled_tasks.lock

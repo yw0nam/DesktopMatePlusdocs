@@ -74,7 +74,7 @@ for ENTRY in "${REPOS[@]}"; do
   git -C "$REPO_PATH" branch -r --merged "$DEFAULT_BRANCH" \
     | grep -v 'HEAD' \
     | sed 's|^ *origin/||' \
-    | grep -v "^${DEFAULT_BRANCH}$\|^master$\|^main$\|^develop$" \
+    | { grep -v "^${DEFAULT_BRANCH}$\|^master$\|^main$\|^develop$" || true; } \
     | while read -r branch; do
         # apply per-repo skip pattern (skill/* for nanoclaw)
         [[ -n "$SKIP_PATTERN" && "$branch" =~ $SKIP_PATTERN ]] && continue
