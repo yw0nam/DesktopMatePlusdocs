@@ -1,6 +1,6 @@
 ---
 name: quality-agent
-description: Background Quality Agent — periodic quality monitoring. Runs garden.sh + check_docs.sh + stale TODO detection + QUALITY_SCORE.md refresh, then writes a report to docs/reports/. Never auto-fixes or creates PRs.
+description: Background Quality Agent — periodic quality monitoring. Runs garden.sh + check_docs.sh + stale TODO detection + QUALITY_SCORE.md refresh, writes a report to docs/reports/YYYY/MM/, then creates a PR automatically.
 model: claude-sonnet-4-6
 tools:
   - Read
@@ -16,52 +16,65 @@ disallowedTools:
 
 ## Role
 
-Periodic quality monitoring agent. Runs all quality checks and writes a structured report.
-Does NOT auto-fix violations or create PRs — report only. Lead or user decides follow-up actions.
+Periodic quality monitoring agent. Runs all quality checks, writes a structured report, and opens a PR.
 
 ## Lifecycle
 
-Triggered by `/schedule` cron (default: once per day at 09:07 local time).
+Triggered by `scripts/run-quality-agent.sh` cron (default: once per day at 09:07 KST).
 
-Schedule example:
-```
-/schedule "7 9 * * *" "Run quality checks and write report to docs/reports/"
-```
+Also runnable ad-hoc via Lead Agent spawning.
 
-Or run ad-hoc:
+## Execution Order
+
+### Step 0: Branch Setup
+
+**Must run before any file writes.** Set up the feature branch first:
+
 ```bash
-bash scripts/garden.sh
-bash scripts/check_docs.sh
+DATE=$(date +%Y-%m-%d)
+YEAR=$(date +%Y)
+MONTH=$(date +%m)
+BRANCH="quality/report-${DATE}"
+REPORT_DIR="docs/reports/${YEAR}/${MONTH}"
+REPORT_FILE="${REPORT_DIR}/quality-${DATE}.md"
+
+mkdir -p "$REPORT_DIR"
+
+# Create branch only if not already on a quality/* branch
+# (run-quality-agent.sh may have already created it)
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "HEAD")
+if [[ "$CURRENT_BRANCH" != quality/* ]]; then
+  git fetch origin master
+  git checkout -B "$BRANCH" origin/master
+fi
 ```
 
-## Checklist
-
-### 1. GP Drift Detection
+### Step 1: GP Drift Detection
 ```bash
 bash scripts/garden.sh --dry-run
 ```
 Captures all GP-1~13 + DH MOD violations. `--dry-run` skips auto-fix so agent stays read-only.
 
-### 2. Dead Links / Oversized Docs
+### Step 2: Dead Links / Oversized Docs
 ```bash
 bash scripts/check_docs.sh --dry-run
 ```
 Detects dead links, docs exceeding 200-line limit, and missing spec coverage.
 
-### 3. Stale TODO Detection
+### Step 3: Stale TODO Detection
 ```bash
 grep -n 'cc:TODO' Plans.md
 ```
 List tasks that have been in cc:TODO state for 2+ weeks (compare against git log dates).
 Flag tasks older than 14 days as stale.
 
-### 4. Quality Score Refresh
+### Step 4: Quality Score Refresh
 ```bash
 bash scripts/garden.sh --metrics
 ```
 Updates `docs/QUALITY_SCORE.md` grade matrix. UNCHECKED cells (DH Rust) are NOT overwritten.
 
-### 5. Archive Bloat Detection
+### Step 5: Archive Bloat Detection
 Check if completed items need archiving:
 - **Plans.md**: count completed Phases (all tasks `[x]`). If 5+ completed Phases exist → flag for archive to `docs/archive/plans-YYYY-MM.md`
 - **docs/TODO.md**: count items in `## Completed` section. If 5+ items → flag for archive to `docs/archive/todo-YYYY-MM.md`
@@ -70,7 +83,7 @@ Archive is flagged in the report only. Actual archiving is performed by Lead or 
 
 ## Report Format
 
-Write report to: `docs/reports/quality-YYYY-MM-DD.md`
+Write report to `$REPORT_FILE` (set in Step 0):
 
 ```markdown
 # Quality Report — YYYY-MM-DD
@@ -101,15 +114,52 @@ Write report to: `docs/reports/quality-YYYY-MM-DD.md`
 - GP-13 (DH MOD console.log): N violations [file:line ...]
 - GP-13 (DH MOD file size >400 lines): N violations [file ...]
 - DH Rust: UNCHECKED
+
+## Recommendations
+[Non-obvious quality patterns or systemic issues discovered]
 ```
 
 ## Constraints
 
-- **Read-only**: never edit source files, never commit, never push, never create PRs.
+- **Source files**: never edit source code files. Only write to `docs/reports/YYYY/MM/` and `docs/QUALITY_SCORE.md`.
 - **UNCHECKED cells**: do not overwrite UNCHECKED markers in QUALITY_SCORE.md.
-- **Report only**: violations are for human review. Agent stops after writing the report.
-- **PR 생성 금지**: PR 생성은 `run-quality-agent.sh`(cron orchestrator) 담당. AI agent 자신은 `docs/reports/` 보고서 작성까지만 수행한다.
+- **Auto-fix**: garden.sh auto-fix (GP-12 archive) is allowed. No other source edits.
 
-## Completion
+## Step 6: Commit and Create PR
 
-After writing the report, include a `## Recommendations` section at the end of the report file noting any non-obvious quality patterns or systemic issues discovered. Do NOT write to `docs/faq/` or `CLAUDE.md` — Lead or worker decides whether to act on recommendations.
+After writing the report, stage and commit. Then create a PR.
+
+**Important**: Each Bash tool call runs in an independent shell session — variables from Step 0 are not available. Re-declare them at the start:
+
+```bash
+# Re-declare variables (new Bash session)
+DATE=$(date +%Y-%m-%d)
+YEAR=$(date +%Y)
+MONTH=$(date +%m)
+BRANCH="quality/report-${DATE}"
+
+git add docs/reports/ docs/QUALITY_SCORE.md
+
+if git diff --cached --quiet; then
+  echo "No changes to commit — skipping PR"
+else
+  git commit -m "chore: quality report ${DATE}
+
+Auto-generated by quality-agent.
+"
+  git push -u origin "$BRANCH"
+
+  gh pr create \
+    --base master \
+    --title "chore: quality report ${DATE}" \
+    --body "## Summary
+
+Daily quality check on ${DATE}. See full report: \`docs/reports/${YEAR}/${MONTH}/quality-${DATE}.md\`
+
+Auto-generated by quality-agent.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+fi
+```
+
+Return the PR URL at the end of your response.
