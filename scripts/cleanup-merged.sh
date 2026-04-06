@@ -63,7 +63,7 @@ for ENTRY in "${REPOS[@]}"; do
       [[ "$wt_path" == "$MAIN_ABS" ]] && continue          # skip main worktree
       [[ "$branch" =~ $OUR_PATTERN ]] || continue           # skip non-ours
 
-      if ! git -C "$REPO_PATH" branch -r --merged "$DEFAULT_BRANCH" \
+      if ! git -C "$REPO_PATH" branch -r --merged "origin/$DEFAULT_BRANCH" \
           | grep -q "origin/${branch}$"; then
         echo "  skip worktree (not merged): $wt_path  [$branch]"
         continue
@@ -75,8 +75,8 @@ for ENTRY in "${REPOS[@]}"; do
   done < <(git -C "$REPO_PATH" worktree list --porcelain)
 
   # ── 2. Merged remote branches ──────────────────────────────────────────────
-  git -C "$REPO_PATH" branch -r --merged "$DEFAULT_BRANCH" \
-    | grep -v 'HEAD' \
+  git -C "$REPO_PATH" branch -r --merged "origin/$DEFAULT_BRANCH" \
+    | { grep -v 'HEAD' || true; } \
     | sed 's|^ *origin/||' \
     | { grep -v "^${DEFAULT_BRANCH}$\|^master$\|^main$\|^develop$" || true; } \
     | while read -r branch; do
