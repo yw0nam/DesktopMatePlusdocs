@@ -68,6 +68,31 @@ grep -n 'cc:TODO' Plans.md
 List tasks that have been in cc:TODO state for 2+ weeks (compare against git log dates).
 Flag tasks older than 14 days as stale.
 
+### Step 3.5: Plans.md Health Check
+
+Scan Plans.md for structural issues that accumulate over time:
+
+```bash
+wc -l Plans.md
+```
+
+Flag any of the following:
+
+1. **Orphaned review blocks** — Large non-task prose blocks (e.g., embedded `/autoplan` or `/review` output) that remain after a Phase is archived. Heuristic: any `## GSTACK REVIEW REPORT` or `### Verdict:` heading in Plans.md signals a block that should have been removed when the phase completed.
+   ```bash
+   grep -n "GSTACK REVIEW REPORT\|### Verdict:" Plans.md
+   ```
+
+2. **Empty sections** — Section headings with no content other than comments:
+   ```bash
+   grep -n "^## " Plans.md
+   ```
+   Flag any `##` section immediately followed by another `##` or end-of-file (no tasks or content).
+
+3. **Plans.md total line count** — Flag if > 150 lines. Likely means orphaned content or unarchived phases.
+
+Report findings in the `## Plans.md Health` section of the quality report. Do NOT auto-fix — flag only.
+
 ### Step 4: Quality Score Refresh
 ```bash
 bash scripts/garden.sh --metrics
@@ -99,6 +124,11 @@ Write report to `$REPORT_FILE` (set in Step 0):
 ## Stale TODO (2w+)
 [Tasks in cc:TODO state for 14+ days]
 - Task ID: description (added: YYYY-MM-DD)
+
+## Plans.md Health
+- Total lines: N (threshold: 150)
+- Orphaned review blocks: [list or "none"]
+- Empty sections: [list or "none"]
 
 ## Quality Score Update
 [Paste updated QUALITY_SCORE.md table]
