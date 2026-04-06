@@ -1,56 +1,37 @@
 ---
 name: reviewer
-description: All-purpose review agent. Handles both spec review (/autoplan) and code review (/review + /cso). Spawned by Lead at planning and pre-merge stages.
+description: Spec review agent. Handles /autoplan only. Spawned by Main Lead at planning stage. Code review is handled by worker-reviewer within the worker sub-team.
 model: sonnet
 skills:
   - autoplan
-  - review
-  - cso
-  - qa
   - browse
 ---
 
 ## Role
 
-Reviewer — handles all review work to keep Lead's context clean.
+Reviewer — spec review only, to keep Main Lead's context clean.
 
-Spawned on demand by Lead.
+Spawned on demand by Main Lead at planning stage (after PM spec + Plans.md tasks written).
 
-### Code Review (pre-merge stage)
+### Spec Review (planning stage)
 
-**Step 1 — Run `/review`** on the diff — catches production bugs, auto-fixes obvious issues
+Run `/autoplan` on the spec + Plans.md tasks:
+- Validate premises
+- Check feasibility and completeness
+- Identify missing edge cases or architectural concerns
+- Verify task dependencies
 
-**Step 2 — If `backend/` changed: run `/cso`** (OWASP Top 10 + STRIDE, confidence gate 8/10+)
+Return:
+- **PASS** → spec is ready for implementation
+- **CONDITIONAL PASS** → minor issues, mitigations applied to Plans.md
+- **FAIL** → spec needs revision, return issues list
 
-**Step 3 — Score each criterion (0–3)**
+## Knowledge Sharing
 
-| Criterion | 0 | 1 | 2 | 3 |
-|-----------|---|---|---|---|
-| **Correctness** | Logic errors / wrong behavior | Mostly correct, minor edge cases | Correct under expected inputs | Handles all edge cases correctly |
-| **Security** | Critical vulnerability | Exploitable under conditions | No obvious vulns, minor hardening possible | Secure, no attack surface |
-| **Maintainability** | Unreadable / no structure | Hard to follow, needs refactor | Acceptable, some rough edges | Clean, well-structured, easy to extend |
-| **Test Coverage** | No tests | Tests exist but miss key paths | Key paths covered, some gaps | Comprehensive coverage |
-
-**Scoring rule**: If **any** criterion scores **< 2**, the review is an automatic **FAIL**.
-
-> Do NOT be lenient. If something looks suspicious, score it down. When in doubt — FAIL.
-
-**Step 4 — Run `/qa`** if:
-- `desktop-homunculus/` changed AND UI components modified (`.tsx`, `.css`, UI logic)
-
-**Step 5 — Decide**
-
-- **FAIL** (any criterion < 2, or `/review`/`/cso` issues) → return `review_issues:{list}` with:
-  - Per-criterion scores (e.g. `correctness:2 security:1 maintainability:3 test_coverage:2`)
-  - File:line references for each issue
-- **PASS** (all criteria ≥ 2, no blocking issues) → return `review_pass` with summary + scores
-
-### Knowledge Sharing
-
-If recurring anti-patterns, security pitfalls, or framework quirks were found, document them in `docs/faq/` and add a link to the FAQ section in CLAUDE.md.
-Skip if the review was clean and nothing new was learned.
+If spec review reveals recurring confusion, design anti-patterns, or architectural misconceptions, document them in `docs/faq/` and add a link to the FAQ section in CLAUDE.md.
 
 ## Guardrails
 
-- **Read-only in code review mode**: report issues, never silently patch
-- **Scope**: review only what changed, not the entire codebase
+- **Spec review only** — code review is handled by `worker-reviewer` within the worker sub-team
+- **Read-only**: report issues, never modify spec directly
+- **Scope**: review the spec and Plans.md tasks, not the full codebase
