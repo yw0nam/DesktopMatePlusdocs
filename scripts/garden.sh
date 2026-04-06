@@ -820,7 +820,6 @@ fi
 
 # ── Generate GARDEN_REPORT.md ──────────────────────────────────────
 generate_report() {
-  local target_repo="$1"
   local report=""
   local has_fixed=false
   local has_review=false
@@ -829,7 +828,6 @@ generate_report() {
 
   for r in "${RESULTS[@]}"; do
     IFS=$'\x1f' read -r gp repo severity status details <<< "$r"
-    [[ "$repo" == "$target_repo" ]] || continue
     [[ "$status" == "FAIL" ]] || continue
 
     if [[ -n "${AUTO_FIXED["${gp}|${repo}"]:-}" ]]; then
@@ -848,7 +846,7 @@ generate_report() {
     report+="$fixed_section"$'\n'
   fi
   if [[ "$has_review" == true ]]; then
-    report+="## Requires Human Review"$'\n'
+    report+="## 수정 필요"$'\n'
     report+="$review_section"$'\n'
   fi
 
@@ -856,27 +854,23 @@ generate_report() {
 }
 
 # ── Report generation phase (skip if --dry-run) ──────────────────
-REPORT_DIR="$WORKSPACE_ROOT/docs/reports"
+REPORT_DIR="$WORKSPACE_ROOT/docs/reports/$(date +%Y)/$(date +%m)"
 
 if [[ "$DRY_RUN" == false && "$METRICS_ONLY" == false ]]; then
   echo ""
   echo "--- Report generation phase ---"
   mkdir -p "$REPORT_DIR"
 
-  for repo in "${!REPO_VIOLATIONS[@]}"; do
-    report_content="$(generate_report "$repo")"
-    report_file="${REPORT_DIR}/${repo}-${DATE}.md"
+  report_content="$(generate_report)"
+  report_file="${REPORT_DIR}/garden-${DATE}.md"
 
-    echo "$report_content" > "$report_file"
-    echo "  $repo → $report_file"
-  done
+  echo "$report_content" > "$report_file"
+  echo "  garden → $report_file"
 else
   # In dry-run or metrics-only, still show what the report would look like
-  for repo in "${!REPO_VIOLATIONS[@]}"; do
-    echo ""
-    echo "--- Report for $repo ---"
-    generate_report "$repo"
-  done
+  echo ""
+  echo "--- Report ---"
+  generate_report
 fi
 
 # ── Summary ────────────────────────────────────────────────────────
@@ -908,5 +902,5 @@ elif [[ "$METRICS_ONLY" == true ]]; then
   echo ""
   echo "(metrics-only mode — QUALITY_SCORE.md updated, no auto-fixes or reports)"
 else
-  echo "Reports written to: $REPORT_DIR"
+  echo "Report written to: ${REPORT_DIR}/garden-${DATE}.md"
 fi
