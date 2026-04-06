@@ -127,9 +127,17 @@ Write report to `$REPORT_FILE` (set in Step 0):
 
 ## Step 6: Commit and Create PR
 
-After writing the report, stage and commit. Then create a PR:
+After writing the report, stage and commit. Then create a PR.
+
+**Important**: Each Bash tool call runs in an independent shell session — variables from Step 0 are not available. Re-declare them at the start:
 
 ```bash
+# Re-declare variables (new Bash session)
+DATE=$(date +%Y-%m-%d)
+YEAR=$(date +%Y)
+MONTH=$(date +%m)
+BRANCH="quality/report-${DATE}"
+
 git add docs/reports/ docs/QUALITY_SCORE.md
 
 if git diff --cached --quiet; then
