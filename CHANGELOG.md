@@ -4,6 +4,24 @@ All notable changes to the DesktopMatePlus workspace coordination layer are docu
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.0.6] - 2026-04-07
+
+### Fixed
+- `scripts/garden.sh` — cron 환경에서 uv/anaconda 미발견으로 GP-1/GP-2/GP-10 backend 검사가 스킵되던 문제 해결. PATH export 추가.
+- `scripts/run-quality-agent.sh` — 동일한 PATH export 추가 (cron 환경 일관성)
+- `docs/data_flow/chat/ADD_CHAT_MESSAGE.md` — dead link 2개 수정 (상대 경로 오류)
+
+### Changed
+- `docs/faq/desktop-homunculus-mod-system.md` — 259줄 → 152줄. MOD 유형별 코드 예제를 `desktop-homunculus-mod-types.md`로 분리
+- `CLAUDE.md` — FAQ 인덱스에 `desktop-homunculus-mod-types.md` 링크 등록
+- `docs/QUALITY_SCORE.md` — backend 도메인 B→A (uv PATH 수정 이후 GP-10 PASS)
+
+### Added
+- `docs/faq/desktop-homunculus-mod-types.md` — MOD 유형별 구조 상세 코드 예제 (Service-only / UI / Service+UI)
+- `docs/archive/phase-25-desktopmate-bridge-ws-drag.md` — Phase 25 아카이브
+- `docs/reports/2026/04/quality-2026-04-07.md` — 2026-04-07 quality report
+- `docs/reports/2026/04/garden-2026-04-07.md` — garden run report
+
 ## [0.1.0.5] - 2026-04-04
 
 ### Changed
