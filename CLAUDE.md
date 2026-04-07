@@ -57,19 +57,20 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic.
 | **Lead** | opus | Phase 위임 + Plans.md + delegation only | — | persistent |
 | `pm-agent` | sonnet | Feature spec → TODO.md | `/office-hours`, `/learn` | user 피처 요청 시 |
 | `reviewer` | sonnet | **Spec review only** | `/autoplan`, `/browse` | planning 단계 |
-| `design-agent` | sonnet | FE mockup + spec + E2E scaffold | `/design-*`, `/browse` | PM spec에 `[target: desktop-homunculus/]` + UI 변경 |
+| `design-agent` | sonnet | FE design + DH runtime/UX QA (dual-mode) | `/design-*`, `/qa`, `/browse` | Design: PM spec + UI 변경 / QA: DH Worker Sub-Team 포함 시 |
 | `pr-merge-agent` | sonnet | PR 코멘트 분류 → 답변 → 머지 | Bash, Read, Grep, Glob | 긴급/수동 시만 (정상은 `/babysit` cron) |
 | `quality-agent` | sonnet | 품질 모니터링 → report 작성 | Read, Bash, Grep, Glob, Write | daily cron (09:07 KST) |
 
-### Worker Sub-Team (per repo, Main Lead가 3명 동시 스폰)
+### Worker Sub-Team (per repo, Main Lead가 3명 동시 스폰 — DH 태스크 시 4명)
 
-> Teammate는 다른 teammate를 스폰할 수 없음 (flat roster). Main Lead가 3명 모두 스폰.
+> Teammate는 다른 teammate를 스폰할 수 없음 (flat roster). Main Lead가 모두 스폰.
 
 | Agent | Model | Role | Skills |
 |-------|-------|------|--------|
 | `worker-lead` | sonnet | Sub-team coordinator | `/simplify`, `/ship`, `/learn` |
 | `worker-coder` | sonnet | TDD 구현 | `/harness-work`, `/investigate`, `/learn` |
 | `worker-reviewer` | sonnet | Code review | `/review`, `/cso`, `/qa`, `/browse` |
+| `design-agent` | sonnet | DH runtime/UX QA (DH 태스크 시만) | `/qa`, `/browse` |
 
 ### Lead 제약
 
@@ -83,6 +84,7 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic.
 - **Worker Lead**: 코드 직접 편집 금지. Coder 완료 + Reviewer PASS 후에만 `/simplify` → `/ship`
 - **Worker-Coder**: `/harness-work` 필수, 직접 코드 구현 금지. Worker Lead에게만 보고
 - **Worker-Reviewer**: Correctness / Security / Maintainability / Test Coverage (0–3, 2 미만 시 자동 FAIL). FAIL 시 Coder에게 직접 이슈 전달
+- **Design Agent (DH 태스크 시)**: runtime/UX QA 체크리스트 (pass/fail). Worker-Reviewer와 병렬 수행, 둘 다 PASS 필요
 - **재활용**: 같은 레포 연속 태스크 → Worker Lead에 `SendMessage` 재사용. 재스폰 기준: `total_tokens` ≥ 80k / `tool_uses` ≥ 60 / 레포 변경
 - **E2E Backend**: Worker-Coder가 직접 backend 기동 + 테스트 후 정리 (유저에게 요청 금지)
 
@@ -106,11 +108,12 @@ Agent definitions: `.claude/agents/`. gstack skills drive all workflow logic.
 5. Lead → `/phase-dispatch` (TeamCreate → Worker Lead + Coder + Reviewer 동시 스폰)
    - UI 피처면 Design Agent 먼저 (mockup → spec → E2E scaffold)
 6. Worker Sub-Team 자율 운영:
-   a. Worker Lead가 Coder + Reviewer에게 SendMessage로 조율
+   a. Worker Lead가 Coder + Reviewer (+ Design Agent if DH)에게 SendMessage로 조율
    b. Coder: /investigate → /harness-work → 완료 보고
    c. Reviewer: /review + /cso → PASS/FAIL
-   d. FAIL → Coder 수정 → Reviewer 재리뷰 (서브팀 내 자율 순환)
-   e. PASS → Worker Lead: /simplify → /ship → PR 생성
+   c-1. DH 태스크: Design Agent QA (runtime/UX 체크리스트) 병렬 수행
+   d. FAIL → Coder 수정 → Reviewer + Design Agent 재리뷰 (서브팀 내 자율 순환)
+   e. 모두 PASS → Worker Lead: /simplify → /ship → PR 생성
 7. Worker Lead → Main Lead에게 최종 보고 (PR URL, test results)
 8. `/babysit` cron (PR 머지 → `/document-release`)
 9. Lead → `/cleanup` (팀 종료 + 워크트리 정리)

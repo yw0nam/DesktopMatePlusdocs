@@ -103,6 +103,24 @@ Worker는 TDD 구현 전문이다. HTML mockup 생성 + 디자인 심사는 gsta
 - Worker는 mockup과 spec을 참조만 하고 구현에 집중
 - `/design-review` 피드백 루프가 구현 작업과 독립적으로 반복 가능
 
+## QA Mode (2026-04-06 추가)
+
+design-agent는 **듀얼 모드**로 동작한다:
+
+- **Design Mode**: 기존 — PM spec 기반 mockup/spec/scaffold (standalone)
+- **QA Mode**: Worker Sub-Team 내에서 DH runtime/UX strict QA 수행
+
+QA Mode는 Worker-Reviewer의 코드 품질 리뷰와 **관점이 다르다**:
+
+| 관점 | 담당 | 기준 |
+|------|------|------|
+| 코드 품질 (correctness, security, maintainability, test coverage) | Worker-Reviewer | 0–3 스코어링 |
+| 런타임/UX (silent failure, state consistency, button state, error propagation) | Design Agent | 체크리스트 pass/fail |
+
+두 리뷰가 병렬 수행되며, **둘 다 PASS**해야 Worker Lead가 `/simplify` → `/ship`을 진행한다.
+
+자세한 체크리스트와 워크플로우: [design-agent.md](../../.claude/agents/design-agent.md#qa-mode)
+
 ## 관련 문서
 
 - [Desktop Homunculus MOD 시스템](./desktop-homunculus-mod-system.md): Glassmorphism UI 가이드라인, signals 통신 패턴

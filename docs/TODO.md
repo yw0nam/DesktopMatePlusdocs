@@ -14,6 +14,9 @@ PM agent가 office-hours 상담 후 작성. Lead가 Plans.md로 가져가 태스
 | 9 | E2E 테스트 확장 (TTS + LTM) | P2 | TODO | [spec](#spec-9-e2e-테스트-확장) |
 | 10 | VRM 런타임 교체 UI | P2 | TODO | [spec](#spec-10-vrm-런타임-교체-ui) |
 | 11 | desktopmate-bridge 백엔드 연결 E2E 테스트 | P0 | TODO | [spec](#spec-11-backend-connection-e2e-테스트) |
+| 12 | desktopmate-bridge WS + Drag 신뢰성 버그 수정 (6개) | P0 | TODO | [spec](#spec-12-desktopmate-bridge-ws--drag-신뢰성-버그-수정) |
+| 13 | desktopmate-bridge SDK Adapter Pattern | P0 | TODO | [spec](#spec-13-sdk-adapter-pattern) |
+| 14 | backend E2E 마이그레이션 + 서버 로그 파싱 검증 | P1 | TODO | [spec](#spec-14-backend-e2e-마이그레이션) |
 
 ---
 
@@ -112,6 +115,110 @@ error messaging the mach port for IMKCFRunLoopWakeUpReliable
 **Design Doc**: `~/.gstack/projects/yw0nam-DesktopMatePlusdocs/spow12-master-design-20260406-092637.md`
 
 [target: desktop-homunculus/]
+
+### Spec 12: desktopmate-bridge WS + Drag 신뢰성 버그 수정
+
+**출처**: 2026-04-06 코드 리뷰. **대상**: `desktop-homunculus` (desktopmate-bridge MOD)
+
+**Design Doc**: `~/.gstack/projects/yw0nam-DesktopMatePlusdocs/spow12-master-design-20260406-170401.md`
+
+**6개 버그 목록**:
+
+| # | 버그 | 위치 | 증상 |
+|---|------|------|------|
+| A | sendWsMessage 무음 실패 + 항상 ok:true | `service.ts:103-107, 120-131` | WS 미연결 시 메시지 유실, UI는 성공 표시 |
+| B | Send 버튼 미비활성화 | `ControlBar.tsx:228-232` | disconnected 상태에서 Send 클릭 가능 |
+| C | shouldRetry에 1006 누락 | `service.ts:20-22` | ECONNREFUSED 시 자동 재시도 없이 stuck |
+| D | error 이벤트 핸들러 없음 | `service.ts:214-242` | unhandled WS error exception |
+| E | isTyping 미리셋 | `useSignals.ts:39-43` | 스트리밍 중 연결 끊기면 입력창 영구 비활성화 |
+| F | Drag Vec2 타입 불일치 | `ControlBar.tsx:136-142` | 드래그 스케일 0.002 fallback → 사실상 불동 |
+
+**변경 파일**: `service.ts` (A/C/D) · `ControlBar.tsx` (B/F) · `store.ts` (E 선행) · `useSignals.ts` (E)
+
+**DoD**:
+- WS 미연결 sendMessage RPC → `{ ok: false }`
+- disconnected 상태에서 Send 버튼 비활성화
+- code 1006 → MAX_RETRIES 재시도 후 "restart-required"
+- 스트리밍 중 연결 끊김 → isTyping 즉시 false
+- 드래그 정상 이동 (1:1 비율)
+- 신규 unit test PASS + 기존 E2E (TC-LC, TC-CW) PASS
+
+[target: desktop-homunculus/]
+
+### Spec 13: desktopmate-bridge SDK Adapter Pattern
+
+**출처**: 2026-04-07 PM office-hours. **대상**: `desktop-homunculus` (desktopmate-bridge MOD)
+
+**Design Doc**: `~/.gstack/projects/yw0nam-DesktopMatePlusdocs/spow12-master-design-20260407-084735.md`
+
+**문제**: `service.ts`가 `@hmcs/sdk`에 직접 의존 → Bevy 없이 import/테스트 불가. `service-ws.test.ts`가 service.ts 로직을 복사해서 테스트하는 것이 현 상황.
+
+**구현 목표**: 3개 신규 파일 + service.ts 리팩토
+
+| 파일 | 역할 |
+|------|------|
+| `src/sdk-adapter.ts` | SdkAdapter 인터페이스 (8개 SDK 오퍼레이션) |
+| `src/real-adapter.ts` | @hmcs/sdk 래핑 (production) |
+| `src/mock-adapter.ts` | 순수 JS mock + 테스트 헬퍼 (onMockSignal, callMockRpc, resetMockAdapter) |
+| `src/service.ts` 수정 | adapter 파라미터 주입 + isMain 가드 + connectAndServe/handleMessage named export |
+
+**환경 스위칭**: `HMCS_MOCK=1` → mock-adapter 사용 (real-adapter import 없음)
+
+**DoD (Unit)**:
+- `HMCS_MOCK=1 pnpm test` — unit 전체 PASS (Bevy 없이)
+- `tests/unit/mock-adapter.test.ts` — signal/RPC mock 헬퍼 PASS
+- `tests/unit/service-flow.test.ts` — authorize_success, typing_start, message_complete, tts_chunk PASS
+
+**DoD (E2E — Worker가 backend 직접 기동, 유저에게 요청 금지)**:
+- `pnpm test:e2e` — docs/data_flow/desktopmate-bridge/ 전체 플로우 PASS:
+  - STARTUP_FLOW: VRM spawn → dm-config signal → WS authorize_success
+  - UI_BACKEND_PROTOCOL: 모든 WS 메시지 타입, 모든 signal, 모든 RPC 메서드
+  - CONFIG_FLOW: loadConfig → dm-config, updateConfig → yaml 쓰기 → dm-config 재발송
+
+**신규 E2E 3개**: `signal-flow.test.ts` · `rpc-flow.test.ts` · `tts-flow.test.ts`
+
+**Week 1 검증 필수**: SDK rpc.serve() 반환 타입 확인, isMain 가드 tsx/bun 호환성, dynamic import ternary 동작.
+
+[target: desktop-homunculus/]
+
+### Spec 14: backend E2E 마이그레이션 + 서버 로그 파싱 검증
+
+**출처**: 2026-04-07 PM office-hours. **대상**: `backend/`
+
+**Design Doc**: `~/.gstack/projects/yw0nam-DesktopMatePlusdocs/spow12-master-design-20260407-090410.md`
+
+**배경**: `backend/examples/`의 test 스크립트들이 pytest 외부에서 standalone 실행됨. 취약점:
+1. 에러 시나리오 미커버 (invalid auth, 잘못된 payload, empty content)
+2. 미포함 엔드포인트 (`GET /v1/tts/voices`, `GET /v1/stm/sessions`, `PATCH metadata`)
+3. 서버 사이드 검증 없음 — TTS chunk 소실(로그 3개/수신 1개) 에러 없이 종료
+
+**핵심 설계 — Auto-Injection Session Fixture + LogReader**:
+- `e2e_session` fixture: 테스트별 unique UUID 자동 생성 → WebSocket에 주입
+- `log_reader` fixture: session_id로 서버 로그 필터링 → 실패 시 해당 session 로그 자동 덤프
+- TTS 3중 검증: client sequence 연속성 / server scheduled==sent / server==client
+- **Skip 불가**: backend 미기동 시 FAIL + 메시지 (Commit/Merge 블로킹)
+
+**수정 파일**:
+
+| 파일 | 변경 |
+|------|------|
+| `backend/pyproject.toml` | `e2e` marker 추가 |
+| `backend/scripts/e2e.sh` | Phase 4를 `pytest -m e2e --tb=long`으로 교체 |
+| `backend/tests/e2e/conftest.py` | 신규 (LogReader, e2e_session, require_backend) |
+| `backend/tests/e2e/test_websocket_e2e.py` | 신규 (TTS chunk 3중 검증 포함) |
+| `backend/tests/e2e/test_stm_e2e.py` | 신규 (happy + error path) |
+| `backend/tests/e2e/test_ltm_e2e.py` | 신규 (happy + error path) |
+| `backend/tests/e2e/test_misc_e2e.py` | 신규 (health, TTS voices) |
+| `backend/examples/test_*.py` 4개 | 삭제 (tests/e2e/로 이전) |
+
+**DoD**:
+- `uv run pytest -m "not e2e" -q` 기존 unit tests PASS (regression 없음)
+- `bash scripts/e2e.sh` PASS — backend 기동 + `pytest -m e2e` 전체 PASS
+- TTS chunk gap 발생 시 assertion FAIL (기존은 silent pass)
+- 실패 테스트의 pytest output에 서버 로그 자동 포함
+- examples/ 구 스크립트 4개 삭제 완료
+
+[target: backend/]
 
 ---
 

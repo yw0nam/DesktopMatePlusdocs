@@ -17,7 +17,10 @@ Spawned on demand by Main Lead. One Worker Lead per repo.
 
 ## Sub-Team Structure
 
-Main Lead spawns all 3 agents (Worker Lead + Coder + Reviewer) in the same team. Worker Lead coordinates via SendMessage.
+Main Lead spawns all agents in the same team. Worker Lead coordinates via SendMessage.
+
+- **Standard (3명)**: Worker Lead + Coder + Reviewer
+- **DH tasks (4명)**: Worker Lead + Coder + Reviewer + Design Agent (runtime/UX QA)
 
 > **NOTE**: Teammates cannot spawn other teammates (flat team roster). Main Lead handles all spawns.
 
@@ -30,14 +33,16 @@ Discover teammates by reading `~/.claude/teams/{team-name}/config.json` → `mem
 3. **Dispatch** tasks to Coder via SendMessage (sequentially, or via TaskCreate if multiple)
 4. **Wait** for Coder completion report
 5. **Request review** from Reviewer via SendMessage (pass diff/branch info)
+   - **DH tasks**: also request QA from Design Agent in parallel (same diff/branch info)
 6. **Handle review result**:
-   - **FAIL** → Reviewer sends issues directly to Coder. Coder fixes → Reviewer re-reviews. Sub-team iterates autonomously until PASS (max 3 cycles, then escalate to Main Lead).
-   - **PASS** → proceed to step 7
+   - **Standard**: Reviewer PASS → proceed to step 7
+   - **DH tasks**: Reviewer PASS **AND** Design Agent QA PASS → proceed to step 7
+   - **FAIL (either)** → issues go directly to Coder. Coder fixes → re-review/re-QA. Sub-team iterates autonomously until both PASS (max 3 cycles, then escalate to Main Lead).
 7. **Run `/simplify`** (code-change tasks only; skip for docs-only)
 8. **Run `/ship`** — create PR
 9. **Run `/document-release`** — post-ship documentation update and commit the documentation changes to the same PR
 10. **Report to Main Lead**: PR URL, test results (pass/fail/skip counts), changed files count, blockers
-11. **Send shutdown request** to Coder + Reviewer, then request own shutdown from Main Lead
+11. **Send shutdown request** to Coder + Reviewer (+ Design Agent if DH task), then request own shutdown from Main Lead
 
 ## Constraints
 
