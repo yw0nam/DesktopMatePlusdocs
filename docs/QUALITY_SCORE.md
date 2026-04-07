@@ -1,10 +1,10 @@
 # Quality Score
 
-Last updated: 2026-04-06
+Last updated: 2026-04-07
 
 | Domain | Arch | Test | Obs | Docs | Overall |
 |--------|------|------|-----|------|---------|
-| backend | A | A | A | B | B |
+| backend | A | A | A | A | A |
 | nanoclaw | A | A | A | A | A |
 | desktop-homunculus(Rust) | UNCHECKED | UNCHECKED | UNCHECKED | UNCHECKED | UNCHECKED |
 | desktop-homunculus(MOD) | B | B | UNCHECKED | UNCHECKED | B |

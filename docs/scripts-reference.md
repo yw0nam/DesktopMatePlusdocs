@@ -59,7 +59,7 @@ bash scripts/run-quality-agent.sh
 
 - cron 설정: `7 9 * * *` (09:07 KST 매일)
 - `quality/report-YYYY-MM-DD` 브랜치 생성 → quality-agent 실행 → PR 오픈
-- 결과 로그: `docs/reports/quality-YYYY-MM-DD.md`
+- 결과 로그: `docs/reports/YYYY/MM/quality-YYYY-MM-DD.md`
 - quality-agent 자신은 PR 생성 안 함 — 이 스크립트가 담당
 
 ---
