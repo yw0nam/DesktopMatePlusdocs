@@ -61,10 +61,10 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 
 ### Phase 26: Quality Debt 해소 (2026-04-07) — source: quality-2026-04-07.md
 
-- [x] **QD-1: quality-agent uv PATH 수정** cc:DONE — `scripts/run-quality-agent.sh` 또는 `scripts/garden.sh`에서 uv PATH 설정 추가. GP-1/GP-2/GP-10 backend 검사 전부 uv 미발견으로 스킵되는 문제 해결. DoD: `scripts/garden.sh` 실행 시 backend lint/test/structural 전부 동작. Depends: none. [target: DesktopMatePlus/]
-- [x] **QD-2: Phase 25 아카이브** cc:DONE — Phase 25 (cc:DONE 5개) 아카이브 처리. DoD: Plans.md에 archived 링크만 남음. Depends: none. [target: DesktopMatePlus/]
-- [x] **QD-3: dead link 수정** cc:DONE — `docs/data_flow/chat/ADD_CHAT_MESSAGE.md`의 삭제된 파일 참조 2개 수정/제거. DoD: `scripts/check_docs.sh` dead link 0. Depends: none. [target: DesktopMatePlus/]
-- [x] **QD-4: oversized doc 분리** cc:DONE — `docs/faq/desktop-homunculus-mod-system.md` 259줄 → 200줄 이하로 분리. DoD: 200줄 한도 준수. Depends: none. [target: DesktopMatePlus/]
+- [x] **QD-1: quality-agent uv PATH 수정** cc:DONE [0148233] — `scripts/run-quality-agent.sh` 또는 `scripts/garden.sh`에서 uv PATH 설정 추가. GP-1/GP-2/GP-10 backend 검사 전부 uv 미발견으로 스킵되는 문제 해결. DoD: `scripts/garden.sh` 실행 시 backend lint/test/structural 전부 동작. Depends: none. [target: DesktopMatePlus/]
+- [x] **QD-2: Phase 25 아카이브** cc:DONE [0148233] — Phase 25 (cc:DONE 5개) 아카이브 처리. DoD: Plans.md에 archived 링크만 남음. Depends: none. [target: DesktopMatePlus/]
+- [x] **QD-3: dead link 수정** cc:DONE [0148233] — `docs/data_flow/chat/ADD_CHAT_MESSAGE.md`의 삭제된 파일 참조 2개 수정/제거. DoD: `scripts/check_docs.sh` dead link 0. Depends: none. [target: DesktopMatePlus/]
+- [x] **QD-4: oversized doc 분리** cc:DONE [0148233] — `docs/faq/desktop-homunculus-mod-system.md` 259줄 → 200줄 이하로 분리. DoD: 200줄 한도 준수. Depends: none. [target: DesktopMatePlus/]
 - [ ] **QD-5: E2E test 파일 분할** cc:TODO — `desktopmate-bridge/tests/e2e/connection-lifecycle.test.ts` 416줄 → 400줄 이하로 분할. DoD: GP-13 file size 위반 0. Depends: none. [target: desktop-homunculus/]
 
 ### Phase 27: desktopmate-bridge SDK Adapter Pattern — spec-ref: docs/TODO.md#spec-13
