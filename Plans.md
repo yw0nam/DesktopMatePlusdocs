@@ -79,10 +79,10 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 
 ### Phase 28: backend E2E 마이그레이션 — spec-ref: docs/TODO.md#spec-14
 
-- [ ] **BE-E1: tests/e2e/ 디렉토리 + conftest.py** cc:TODO — LogReader, e2e_session fixture, require_backend fixture 생성. pyproject.toml에 e2e marker 추가. DoD: `uv run pytest -m e2e --collect-only` 성공. Depends: none. [target: backend/]
-- [ ] **BE-E2: WebSocket E2E 마이그레이션** cc:TODO — test_websocket_e2e.py 신규 (TTS chunk 3중 검증 포함). DoD: backend 기동 + pytest PASS. Depends: BE-E1. [target: backend/]
-- [ ] **BE-E3: STM/LTM/Misc E2E 마이그레이션** cc:TODO — test_stm_e2e.py + test_ltm_e2e.py + test_misc_e2e.py 신규. DoD: pytest PASS. Depends: BE-E1. [target: backend/]
-- [ ] **BE-E4: e2e.sh 교체 + examples 삭제** cc:TODO — scripts/e2e.sh Phase 4를 `pytest -m e2e --tb=long`으로 교체. examples/ 구 스크립트 4개 삭제. DoD: `bash scripts/e2e.sh` 전체 PASS. Depends: BE-E2, BE-E3. [target: backend/]
+- [x] **BE-E1: tests/e2e/ 디렉토리 + conftest.py** cc:TODO — LogReader, e2e_session fixture, require_backend fixture 생성. pyproject.toml에 e2e marker 추가. DoD: `uv run pytest -m e2e --collect-only` 성공. Depends: none. [target: backend/]
+- [x] **BE-E2: WebSocket E2E 마이그레이션** cc:TODO — test_websocket_e2e.py 신규 (TTS chunk 3중 검증 포함). DoD: backend 기동 + pytest PASS. Depends: BE-E1. [target: backend/]
+- [x] **BE-E3: STM/LTM/Misc E2E 마이그레이션** cc:TODO — test_stm_e2e.py + test_ltm_e2e.py + test_misc_e2e.py 신규. DoD: pytest PASS. Depends: BE-E1. [target: backend/]
+- [x] **BE-E4: e2e.sh 교체 + examples 삭제** cc:TODO — scripts/e2e.sh Phase 4를 `pytest -m e2e --tb=long`으로 교체. examples/ 구 스크립트 4개 삭제. DoD: `bash scripts/e2e.sh` 전체 PASS. Depends: BE-E2, BE-E3. [target: backend/]
 
 ### Phase 25: desktopmate-bridge WS + Drag 신뢰성 버그 수정 — spec-ref: docs/TODO.md#spec-12 — [archived](docs/archive/phase-25-desktopmate-bridge-ws-drag.md)
 
