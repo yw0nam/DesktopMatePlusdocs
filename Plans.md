@@ -71,11 +71,11 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 
 ### Phase 27: desktopmate-bridge SDK Adapter Pattern — spec-ref: docs/TODO.md#spec-13
 
-- [ ] **DH-A1: sdk-adapter.ts 인터페이스 정의** cc:TODO — SdkAdapter 인터페이스 8개 오퍼레이션 (spawnVrm, sendSignal, onRpcCall, speakWithTimeline 등). DoD: 타입 체크 PASS. Depends: none. [target: desktop-homunculus/]
-- [ ] **DH-A2: real-adapter.ts 구현** cc:TODO — @hmcs/sdk 래핑하는 production adapter. DoD: 기존 service.ts와 동일 동작. Depends: DH-A1. [target: desktop-homunculus/]
-- [ ] **DH-A3: mock-adapter.ts 구현** cc:TODO — 순수 JS mock (EventEmitter signal, 로컬 RPC, VRM no-op) + 테스트 헬퍼 (onMockSignal, callMockRpc, resetMockAdapter). DoD: `HMCS_MOCK=1 pnpm test` unit PASS. Depends: DH-A1. [target: desktop-homunculus/]
-- [ ] **DH-A4: service.ts 리팩토** cc:TODO — adapter 파라미터 주입 + isMain 가드 + connectAndServe/handleMessage named export. DoD: `HMCS_MOCK=1 pnpm test` 전체 PASS + 기존 E2E PASS. Depends: DH-A2, DH-A3. [target: desktop-homunculus/]
-- [ ] **DH-A5: 신규 E2E 테스트** cc:TODO — signal-flow.test.ts + rpc-flow.test.ts + tts-flow.test.ts. Worker가 backend 직접 기동. DoD: `pnpm test:e2e` 전체 PASS. Depends: DH-A4. [target: desktop-homunculus/]
+- [x] **DH-A1: sdk-adapter.ts 인터페이스 정의** cc:DONE — SdkAdapter 인터페이스 8개 오퍼레이션 (spawnVrm, sendSignal, onRpcCall, speakWithTimeline 등). DoD: 타입 체크 PASS. Depends: none. [target: desktop-homunculus/]
+- [x] **DH-A2: real-adapter.ts 구현** cc:DONE — @hmcs/sdk 래핑하는 production adapter. DoD: 기존 service.ts와 동일 동작. Depends: DH-A1. [target: desktop-homunculus/]
+- [x] **DH-A3: mock-adapter.ts 구현** cc:DONE — 순수 JS mock (EventEmitter signal, 로컬 RPC, VRM no-op) + 테스트 헬퍼 (onMockSignal, callMockRpc, resetMockAdapter). DoD: `HMCS_MOCK=1 pnpm test` unit PASS. Depends: DH-A1. [target: desktop-homunculus/]
+- [x] **DH-A4: service.ts 리팩토** cc:DONE — adapter 파라미터 주입 + isMain 가드 + connectAndServe/handleMessage named export. DoD: `HMCS_MOCK=1 pnpm test` 전체 PASS + 기존 E2E PASS. Depends: DH-A2, DH-A3. [target: desktop-homunculus/]
+- [x] **DH-A5: 신규 E2E 테스트** cc:DONE — signal-flow.test.ts + rpc-flow.test.ts + tts-flow.test.ts + TC-UI-06~09 (Playwright 채팅 비즈니스 로직). DoD: 120 unit PASS + 9 Playwright PASS. Depends: DH-A4. [target: desktop-homunculus/]
 
 ### Phase 28: backend E2E 마이그레이션 — spec-ref: docs/TODO.md#spec-14
 
