@@ -5,6 +5,10 @@
 
 set -euo pipefail
 
+# ── PATH: ensure uv and other user-installed tools are available ───
+# Required for cron runs where PATH is minimal
+export PATH="$HOME/.local/bin:$HOME/anaconda3/bin:$HOME/.cargo/bin:$PATH"
+
 CLAUDE_BIN="/home/spow12/.local/bin/claude"
 WORKSPACE="/home/spow12/codes/2025_lower/DesktopMatePlus"
 LOG_DIR="$WORKSPACE/docs/reports"
