@@ -65,8 +65,9 @@ DA 태스크 Phase에는 다음 2개 태스크 유형을 함께 작성한다:
 - [x] **QD-2: Phase 25 아카이브** cc:DONE [0148233] — Phase 25 (cc:DONE 5개) 아카이브 처리. DoD: Plans.md에 archived 링크만 남음. Depends: none. [target: DesktopMatePlus/]
 - [x] **QD-3: dead link 수정** cc:DONE [0148233] — `docs/data_flow/chat/ADD_CHAT_MESSAGE.md`의 삭제된 파일 참조 2개 수정/제거. DoD: `scripts/check_docs.sh` dead link 0. Depends: none. [target: DesktopMatePlus/]
 - [x] **QD-4: oversized doc 분리** cc:DONE [0148233] — `docs/faq/desktop-homunculus-mod-system.md` 259줄 → 200줄 이하로 분리. DoD: 200줄 한도 준수. Depends: none. [target: DesktopMatePlus/]
-- [ ] **QD-5: E2E test 파일 분할** cc:TODO — `desktopmate-bridge/tests/e2e/connection-lifecycle.test.ts` 416줄 → 400줄 이하로 분할. DoD: GP-13 file size 위반 0. Depends: none. [target: desktop-homunculus/]
-- [ ] **QD-6: ControlBar.test.tsx 파일 분할** cc:TODO — `desktopmate-bridge/tests/ControlBar.test.tsx` 432줄 → 400줄 이하로 분할. DoD: GP-13 file size 위반 0. Depends: none. [target: desktop-homunculus/]
+- [x] **QD-5: E2E test 파일 분할** cc:DONE [825aca2] — `desktopmate-bridge/tests/e2e/connection-lifecycle.test.ts` 416→371줄, TC-LC-08 → `session-continuity.test.ts`로 분리. DoD: GP-13 file size 위반 0. Depends: none. [target: desktop-homunculus/]
+- [x] **QD-6: ControlBar.test.tsx 파일 분할** cc:DONE [825aca2] — `desktopmate-bridge/tests/ControlBar.test.tsx` 432→351줄, DH-BUG-13 reconnect 테스트 → `ControlBar.reconnect.test.tsx`로 분리. DoD: GP-13 file size 위반 0. Depends: none. [target: desktop-homunculus/]
+- [x] **QD-7: DH PR #14 리뷰 + 머지** cc:DONE — `fix/sweep-2026-04-07` post-merge sweep MERGED (2026-04-07). Reviewer PASS (12/12). Depends: none. [target: desktop-homunculus/]
 
 ### Phase 27: desktopmate-bridge SDK Adapter Pattern — spec-ref: docs/TODO.md#spec-13
 
