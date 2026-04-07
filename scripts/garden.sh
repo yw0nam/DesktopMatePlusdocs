@@ -3,6 +3,10 @@
 # Runs GOLDEN_PRINCIPLES.md verify commands, auto-fixes Minor violations, generates reports.
 set -euo pipefail
 
+# ── PATH: ensure uv and other user-installed tools are available ───
+# Required for cron/quality-agent runs where PATH is minimal
+export PATH="$HOME/.local/bin:$HOME/anaconda3/bin:$HOME/.cargo/bin:$PATH"
+
 # ── Workspace root (script lives in scripts/) ──────────────────────
 WORKSPACE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATE="$(date +%Y-%m-%d)"

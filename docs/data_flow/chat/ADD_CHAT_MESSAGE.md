@@ -123,6 +123,6 @@ sequenceDiagram
 
 ### Related
 
-- [WebSocket API Guide](../../backend/docs/websocket/CLAUDE.md)
-- [TTS Service Patterns](../../backend/src/services/tts_service/CLAUDE.md)
+- [WebSocket API Guide](../../../backend/docs/websocket/CLAUDE.md)
+- [TTS Service Patterns](../../../backend/src/services/tts_service/CLAUDE.md)
 - [SLACK_MESSAGE Data Flow](../channel/SLACK_MESSAGE.md)
